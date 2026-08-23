@@ -57,6 +57,9 @@ const PAGE_SCRIPT = () => {
     const ct = createClickTrail({ destinations: [dest], now: () => fx.input.now });
     ct.start();
     const parsed = parseAttributionUrl(fx.input);
+    // Stored-state fixtures (Phase 2 harness extension): hydrate the visitor's
+    // pre-existing payload BEFORE applying the new landing touch.
+    if (fx.stored) ct.hydrateStoredPayload(fx.stored);
     if (parsed.kind === 'touch') ct.mergeParsedTouch(parsed.touch);
     const api = createLegacyGlobal(ct); // legacy global shape (getData/...)
     ct.track('page_view', { event_time: fx.input.now });

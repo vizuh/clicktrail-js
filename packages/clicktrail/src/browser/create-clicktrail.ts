@@ -65,6 +65,7 @@ import type {
   SignFn,
   VerifyFn,
 } from './link-decoration.js';
+import { CANONICAL_KEY_SET } from './payload-store.js';
 
 export type DiagnosticsLevel = 'silent' | 'warn';
 
@@ -174,6 +175,12 @@ export interface ClickTrailInstance {
   track(eventName: string, data?: Record<string, unknown>): void;
   /** Feed a parsed attribution signal into the stored payload. */
   mergeParsedTouch(touch: ParsedTouch): void;
+  /**
+   * Merge a previously stored canonical payload (legacy import / migration).
+   * Only canonical keys with non-empty string values are adopted; incoming
+   * values win on conflicts. Persists post-start, in-memory pre-start.
+   */
+  hydrateStoredPayload(payload: AttributionPayload): void;
   /** Full canonical flat payload (defensive copy). */
   getData(): AttributionPayload;
   /** One field by canonical flat key (`ft_source`, `gclid`, ...). */
@@ -450,6 +457,19 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       payload = mergeAttributionTouch(payload, touch);
       // Zero side effects until start(): pre-start merges stay in memory
       // and are flushed to storage by the hydration step in start().
+      if (started && adapters) persistPayload();
+    },
+
+    hydrateStoredPayload(incoming) {
+      // Migration path (WP swap / legacy imports): adopt canonical non-empty
+      // keys only. Unknown keys are dropped here rather than at the store so
+      // hydration works identically with or without storage adapters.
+      for (const key of Object.keys(incoming)) {
+        const value = incoming[key];
+        if (CANONICAL_KEY_SET.has(key) && typeof value === 'string' && value !== '') {
+          payload[key] = value;
+        }
+      }
       if (started && adapters) persistPayload();
     },
 

@@ -23,6 +23,9 @@ const LT_KEYS = touchKeys('lt');
 export const CANONICAL_PAYLOAD_KEYS: readonly string[] = [
   ...Object.values(FT_KEYS),
   ...Object.values(LT_KEYS),
+  // Ruling #12: captured click IDs are mirrored into touch fields
+  // (ft_<cid>/lt_<cid>) and MUST survive store round-trips + hydration.
+  ...CLICK_ID_KEYS.flatMap((cid) => [`ft_${cid}`, `lt_${cid}`]),
   ...CLICK_ID_KEYS,
   ...BROWSER_ID_KEYS,
   'visitor_id',
@@ -30,7 +33,7 @@ export const CANONICAL_PAYLOAD_KEYS: readonly string[] = [
   'session_number',
 ];
 
-const CANONICAL_KEY_SET: ReadonlySet<string> = new Set(CANONICAL_PAYLOAD_KEYS);
+export const CANONICAL_KEY_SET: ReadonlySet<string> = new Set(CANONICAL_PAYLOAD_KEYS);
 
 // ---------------------------------------------------------------------------
 // Legacy key aliases

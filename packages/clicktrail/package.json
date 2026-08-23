@@ -23,6 +23,10 @@
       "types": "./dist/agent/index.d.ts",
       "default": "./dist/agent/index.js"
     },
+    "./apointoo": {
+      "types": "./dist/apointoo/index.d.ts",
+      "default": "./dist/apointoo/index.js"
+    },
     "./package.json": "./package.json",
     "./browser": {
       "types": "./dist/browser/index.d.ts",
