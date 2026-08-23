@@ -1,5 +1,7 @@
 # ClickTrail JS
 
+[![CI](https://github.com/funnelsheet/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/funnelsheet/clicktrail-js/actions/workflows/ci.yml) <!-- badge placeholder: activates once pushed to GitHub -->
+
 First-party, deterministic attribution and customer-journey capture engine.
 
 Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by Funnelsheet.
@@ -27,12 +29,26 @@ Design rules (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 3. Every payload carries `schema_version` and `classifier_version`.
 4. Classifier behavior changes are major semver, by definition.
 
-## Development
+## Quickstart
 
 ```bash
 pnpm install
-pnpm test
+pnpm -r test        # vitest, replays golden fixtures
+pnpm -r build       # tsc per package
 ```
+
+Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.
+
+## Why deterministic
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):
+
+- Same inputs -> same output. Time, IDs, storage, consent and network are
+  injected by callers, never requested by core.
+- Replayable debugging: capture inputs once, reproduce attribution exactly —
+  in the WP plugin, Next.js, dashboard, and CI alike.
+- Golden fixtures are the executable spec; classifier upgrades get diffed
+  fixture-by-fixture before any release.
 
 ## License
 

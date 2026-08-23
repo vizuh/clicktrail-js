@@ -1,0 +1,66 @@
+# ============================================================================
+# publish.yml — DRAFT. Fully disabled: every line below is a comment.
+#
+# Intended mechanism: npm OIDC trusted publishing (no NPM_TOKEN secret).
+# npm >= 11.5.1 with `npm publish --provenance` attests builds to this
+# repository via the `id-token: write` permission — no tokens stored.
+#
+# PRECONDITIONS (from docs/ARCHITECTURE.md, "One-way doors") — verify ALL
+# before removing comments and enabling this workflow:
+#
+#   1. SCOPE OWNERSHIP: confirm the `@funnelsheet` npm scope is owned by the
+#      funnelsheet org and that trusted publishing is registered for this
+#      repository + workflow + environment on npmjs.com.
+#   2. COPYRIGHT PROVENANCE: complete the contributor copyright chain
+#      verification required before licensing the code MIT. The WP plugin
+#      stays GPL-2.0-or-later; MIT embedding must be clean of unreviewed
+#      third-party contributions.
+#   3. VERSIONING GATES: every payload carries `schema_version` (additive)
+#      and `classifier_version` (semantic). A classifier behavior change may
+#      only ship as a MAJOR release; check fixtures for recorded semver
+#      decisions before publishing.
+#
+# To enable: delete the leading `# ` from every line, add an `environment`
+# matching the npm trusted-publisher configuration, and tag-trigger it.
+# ============================================================================
+
+# name: Publish
+#
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+#
+# permissions:
+#   contents: read
+#   id-token: write        # REQUIRED for OIDC trusted publishing / provenance
+#
+# jobs:
+#   publish:
+#     runs-on: ubuntu-latest
+#     environment: npm     # must match the environment registered on npmjs.com
+#     steps:
+#       - uses: actions/checkout@v4
+#
+#       - uses: pnpm/action-setup@v4
+#         with:
+#           version: 10
+#
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 22
+#           cache: pnpm
+#           registry-url: 'https://registry.npmjs.org'
+#
+#       - run: pnpm install --frozen-lockfile
+#       - run: pnpm -r exec tsc -p tsconfig.json --noEmit
+#       - run: pnpm -r test
+#       - run: pnpm -r build
+#
+#       # npm >= 11.5.1 supports OIDC trusted publishing; no token needed.
+#       # The package must have `publishConfig.access: public` or use --access.
+#       - name: Publish @funnelsheet/clicktrail
+#         run: |
+#           npm install -g npm@latest
+#           cd packages/clicktrail
+#           npm publish --access public --provenance
