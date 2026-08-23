@@ -34,6 +34,12 @@ export const LEGACY_ATTRIBUTION_KEY = 'ct_attribution'; // DATA-MODEL.md:114 (ol
 export const SESSION_ID_FALLBACK_KEY = 'ct_session_id'; // DATA-MODEL.md:232, :238
 export const VISITOR_ID_FALLBACK_KEY = 'ct_visitor_id'; // DATA-MODEL.md:233, :239
 export const SESSION_STATE_KEY = 'ct_session'; // DATA-MODEL.md:234, :240
+/**
+ * Per-installation HMAC key for cross-domain continuation tokens
+ * (work-queue #5). Not personal data, but consent denial wipes it so a
+ * withdrawn visitor leaves no tracking-capable state behind.
+ */
+export const SIGNING_KEY_KEY = 'ct_signing_key';
 
 /** Every surface `clearAttributionStorage` must wipe on consent denial. */
 export const ATTRIBUTION_STORAGE_KEYS: readonly string[] = [
@@ -42,6 +48,7 @@ export const ATTRIBUTION_STORAGE_KEYS: readonly string[] = [
   SESSION_ID_FALLBACK_KEY,
   VISITOR_ID_FALLBACK_KEY,
   SESSION_STATE_KEY,
+  SIGNING_KEY_KEY,
 ];
 
 /** Delete every known attribution/identity key from the given adapters. */

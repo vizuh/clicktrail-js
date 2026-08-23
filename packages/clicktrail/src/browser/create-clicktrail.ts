@@ -30,6 +30,34 @@ import type {
 import type { Destination } from './transport.js';
 import type { SessionSnapshot } from './global-adapter.js';
 import { buildEventPayload, type ClickTrailEvent } from './serialize.js';
+import {
+  createFormInjector,
+  defaultFormDocument,
+  defaultObserverFactory,
+} from './form-injection.js';
+import type {
+  FormDomDocument,
+  FormInjector,
+  ObserverFactory,
+} from './form-injection.js';
+import {
+  CONTINUATION_FIELDS,
+  DEFAULT_TOKEN_PARAM as DEFAULT_TOKEN_PARAM_FALLBACK,
+  consumeLandingToken,
+  createLinkDecorator,
+  defaultHmacSign,
+  defaultHmacVerify,
+  defaultLinkDocument,
+  defaultLocationSeam,
+  encodeContinuationToken,
+} from './link-decoration.js';
+import type {
+  LinkDecorator,
+  LinkDomDocument,
+  LocationHistorySeam,
+  SignFn,
+  VerifyFn,
+} from './link-decoration.js';
 
 export type DiagnosticsLevel = 'silent' | 'warn';
 
@@ -54,6 +82,17 @@ export interface ClickTrailConfig {
    * Nothing touches storage before start() (zero side effects).
    */
   storage?: ClickTrailStorageConfig;
+  /**
+   * Hidden-field form injection. Default: OFF (opt-in). All DOM effects
+   * happen after start(); the observer lifecycle is tied to stop().
+   */
+  forms?: ClickTrailFormsConfig;
+  /**
+   * Cross-domain continuity (approved-domain link decoration + landing
+   * token consumption). Default: OFF (opt-in). Requires `storage` when the
+   * default WebCrypto signer is used so the signing key can persist.
+   */
+  crossDomain?: ClickTrailCrossDomainConfig;
 }
 
 export interface ClickTrailStorageConfig {
@@ -75,6 +114,42 @@ export interface ClickTrailStorageConfig {
   /** Injected wall clock (ms) for session rolls + mirror expiry. */
   nowMs?: () => number;
 }
+
+export type ClickTrailFormsConfig =
+  | {
+      /** Canonical payload keys to inject. Default: DEFAULT_FORM_FIELDS summary set. */
+      fields?: readonly string[];
+      /** Overwrite existing NON-EMPTY hidden inputs. Default: false (preserve). */
+      overwrite?: boolean;
+      /** Injectable document root (tests / non-DOM hosts). Default: document wrapper. */
+      doc?: FormDomDocument;
+      /** Observer factory for late-added forms; null disables watching. Default: MutationObserver. */
+      observer?: ObserverFactory | null;
+    }
+  | false;
+
+export type ClickTrailCrossDomainConfig = {
+  /** Approved target domains, exact-suffix matched (example.com, shop.example.com). */
+  domains: readonly string[];
+  /** Continuation-token URL parameter. Default: 'ct_token'. */
+  tokenParam?: string;
+  /** Skip anchors whose URL already carries the token. Default: true. */
+  skipSignedUrls?: boolean;
+  /**
+   * Injected signer for continuation tokens. Default: WebCrypto HMAC-SHA256
+   * with a per-installation random key persisted in the storage adapters
+   * (requires config.storage to be present for persistence).
+   */
+  sign?: SignFn;
+  /** Injected verifier matching `sign`. Default: WebCrypto HMAC-SHA256 verify. */
+  verify?: VerifyFn;
+  /** Injectable location/history seam. Default: globalThis wrapper. */
+  location?: LocationHistorySeam;
+  /** Injectable document root for anchor decoration (tests / SSR). */
+  doc?: LinkDomDocument;
+  /** Observer factory for late-added links; null disables watching. */
+  observer?: ObserverFactory | null;
+} | false;
 
 export interface ClickTrailInstance {
   /** Begin delivering events to destinations. Idempotent. */
@@ -130,6 +205,8 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const storageCfg = config.storage;
   let adapters: { primary: StorageAdapter; mirror: StorageAdapter } | null = null;
   let identity: IdentityStore | null = null;
+  let formInjector: FormInjector | null = null;
+  let linkDecorator: LinkDecorator | null = null;
 
   const initStorage = (): void => {
     if (!storageCfg || adapters !== null) return;
@@ -194,7 +271,77 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     return false;
   };
 
-  return {
+  /**
+   * Cross-domain wiring (work-queue #5): landing-token consumption + outbound
+   * link decoration. Resolves all default seams lazily here so nothing runs
+   * before start(). Consumption is async fire-and-forget; a rejected promise
+   * is swallowed deterministically (consumption never throws).
+ */
+  function wireCrossDomain(instance: ClickTrailInstance): void {
+    const crossCfg = config.crossDomain;
+    if (!crossCfg) return;
+    const nowMs = storageCfg?.nowMs ?? (() => Date.now());
+    const randomBytes = storageCfg?.randomBytes ?? defaultRandomBytes;
+    const adapterList =
+      adapters !== null ? [adapters.primary, adapters.mirror] : [];
+    const sign = crossCfg.sign ?? defaultHmacSign(adapterList, randomBytes);
+    const verify = crossCfg.verify ?? defaultHmacVerify(adapterList);
+    const seam = crossCfg.location ?? defaultLocationSeam();
+    const nowIso = () =>
+      config.now ? config.now() : new Date(nowMs()).toISOString();
+
+    // Landing consumption first: strip + merge before decorating outbound
+    // links with a token that would carry pre-continuity state.
+    if (seam) {
+      void consumeLandingToken({
+        seam,
+        tokenParam: crossCfg.tokenParam ?? DEFAULT_TOKEN_PARAM_FALLBACK,
+        verify,
+        nowMs,
+        nowIso,
+        consentAllowed: () => !consentGate || consentGate(),
+        mergeTouch: (touch) => instance.mergeParsedTouch(touch),
+      }).catch(() => {
+        // Deterministic no-op on unexpected failure; never breaks start().
+      });
+    }
+
+    const doc = crossCfg.doc ?? defaultLinkDocument() ?? undefined;
+    linkDecorator = createLinkDecorator({
+      domains: crossCfg.domains,
+      tokenParam: crossCfg.tokenParam,
+      skipSignedUrls: crossCfg.skipSignedUrls,
+      doc,
+      observer: crossCfg.observer,
+      consentAllowed: () => !consentGate || consentGate(),
+      getBaseUrl: () => seam?.href() ?? '',
+      getToken: async () => {
+        // Consent-denied gates yield empty snapshots -> empty token -> no
+        // decoration (identity exists only while consent allows).
+        const snap = instance.getSession();
+        if (!snap.visitorId && !snap.sessionId) return '';
+        const attribution: Record<string, string> = {};
+        for (const key of CONTINUATION_FIELDS) {
+          const value = payload[key];
+          if (value) attribution[key] = value;
+        }
+        try {
+          return await encodeContinuationToken({
+            visitorId: snap.visitorId,
+            sessionId: snap.sessionId,
+            attribution,
+            nowMs: nowMs(),
+            sign,
+          });
+        } catch {
+          return ''; // oversized/failed token: deterministic skip
+        }
+      },
+    });
+    linkDecorator.start();
+  }
+
+  const instance: ClickTrailInstance = {
     start() {
       if (started) return;
       started = true;
@@ -210,11 +357,31 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
             : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
         persistPayload();
       }
+      if (config.forms) {
+        const { fields, overwrite, observer } = config.forms;
+        formInjector = createFormInjector({
+          fields,
+          overwrite,
+          observer,
+          consentAllowed: () => !consentGate || consentGate(),
+          getPayload: () => payload,
+          getIdentity: () => instance.getSession(),
+          doc: config.forms.doc ?? defaultFormDocument() ?? undefined,
+        });
+        formInjector.start();
+      }
+      if (config.crossDomain) {
+        wireCrossDomain(instance);
+      }
     },
 
     stop() {
       if (!started) return;
       for (const dest of destinations) void Promise.resolve(dest.flush?.());
+      formInjector?.stop();
+      formInjector = null;
+      linkDecorator?.stop();
+      linkDecorator = null;
       started = false;
     },
 
@@ -272,4 +439,6 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       };
     },
   };
+  return instance;
 }
+
