@@ -1,0 +1,52 @@
+{
+  "name": "@funnelsheet/clicktrail",
+  "version": "0.1.0",
+  "description": "Deterministic first-party attribution conventions and engine. Captures the trail from ad click to conversion.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./incubating": {
+      "types": "./dist/incubating.d.ts",
+      "default": "./dist/incubating.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "attribution",
+    "utm",
+    "gclid",
+    "fbclid",
+    "first-touch",
+    "last-touch",
+    "analytics",
+    "marketing",
+    "conversion-tracking",
+    "consent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/funnelsheet/clicktrail-js.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "fast-check": "^3.22.0"
+  }
+}

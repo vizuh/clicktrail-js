@@ -1,0 +1,15 @@
+{
+  "name": "sc-click-id-alias",
+  "description": "sc_click_id folds into canonical sccid.",
+  "quirk_decision": "CONTRACT: sc_click_id is an alias of sccid (per plugin contract).",
+  "input": {
+    "url": "https://example.com/promo?sc_click_id=SC991",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T15:00:00Z"
+  },
+  "expected": {
+    "sccid": "SC991",
+    "_channel": "paid_social"
+  }
+}

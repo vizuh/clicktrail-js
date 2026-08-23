@@ -1,0 +1,14 @@
+{
+  "name": "internal-referrer-no-new-touch",
+  "description": "Same-site navigation creates no new touch.",
+  "quirk_decision": "CONTRACT: internal/related-host referrer creates no touch.",
+  "input": {
+    "url": "https://example.com/contact",
+    "referrer": "https://www.example.com/pricing",
+    "currentHost": "example.com",
+    "now": "2026-08-23T14:00:00Z"
+  },
+  "expected": {
+    "_no_touch_reason": "internal_referrer"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "organic-social-referrer",
+  "description": "Instagram referrer infers organic social.",
+  "quirk_decision": "CONTRACT: social host -> organic_social / medium=social.",
+  "input": {
+    "url": "https://example.com/",
+    "referrer": "https://l.instagram.com/?u=https%3A%2F%2Fexample.com",
+    "currentHost": "example.com",
+    "now": "2026-08-23T13:00:00Z"
+  },
+  "expected": {
+    "ft_source": "l.instagram.com",
+    "ft_medium": "social",
+    "_channel": "organic_social"
+  }
+}

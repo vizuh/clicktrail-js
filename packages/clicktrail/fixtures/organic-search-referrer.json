@@ -1,0 +1,16 @@
+{
+  "name": "organic-search-referrer",
+  "description": "External Google referrer infers organic search.",
+  "quirk_decision": "CONTRACT: search-engine referrer -> organic_search / medium=organic.",
+  "input": {
+    "url": "https://example.com/services",
+    "referrer": "https://www.google.com/search?q=botox+nyc",
+    "currentHost": "example.com",
+    "now": "2026-08-23T12:00:00Z"
+  },
+  "expected": {
+    "ft_source": "google.com",
+    "ft_medium": "organic",
+    "_channel": "organic_search"
+  }
+}
