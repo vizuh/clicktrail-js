@@ -104,3 +104,43 @@ Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing paylo
 Target after implementation: runtime harness diffs shrink to ONLY rulings #1/#2/#6/#7/#10/#14 standing deviations.
 
 | Sticky top-level click IDs | ENGINE keeps newest-non-empty-wins (consistent with last-touch philosophy; ft_/lt_ mirrors now give consumers BOTH first and latest values). Recorded as standing deviation D3 -> joins the Hugo confirmation gate before WP swap. |
+
+
+---
+
+## HUGO GATE RULINGS (2026-08-23, release-candidate directive) — SUPERSEDE prior D2/D3 notes
+
+### D2 — bare fbclid classification
+A bare fbclid must NOT be classified as 'Facebook Ads' AND NOT definitively as
+'Facebook Organic'. Meta appends fbclid automatically to outbound links from
+Facebook and Instagram surfaces, not exclusively to advertisements — both prior
+labels are over-certain.
+
+Canonical model for uncertain click IDs (fbclid, ttclid, twclid, li_fat_id,
+sccid, epik):
+- source_platform: the platform name ('facebook', 'tiktok', ...)
+- traffic_class / channel: UNKNOWN — promoted to paid_social ONLY on explicit
+  additional evidence: paid UTM values, campaign/ad metadata, or an integration
+  signal
+- certain-paid click IDs (gclid, wbraid, gbraid, msclkid — advertising-only
+  identifiers) keep their paid classification
+
+The old WordPress label ('Facebook Organic') survives ONLY as a temporary
+legacy compatibility output (`legacyWordPressChannelLabel`), never in the
+canonical model.
+
+### D3 — competing click IDs
+Top-level click IDs use NEWEST-VALID-WINS (already engine behavior — confirmed).
+Additionally required:
+- preserve first-touch IDs (ft_<cid> mirrors — exists)
+- preserve complete click-ID history: new additive payload key
+  `click_id_history` (JSON array of {k, v, t}, capped)
+- record which ID was selected for attribution and why:
+  `attribution_selected_click_id` + `attribution_selected_click_id_reason`
+- empty, invalid, or expired IDs never overwrite a valid ID (empty already
+  cannot; validity = non-empty post-sanitization)
+
+Rationale: destination APIs tie offline conversions to the click within a
+conversion window (Google Ads import rules); a stale first ID risks failed or
+wrong-window uploads, while first-touch/history retention keeps every
+attribution model (first, last, future multi-touch) computable.

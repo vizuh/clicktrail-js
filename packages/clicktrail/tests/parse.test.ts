@@ -23,14 +23,40 @@ describe('parseAttributionUrl', () => {
     expect(r.touch.touchTimestamp).toBe('2026-08-23T10:00:00.000Z');
   });
 
-  it('infers a paid touch from fbclid alone', () => {
+  it('classifies a bare fbclid as Facebook with UNKNOWN paid status (D2)', () => {
     const r = parseAttributionUrl({ url: 'https://example.com/?fbclid=Abc' });
     expect(r.kind).toBe('touch');
     if (r.kind !== 'touch') return;
     expect(r.touch.source).toBe('facebook');
+    expect(r.touch.medium).toBe('');
+    expect(r.touch.channel).toBe('unknown');
+    expect(r.touch.channelLabel).toBe('Facebook');
+  });
+
+  it('promotes fbclid to paid_social only with explicit paid evidence (D2)', () => {
+    const r = parseAttributionUrl({
+      url: 'https://example.com/?fbclid=Abc&utm_source=facebook&utm_medium=cpc',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
     expect(r.touch.medium).toBe('cpc');
     expect(r.touch.channel).toBe('paid_social');
     expect(r.touch.channelLabel).toBe('Facebook Ads');
+  });
+
+  it('keeps gclid certain-paid (advertising-only identifier)', () => {
+    const r = parseAttributionUrl({ url: 'https://example.com/?gclid=G1' });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch.medium).toBe('cpc');
+    expect(r.touch.channel).toBe('paid_search');
+  });
+
+  it('legacyWordPressChannelLabel reproduces the plugin strings for migration', async () => {
+    const { legacyWordPressChannelLabel } = await import('../src/core/knowledge.js');
+    const ids = { fbclid: 'Abc' };
+    expect(legacyWordPressChannelLabel({ clickIds: ids, medium: '' })).toBe('Facebook Organic');
+    expect(legacyWordPressChannelLabel({ clickIds: ids, medium: 'cpc' })).toBe('Facebook Ads');
   });
 
   it('collects browser-ID query params top-level (ruling A part a)', () => {
@@ -127,11 +153,12 @@ describe('parseAttributionUrl', () => {
     expect(r.kind).toBe('none');
   });
 
-  it('folds sc_click_id into sccid and classifies paid_social', () => {
+  it('folds sc_click_id into sccid with uncertain paid status (D2)', () => {
     const r = parseAttributionUrl({ url: 'https://example.com/?sc_click_id=S1' });
     expect(r.kind).toBe('touch');
     if (r.kind !== 'touch') return;
-    expect(r.touch.channel).toBe('paid_social');
+    expect(r.touch.source).toBe('snapchat');
+    expect(r.touch.channel).toBe('unknown');
   });
 
   // --- WP-parity rulings ---

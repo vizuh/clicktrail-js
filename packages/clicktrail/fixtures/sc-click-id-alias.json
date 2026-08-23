@@ -10,7 +10,8 @@
   },
   "expected": {
     "sccid": "SC991",
-    "_channel": "paid_social",
-    "ft_channel": "Snapchat Ads"
+    "_channel": "unknown",
+    "ft_channel": "Snapchat",
+    "lt_channel": "Snapchat"
   }
 }

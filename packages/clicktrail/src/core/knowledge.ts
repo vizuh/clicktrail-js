@@ -138,9 +138,45 @@ export const CHANNEL_LABELS = {
   WHATSAPP: 'WhatsApp',
   TELEGRAM: 'Telegram',
   DISCORD: 'Discord',
+  // Uncertain-certainty click-ID platforms WITHOUT paid evidence (ruling D2):
+  // the surface is proven, the payment is not.
+  FACEBOOK: 'Facebook',
+  INSTAGRAM: 'Instagram',
+  TIKTOK: 'TikTok',
+  LINKEDIN: 'LinkedIn',
+  TWITTER_X: 'X',
+  SNAPCHAT: 'Snapchat',
+  PINTEREST: 'Pinterest',
   // Fallback
   UNKNOWN: 'Unknown',
 } as const;
+
+/**
+ * LEGACY compatibility output ONLY (Hugo gate D2). Maps classifications to the
+ * WordPress plugin v1.8.x human labels so parity consumers can opt into the old
+ * strings during migration. Never write these through the canonical pipeline;
+ * kept versioned so the shim has its own lifecycle.
+ */
+export const LEGACY_WP_LABEL_VERSION = '1';
+export function legacyWordPressChannelLabel(input: {
+  clickIds: Record<string, string | undefined>;
+  medium: string;
+}): string {
+  const ids = input.clickIds;
+  if (ids.gclid || ids.gbraid || ids.wbraid) return CHANNEL_LABELS.GOOGLE_ADS;
+  if (ids.msclkid) return CHANNEL_LABELS.MICROSOFT_ADS;
+  if (ids.li_fat_id) return CHANNEL_LABELS.LINKEDIN_ADS;
+  if (ids.twclid) return CHANNEL_LABELS.X_ADS;
+  if (ids.ttclid) return CHANNEL_LABELS.TIKTOK_ADS;
+  if (ids.epik) return CHANNEL_LABELS.PINTEREST_ADS;
+  if (ids.sccid) return CHANNEL_LABELS.SNAPCHAT_ADS;
+  if (ids.fbclid) {
+    return PAID_MEDIUMS.includes(input.medium.trim().toLowerCase())
+      ? CHANNEL_LABELS.FACEBOOK_ADS
+      : CHANNEL_LABELS.FACEBOOK_ORGANIC;
+  }
+  return CHANNEL_LABELS.UNKNOWN;
+}
 
 /** utm_medium values that mark a visit as PAID (ported from the plugin). */
 export const PAID_MEDIUMS: readonly string[] = ['cpc', 'ppc', 'paid', 'paidsearch', 'paid_social'];
@@ -251,18 +287,20 @@ export interface ChannelLabelInput {
 export function resolveChannelLabel(input: ChannelLabelInput): string {
   const ids = input.clickIds;
 
-  // Paid click IDs — highest priority, checked before referrer.
+  // Click IDs — highest priority, checked before referrer. Certainty-tiered
+  // per Hugo gate ruling D2: advertising-only identifiers get their Ads label;
+  // uncertain identifiers get the plain platform label UNLESS explicit paid
+  // evidence (a paid utm_medium) promotes them.
+  const medium = input.medium.trim().toLowerCase();
+  const hasPaidEvidence = PAID_MEDIUMS.includes(medium);
   if (ids.gclid || ids.gbraid || ids.wbraid) return CHANNEL_LABELS.GOOGLE_ADS;
   if (ids.msclkid) return CHANNEL_LABELS.MICROSOFT_ADS;
-  if (ids.li_fat_id) return CHANNEL_LABELS.LINKEDIN_ADS;
-  if (ids.twclid) return CHANNEL_LABELS.X_ADS;
-  if (ids.ttclid) return CHANNEL_LABELS.TIKTOK_ADS;
-  if (ids.epik) return CHANNEL_LABELS.PINTEREST_ADS;
-  if (ids.sccid) return CHANNEL_LABELS.SNAPCHAT_ADS;
-
-  // fbclid: Ads only when a paid medium is also present.
-  const medium = input.medium.trim().toLowerCase();
-  if (ids.fbclid && PAID_MEDIUMS.includes(medium)) return CHANNEL_LABELS.FACEBOOK_ADS;
+  if (ids.li_fat_id) return hasPaidEvidence ? CHANNEL_LABELS.LINKEDIN_ADS : CHANNEL_LABELS.LINKEDIN;
+  if (ids.twclid) return hasPaidEvidence ? CHANNEL_LABELS.X_ADS : CHANNEL_LABELS.TWITTER_X;
+  if (ids.ttclid) return hasPaidEvidence ? CHANNEL_LABELS.TIKTOK_ADS : CHANNEL_LABELS.TIKTOK;
+  if (ids.epik) return hasPaidEvidence ? CHANNEL_LABELS.PINTEREST_ADS : CHANNEL_LABELS.PINTEREST;
+  if (ids.sccid) return hasPaidEvidence ? CHANNEL_LABELS.SNAPCHAT_ADS : CHANNEL_LABELS.SNAPCHAT;
+  if (ids.fbclid) return hasPaidEvidence ? CHANNEL_LABELS.FACEBOOK_ADS : CHANNEL_LABELS.FACEBOOK;
 
   // Email platform signals (mc_* triggers dropped per ruling #1).
   const source = input.source.trim().toLowerCase();
@@ -296,26 +334,47 @@ export function resolveChannelLabel(input: ChannelLabelInput): string {
     }
   }
 
-  // fbclid without paid medium defaults to organic Facebook (unreachable in
-  // the engine today: the click-ID path always infers medium=cpc — kept for parity).
-  if (ids.fbclid) return CHANNEL_LABELS.FACEBOOK_ORGANIC;
-
   return CHANNEL_LABELS.UNKNOWN;
 }
 
-/** Click-ID parameter -> ad platform mapping (paid channels). */
-export const CLICK_ID_PLATFORMS: Readonly<Record<string, { source: string; channel: Channel }>> = {
-  gclid:    { source: 'google',   channel: 'paid_search' },
-  wbraid:   { source: 'google',   channel: 'paid_search' },
-  gbraid:   { source: 'google',   channel: 'paid_search' },
-  fbclid:   { source: 'facebook', channel: 'paid_social' },
-  msclkid:  { source: 'bing',     channel: 'paid_search' },
-  ttclid:   { source: 'tiktok',   channel: 'paid_social' },
-  twclid:   { source: 'twitter',  channel: 'paid_social' },
-  li_fat_id:{ source: 'linkedin', channel: 'paid_social' },
-  sccid:    { source: 'snapchat', channel: 'paid_social' },
-  epik:     { source: 'pinterest',channel: 'paid_social' },
+/**
+ * Click-ID parameter -> platform mapping with PAID CERTAINTY tiers (Hugo gate
+ * ruling D2): some identifiers are added ONLY by advertising platforms
+ * (certain -> paid classification); others are appended to organic/outbound
+ * links too (uncertain -> traffic_class stays UNKNOWN until explicit paid
+ * evidence such as a paid utm_medium arrives).
+ */
+export type PaidCertainty = 'certain' | 'uncertain';
+
+export const CLICK_ID_PLATFORMS: Readonly<
+  Record<
+    string,
+    { source: string; certainty: PaidCertainty; paidChannel?: Channel }
+  >
+> = {
+  // Advertising-only identifiers: paid classification is unambiguous.
+  gclid:     { source: 'google',    certainty: 'certain', paidChannel: 'paid_search' },
+  wbraid:    { source: 'google',    certainty: 'certain', paidChannel: 'paid_search' },
+  gbraid:    { source: 'google',    certainty: 'certain', paidChannel: 'paid_search' },
+  msclkid:   { source: 'bing',      certainty: 'certain', paidChannel: 'paid_search' },
+  // Platform identifiers also appended to non-paid outbound links: the mere
+  // presence proves the SURFACE, not the payment (D2). paidChannel applies
+  // only when explicit paid evidence exists alongside.
+  fbclid:    { source: 'facebook',  certainty: 'uncertain', paidChannel: 'paid_social' },
+  ttclid:    { source: 'tiktok',    certainty: 'uncertain', paidChannel: 'paid_social' },
+  twclid:    { source: 'twitter',   certainty: 'uncertain', paidChannel: 'paid_social' },
+  li_fat_id: { source: 'linkedin',  certainty: 'uncertain', paidChannel: 'paid_social' },
+  sccid:     { source: 'snapchat',  certainty: 'uncertain', paidChannel: 'paid_social' },
+  epik:      { source: 'pinterest', certainty: 'uncertain', paidChannel: 'paid_social' },
 };
+
+/** D3 additive payload keys (click-ID selection audit trail). */
+export const CLICK_ID_HISTORY_KEY = 'click_id_history';
+export const ATTRIBUTION_SELECTED_CLICK_ID_KEY = 'attribution_selected_click_id';
+export const ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY = 'attribution_selected_click_id_reason';
+
+/** Hard cap on recorded click-ID history entries (oldest dropped first). */
+export const CLICK_ID_HISTORY_LIMIT = 50;
 
 /** Canonical click ID keys in payload order (sc_click_id is an alias of sccid). */
 export const CLICK_ID_KEYS: readonly string[] = [

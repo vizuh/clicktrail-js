@@ -24,7 +24,7 @@ Rules for every task:
 | 7 | `/conversation` subpath (Chatwoot journey attributes, captureContent=false default) | 3 | DONE (f8fd72f) | retry succeeded after silent no-op attempt; privacy guard fail-closed at construction time |
 | 8 | `/agent` subpath (agent_run events, actor model, tool-call metadata) | 3 | DONE (202814b) | exact-key allowlist guard; ai.trace_id linking without OTel dep |
 | 9 | `/otel` subpath (traceparent correlation exporter) | 3 | DONE (de0e0a1) | zero OTel imports; structural tracer interface; deterministic derivation |
-| 10 | `/apointoo` destination subpath | 3 | IN PROGRESS (worker: apointoo-destination) | Last queue item |
+| 10 | `/apointoo` destination subpath | 3 | DONE (fb7c403) | outcome-only lane; auth law documented; minimization via canonical allowlist |
 | 12 | Implement runtime-finding rulings: core parses browser-ID URL params; adapter collects consent-gated cookie IDs; merge mirrors click IDs into ft_/lt_ fields; update fixtures; rerun `pnpm parity` expecting only ruled diffs | 2 freeze prep | DONE (fa3127b) | 16 MATCH/9 RULED DIFF/0 new; sticky-top-level-cid ruled as deviation D3 (Hugo gate) |
 | 11 | Core parity fixes per WP-PARITY-DRAFT.md SUPERVISOR RULINGS | 2 prep | DONE (396a1ad) | 13 drafts flipped to CONTRACT; 5 standing deviations pinned (incl. bare-click-id inference -> Hugo gate before WP swap); versions 1.1.0 |
 
@@ -45,3 +45,12 @@ Rules for every task:
 | #7 /conversation subpath (journey store + Chatwoot builder, privacy fail-closed) | f8fd72f |
 | #8 /agent subpath (recorder + metadata-only guard) | 202814b |
 | #9 /otel subpath (W3C traceparent, zero OTel deps) | de0e0a1 |
+| #10 /apointoo destination (+ hydration API, mirror-key storage fix) | fb7c403 |
+
+## QUEUE COMPLETE
+
+All items done. Remaining work is DECISION-gated, not buildable:
+- Hugo gate: deviation D2 (bare-click-id inference labels) + D3 (newest-wins top-level click IDs) before WP runtime swap
+- Hugo gate: npm publish preconditions (@funnelsheet scope ownership, copyright provenance)
+- Deferred: wiring probe+parity into CI; WP plugin swap execution; live Chatwoot/Apointoo integration pilots
+

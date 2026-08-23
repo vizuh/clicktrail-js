@@ -1,5 +1,13 @@
 import { CLASSIFIER_VERSION, SCHEMA_VERSION } from '../conventions/stable.js';
-import { BROWSER_ID_KEYS, CLICK_ID_KEYS, touchKeys } from './knowledge.js';
+import {
+  ATTRIBUTION_SELECTED_CLICK_ID_KEY,
+  ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
+  BROWSER_ID_KEYS,
+  CLICK_ID_HISTORY_KEY,
+  CLICK_ID_HISTORY_LIMIT,
+  CLICK_ID_KEYS,
+  touchKeys,
+} from './knowledge.js';
 import { sanitizeField } from './sanitize.js';
 import type { AttributionPayload, ParsedTouch } from './types.js';
 
@@ -13,7 +21,53 @@ export function emptyAttribution(): AttributionPayload {
   for (const key of Object.values(LT)) payload[key] = '';
   for (const key of CLICK_ID_KEYS) payload[key] = '';
   for (const key of BROWSER_ID_KEYS) payload[key] = '';
+  payload[CLICK_ID_HISTORY_KEY] = '[]';
+  payload[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = '';
+  payload[ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY] = '';
   return payload;
+}
+
+/**
+ * D3 audit trail (Hugo gate ruling): append newly captured click IDs to
+ * `click_id_history` (capped, oldest dropped first) and record which ID is
+ * selected for attribution plus why. Malformed stored history is discarded,
+ * never fatal. Empty values never enter history or overwrite a selection.
+ */
+function applyClickIdSelectionAudit(
+  next: AttributionPayload,
+  capturedNow: Array<{ k: string; v: string }>,
+  timestamp: string,
+): void {
+  let history: Array<{ k: string; v: string; t: string }> = [];
+  try {
+    const parsed: unknown = next[CLICK_ID_HISTORY_KEY]
+      ? JSON.parse(next[CLICK_ID_HISTORY_KEY])
+      : [];
+    if (Array.isArray(parsed)) history = parsed as typeof history;
+  } catch {
+    history = [];
+  }
+
+  for (const entry of capturedNow) {
+    history.push({ k: entry.k, v: entry.v, t: timestamp });
+  }
+  if (history.length > CLICK_ID_HISTORY_LIMIT) {
+    history = history.slice(history.length - CLICK_ID_HISTORY_LIMIT);
+  }
+  next[CLICK_ID_HISTORY_KEY] = JSON.stringify(history);
+
+  const newestValid = [...history].reverse().find((e) => typeof e.v === 'string' && e.v !== '');
+  if (!newestValid) return;
+  const previousSelected = next[ATTRIBUTION_SELECTED_CLICK_ID_KEY];
+  if (!previousSelected) {
+    next[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = newestValid.v;
+    next[ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY] = 'newest_valid';
+  } else if (previousSelected !== newestValid.v) {
+    next[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = newestValid.v;
+    next[ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY] = 'newest_valid_superseded_previous';
+  } else if (capturedNow.length > 0) {
+    next[ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY] = 'newest_valid';
+  }
 }
 
 /**
@@ -90,11 +144,17 @@ export function mergeAttributionTouch(
     if (value) next[`lt_${key}`] = value;
   }
 
-  // Click IDs: newest non-empty wins (from the touch itself; deterministic order).
+  // Click IDs: newest-valid-wins (from the touch itself; deterministic order).
+  const capturedNow: Array<{ k: string; v: string }> = [];
   for (const key of CLICK_ID_KEYS) {
     const value = touch.clickIds?.[key];
-    if (value) next[key] = value;
+    if (value) {
+      next[key] = value;
+      capturedNow.push({ k: key, v: value });
+    }
   }
+
+  applyClickIdSelectionAudit(next, capturedNow, touch.touchTimestamp);
 
   // Browser IDs (RULING A part a): newest non-empty wins, same law as
   // click IDs (plugin mergeTopLevelIdentifiers overwrites on any

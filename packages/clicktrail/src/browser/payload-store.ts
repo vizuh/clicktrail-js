@@ -13,6 +13,11 @@ import {
   touchKeys,
 } from '../core/knowledge.js';
 import type { AttributionPayload } from '../core/types.js';
+import {
+  ATTRIBUTION_SELECTED_CLICK_ID_KEY,
+  ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
+  CLICK_ID_HISTORY_KEY,
+} from '../core/knowledge.js';
 import { ATTRIBUTION_KEY } from './storage.js';
 import type { StorageAdapter } from './storage.js';
 
@@ -31,6 +36,10 @@ export const CANONICAL_PAYLOAD_KEYS: readonly string[] = [
   'visitor_id',
   'session_id',
   'session_number',
+  // D3 selection audit trail
+  CLICK_ID_HISTORY_KEY,
+  ATTRIBUTION_SELECTED_CLICK_ID_KEY,
+  ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
 ];
 
 export const CANONICAL_KEY_SET: ReadonlySet<string> = new Set(CANONICAL_PAYLOAD_KEYS);

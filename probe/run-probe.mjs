@@ -140,7 +140,11 @@ try {
         else if (actual.noTouchReason !== noTouchReason) {
           failures.push(`reason: expected ${noTouchReason}, got ${actual.noTouchReason}`);
         }
-        const nonEmpty = Object.entries(actual.data).filter(([, v]) => v !== '');
+        // D3 audit keys are STRUCTURAL (initialized by emptyAttribution),
+        // not attribution signal: excluded from the emptiness assertion.
+        const AUDIT_KEYS = new Set(['click_id_history', 'attribution_selected_click_id', 'attribution_selected_click_id_reason']);
+        const nonEmpty = Object.entries(actual.data)
+          .filter(([k, v]) => !AUDIT_KEYS.has(k) && v !== '');
         if (nonEmpty.length > 0) {
           failures.push(`payload should be empty for no-touch, got ${JSON.stringify(nonEmpty)}`);
         }

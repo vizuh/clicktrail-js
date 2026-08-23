@@ -1,7 +1,7 @@
 {
   "name": "wp-fbclid-only-organic-facebook",
   "description": "[RULED] bare fbclid: engine infers source=facebook/medium=cpc/label 'Facebook Ads' (ruling #2, intentional deviation). Both engines now ALSO write the ft_/lt_ click-ID mirror (ruling B) and derive top-level fbc from fbclid ('fb.1.<epochMs>.<fbclid>', plugin BrowserIdentifiers.collect :860-866).",
-  "quirk_decision": "RULED DIFF standing (#2): engine's click-ID platform inference kept intentionally; requires Hugo confirmation before WP runtime swap. Click-ID ft_/lt_ mirror + fbc derivation now IMPLEMENTED per runtime-findings rulings A/B -- no longer diffs.",
+  "quirk_decision": "RULED DIFF standing (Hugo gate D2, 2026-08-23): bare fbclid is now classified source=facebook / channel=unknown / label 'Facebook' (paid status unknown). Plugin said 'Facebook Organic'; pre-D2 engine said 'Facebook Ads' \u2014 both were over-certain. Legacy plugin label available via legacyWordPressChannelLabel() only.",
   "input": {
     "url": "https://example.com/?fbclid=IwARabc123",
     "referrer": "",
@@ -11,12 +11,13 @@
   "expected": {
     "fbclid": "IwARabc123",
     "ft_source": "facebook",
-    "ft_medium": "cpc",
-    "ft_channel": "Facebook Ads",
-    "lt_channel": "Facebook Ads",
-    "_channel": "paid_social",
+    "ft_medium": "",
+    "ft_channel": "Facebook",
+    "lt_channel": "Facebook",
+    "_channel": "unknown",
     "fbc": "fb.1.1787481000000.IwARabc123",
     "ft_fbclid": "IwARabc123",
-    "lt_fbclid": "IwARabc123"
+    "lt_fbclid": "IwARabc123",
+    "lt_medium": ""
   }
 }

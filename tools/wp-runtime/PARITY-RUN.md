@@ -9,40 +9,40 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Verdict | Fixtures |
 |---|---|
-| MATCH | 16 |
-| RULED DIFF (expected per supervisor ruling) | 9 |
-| NEW FINDING (unexplained diff — investigate) | 0 |
+| MATCH | 0 |
+| RULED DIFF (expected per supervisor ruling) | 0 |
+| NEW FINDING (unexplained diff — investigate) | 25 |
 | HARNESS ERROR | 0 |
 
 ## Results
 
 | Fixture | Plugin result (non-empty fields) | Engine result (non-empty fields) | Diff fields | Verdict |
 |---|---|---|---|---|
-| wp-brave-search-engine | ft_source="search.brave.com"; ft_medium="referral"; ft_referrer="https://search.brave.com/search?q=test"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T… | ft_source="brave"; ft_medium="organic"; ft_channel="Brave"; ft_referrer="https://search.brave.com/search?q=test"; ft_landing_page="https://example.com/"; ft_to… | ft_channel, ft_medium, ft_source, lt_channel, lt_medium, lt_source | **RULED DIFF (#6)** |
-| wp-browser-id-query-param | fbp="fb.1.1787480990000.987654321"; fbc="fb.1.1787480990000.ABC"; ttp="ttp_XYZ"; li_gc="MTswOzE"; ga_client_id="1234567890.9876543210"; ga_session_id="17874810… | ft_source="facebook"; ft_medium="cpc"; ft_channel="Facebook Ads"; ft_landing_page="https://example.com/lp?utm_source=facebook&utm_medium=cpc&fbp=fb.1.178748099… | — | **MATCH** |
-| wp-chatgpt-ai-assistant-referrer | ft_source="chatgpt.com"; ft_medium="referral"; ft_referrer="https://chatgpt.com/c/abc123"; ft_channel="ChatGPT"; ft_touch_timestamp="2026-08-23T11:15:00.000Z";… | ft_source="chatgpt.com"; ft_medium="referral"; ft_channel="ChatGPT"; ft_referrer="https://chatgpt.com/c/abc123"; ft_landing_page="https://example.com/guides"; … | — | **MATCH** |
-| wp-click-id-mirror-on-merge | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-22T09:00:00.000Z"; ft_landing_page="https://example.com/landing"; lt_… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/landing"; ft_touch_timestamp="2026-08-22T09:00:00.000Z"; lt_… | — | **MATCH** |
-| wp-duplicate-param-last-wins | ft_source="renamed"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T12:15:00.000Z"; ft_landing_page="https://example.com/?utm_source=newsletter&utm_sourc… | ft_source="renamed"; ft_channel="Unknown"; ft_landing_page="https://example.com/?utm_source=newsletter&utm_source=renamed"; ft_touch_timestamp="2026-08-23T12:1… | — | **MATCH** |
-| wp-empty-utm-values-dropped | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:10:00.000Z"; ft_landing_page="https://example.com/lp?utm_source… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=&utm_conten… | — | **MATCH** |
-| wp-fbclid-only-organic-facebook | fbc="fb.1.1787481000000.IwARabc123"; ft_fbclid="IwARabc123"; ft_channel="Facebook Organic"; ft_touch_timestamp="2026-08-23T10:30:00.000Z"; ft_landing_page="htt… | ft_source="facebook"; ft_medium="cpc"; ft_channel="Facebook Ads"; ft_landing_page="https://example.com/?fbclid=IwARabc123"; ft_touch_timestamp="2026-08-23T10:3… | ft_channel, ft_medium, ft_source, lt_channel, lt_medium, lt_source | **RULED DIFF (#2)** |
-| wp-first-touch-guard-counts-click-ids | ft_gclid="G-FIRST"; gclid="G-FIRST"; lt_source="nl"; lt_medium="email"; lt_channel="Unknown"; lt_touch_timestamp="2026-08-23T12:00:00.000Z"; lt_landing_page="h… | lt_source="nl"; lt_medium="email"; lt_channel="Unknown"; lt_landing_page="https://example.com/newsletter?utm_source=nl&utm_medium=email"; lt_touch_timestamp="2… | — | **MATCH** |
-| wp-gclid-only-no-source-medium | ft_gclid="EAIaIQobChMTest"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:35:00.000Z"; ft_landing_page="https://example.com/landing?gclid=EAIaIQob… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/landing?gclid=EAIaIQobChMTest"; ft_touch_timestamp="2026-08-… | ft_medium, ft_source, lt_medium, lt_source | **RULED DIFF (#2)** |
-| wp-landing-page-includes-query | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T12:10:00.000Z"; ft_landing_page="https://example.com/pricing?utm_s… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/pricing?utm_source=google&utm_medium=cpc"; ft_touch_timestam… | — | **MATCH** |
-| wp-last-touch-always-updates | ft_source="google"; ft_medium="cpc"; ft_touch_timestamp="2026-08-01T09:00:00Z"; lt_source="meta"; lt_medium="paid_social"; lt_channel="Facebook Ads"; lt_touch_… | ft_source="google"; ft_medium="cpc"; ft_touch_timestamp="2026-08-01T09:00:00Z"; lt_source="meta"; lt_medium="paid_social"; lt_channel="Facebook Ads"; lt_landin… | — | **MATCH** |
-| wp-mc-eid-mailchimp | ft_source="mailchimp"; ft_mc_eid="abc123"; ft_channel="Mailchimp"; ft_touch_timestamp="2026-08-23T10:25:00.000Z"; ft_landing_page="https://example.com/?mc_eid=… | ft_source="mailchimp"; ft_channel="Unknown"; ft_landing_page="https://example.com/?mc_eid=abc123&utm_source=mailchimp"; ft_touch_timestamp="2026-08-23T10:25:00… | ft_channel, ft_mc_eid, lt_channel, lt_mc_eid, mc_eid | **RULED DIFF (#1)** |
-| wp-plus-sign-preserved | ft_source="google"; ft_term="best+clinic"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T10:05:00.000Z"; ft_landing_page="https://example.com/?utm_sourc… | ft_source="google"; ft_term="best clinic"; ft_channel="Unknown"; ft_landing_page="https://example.com/?utm_source=google&utm_term=best+clinic"; ft_touch_timest… | ft_term, lt_term | **RULED DIFF (#10)** |
-| wp-rdt-cid-extra-click-id | ft_rdt_cid="ttd123456"; ft_channel="Reddit Ads"; ft_touch_timestamp="2026-08-23T10:20:00.000Z"; ft_landing_page="https://example.com/?rdt_cid=ttd123456"; lt_rd… | (empty) | ft_channel, ft_landing_page, ft_rdt_cid, ft_touch_timestamp, lt_channel, lt_landing_page, lt_rdt_cid, lt_touch_timestamp, rdt_cid | **RULED DIFF (#1)** |
-| wp-referral-medium-string | ft_source="partner-site.example.io"; ft_medium="referral"; ft_referrer="https://partner-site.example.io/page"; ft_channel="Unknown"; ft_touch_timestamp="2026-0… | ft_source="partner-site.example.io"; ft_medium="referral"; ft_channel="Unknown"; ft_referrer="https://partner-site.example.io/page"; ft_landing_page="https://e… | — | **MATCH** |
-| wp-referrer-canonical-source-name | ft_source="google"; ft_medium="organic"; ft_referrer="https://www.google.com/search?q=botox+nyc"; ft_channel="Google Organic"; ft_touch_timestamp="2026-08-23T1… | ft_source="google"; ft_medium="organic"; ft_channel="Google Organic"; ft_referrer="https://www.google.com/search?q=botox+nyc"; ft_landing_page="https://example… | — | **MATCH** |
-| wp-sc-click-id-alias-partial | ft_sccid="SC991"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T11:30:00.000Z"; ft_landing_page="https://example.com/promo?sc_click_id=SC991"; lt_sccid=… | ft_source="snapchat"; ft_medium="cpc"; ft_channel="Snapchat Ads"; ft_landing_page="https://example.com/promo?sc_click_id=SC991"; ft_touch_timestamp="2026-08-23… | ft_channel, ft_medium, ft_source, lt_channel, lt_medium, lt_source | **RULED DIFF (#2)** |
-| wp-sibling-subdomain-internal-referrer | (empty) | (empty) | — | **MATCH** |
-| wp-template-macro-value-rejected | ft_source="facebook"; ft_medium="paid_social"; ft_channel="Facebook Ads"; ft_touch_timestamp="2026-08-23T10:15:00.000Z"; ft_landing_page="https://example.com/?… | ft_source="facebook"; ft_medium="paid_social"; ft_channel="Facebook Ads"; ft_landing_page="https://example.com/?utm_source=facebook&utm_medium=paid_social&utm_… | — | **MATCH** |
-| wp-timestamp-millisecond-precision | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:00:00.000Z"; ft_landing_page="https://example.com/?utm_source=g… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/?utm_source=google&utm_medium=cpc"; ft_touch_timestamp="2026… | — | **MATCH** |
-| wp-utm-key-case-insensitive | ft_source="google"; ft_campaign="spring"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T10:00:00.000Z"; ft_landing_page="https://example.com/?Utm_Source… | ft_source="google"; ft_campaign="spring"; ft_channel="Unknown"; ft_landing_page="https://example.com/?Utm_Source=google&UTM_CAMPAIGN=spring"; ft_touch_timestam… | — | **MATCH** |
-| wp-value-length-cap | ft_source="google"; ft_campaign="CAMP-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000… | ft_source="google"; ft_campaign="CAMP-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000… | ft_campaign, lt_campaign | **RULED DIFF (#14+#16)** |
-| wp-whatsapp-social-engine-only | ft_source="wa.me"; ft_medium="referral"; ft_referrer="https://wa.me/351912345678"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T11:25:00.000Z"; ft_land… | ft_source="whatsapp"; ft_medium="social"; ft_channel="WhatsApp"; ft_referrer="https://wa.me/351912345678"; ft_landing_page="https://example.com/"; ft_touch_tim… | ft_channel, ft_medium, ft_source, lt_channel, lt_medium, lt_source | **RULED DIFF (#7)** |
-| wp-www-internal-referrer | (empty) | (empty) | — | **MATCH** |
-| wp-yahoo-intl-label-match | ft_source="yahoo"; ft_medium="organic"; ft_referrer="https://search.yahoo.co.jp/search?p=test"; ft_channel="Yahoo"; ft_touch_timestamp="2026-08-23T11:05:00.000… | ft_source="yahoo"; ft_medium="organic"; ft_channel="Yahoo"; ft_referrer="https://search.yahoo.co.jp/search?p=test"; ft_landing_page="https://example.com/"; ft_… | — | **MATCH** |
+| wp-brave-search-engine | ft_source="search.brave.com"; ft_medium="referral"; ft_referrer="https://search.brave.com/search?q=test"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T… | ft_source="brave"; ft_medium="organic"; ft_channel="Brave"; ft_referrer="https://search.brave.com/search?q=test"; ft_landing_page="https://example.com/"; ft_to… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-browser-id-query-param | fbp="fb.1.1787480990000.987654321"; fbc="fb.1.1787480990000.ABC"; ttp="ttp_XYZ"; li_gc="MTswOzE"; ga_client_id="1234567890.9876543210"; ga_session_id="17874810… | ft_source="facebook"; ft_medium="cpc"; ft_channel="Facebook Ads"; ft_landing_page="https://example.com/lp?utm_source=facebook&utm_medium=cpc&fbp=fb.1.178748099… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-chatgpt-ai-assistant-referrer | ft_source="chatgpt.com"; ft_medium="referral"; ft_referrer="https://chatgpt.com/c/abc123"; ft_channel="ChatGPT"; ft_touch_timestamp="2026-08-23T11:15:00.000Z";… | ft_source="chatgpt.com"; ft_medium="referral"; ft_channel="ChatGPT"; ft_referrer="https://chatgpt.com/c/abc123"; ft_landing_page="https://example.com/guides"; … | click_id_history (unexplained) | **NEW FINDING** |
+| wp-click-id-mirror-on-merge | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-22T09:00:00.000Z"; ft_landing_page="https://example.com/landing"; lt_… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/landing"; ft_touch_timestamp="2026-08-22T09:00:00.000Z"; lt_… | attribution_selected_click_id (unexplained), attribution_selected_click_id_reason (unexplained), click_id_history (unexplained) | **NEW FINDING** |
+| wp-duplicate-param-last-wins | ft_source="renamed"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T12:15:00.000Z"; ft_landing_page="https://example.com/?utm_source=newsletter&utm_sourc… | ft_source="renamed"; ft_channel="Unknown"; ft_landing_page="https://example.com/?utm_source=newsletter&utm_source=renamed"; ft_touch_timestamp="2026-08-23T12:1… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-empty-utm-values-dropped | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:10:00.000Z"; ft_landing_page="https://example.com/lp?utm_source… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=&utm_conten… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-fbclid-only-organic-facebook | fbc="fb.1.1787481000000.IwARabc123"; ft_fbclid="IwARabc123"; ft_channel="Facebook Organic"; ft_touch_timestamp="2026-08-23T10:30:00.000Z"; ft_landing_page="htt… | ft_source="facebook"; ft_channel="Facebook"; ft_landing_page="https://example.com/?fbclid=IwARabc123"; ft_touch_timestamp="2026-08-23T10:30:00.000Z"; lt_source… | attribution_selected_click_id (unexplained), attribution_selected_click_id_reason (unexplained), click_id_history (unexplained) | **NEW FINDING** |
+| wp-first-touch-guard-counts-click-ids | ft_gclid="G-FIRST"; gclid="G-FIRST"; lt_source="nl"; lt_medium="email"; lt_channel="Unknown"; lt_touch_timestamp="2026-08-23T12:00:00.000Z"; lt_landing_page="h… | lt_source="nl"; lt_medium="email"; lt_channel="Unknown"; lt_landing_page="https://example.com/newsletter?utm_source=nl&utm_medium=email"; lt_touch_timestamp="2… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-gclid-only-no-source-medium | ft_gclid="EAIaIQobChMTest"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:35:00.000Z"; ft_landing_page="https://example.com/landing?gclid=EAIaIQob… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/landing?gclid=EAIaIQobChMTest"; ft_touch_timestamp="2026-08-… | attribution_selected_click_id (unexplained), attribution_selected_click_id_reason (unexplained), click_id_history (unexplained) | **NEW FINDING** |
+| wp-landing-page-includes-query | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T12:10:00.000Z"; ft_landing_page="https://example.com/pricing?utm_s… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/pricing?utm_source=google&utm_medium=cpc"; ft_touch_timestam… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-last-touch-always-updates | ft_source="google"; ft_medium="cpc"; ft_touch_timestamp="2026-08-01T09:00:00Z"; lt_source="meta"; lt_medium="paid_social"; lt_channel="Facebook Ads"; lt_touch_… | ft_source="google"; ft_medium="cpc"; ft_touch_timestamp="2026-08-01T09:00:00Z"; lt_source="meta"; lt_medium="paid_social"; lt_channel="Facebook Ads"; lt_landin… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-mc-eid-mailchimp | ft_source="mailchimp"; ft_mc_eid="abc123"; ft_channel="Mailchimp"; ft_touch_timestamp="2026-08-23T10:25:00.000Z"; ft_landing_page="https://example.com/?mc_eid=… | ft_source="mailchimp"; ft_channel="Unknown"; ft_landing_page="https://example.com/?mc_eid=abc123&utm_source=mailchimp"; ft_touch_timestamp="2026-08-23T10:25:00… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-plus-sign-preserved | ft_source="google"; ft_term="best+clinic"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T10:05:00.000Z"; ft_landing_page="https://example.com/?utm_sourc… | ft_source="google"; ft_term="best clinic"; ft_channel="Unknown"; ft_landing_page="https://example.com/?utm_source=google&utm_term=best+clinic"; ft_touch_timest… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-rdt-cid-extra-click-id | ft_rdt_cid="ttd123456"; ft_channel="Reddit Ads"; ft_touch_timestamp="2026-08-23T10:20:00.000Z"; ft_landing_page="https://example.com/?rdt_cid=ttd123456"; lt_rd… | click_id_history="[]" | click_id_history (unexplained) | **NEW FINDING** |
+| wp-referral-medium-string | ft_source="partner-site.example.io"; ft_medium="referral"; ft_referrer="https://partner-site.example.io/page"; ft_channel="Unknown"; ft_touch_timestamp="2026-0… | ft_source="partner-site.example.io"; ft_medium="referral"; ft_channel="Unknown"; ft_referrer="https://partner-site.example.io/page"; ft_landing_page="https://e… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-referrer-canonical-source-name | ft_source="google"; ft_medium="organic"; ft_referrer="https://www.google.com/search?q=botox+nyc"; ft_channel="Google Organic"; ft_touch_timestamp="2026-08-23T1… | ft_source="google"; ft_medium="organic"; ft_channel="Google Organic"; ft_referrer="https://www.google.com/search?q=botox+nyc"; ft_landing_page="https://example… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-sc-click-id-alias-partial | ft_sccid="SC991"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T11:30:00.000Z"; ft_landing_page="https://example.com/promo?sc_click_id=SC991"; lt_sccid=… | ft_source="snapchat"; ft_channel="Snapchat"; ft_landing_page="https://example.com/promo?sc_click_id=SC991"; ft_touch_timestamp="2026-08-23T11:30:00.000Z"; lt_s… | attribution_selected_click_id (unexplained), attribution_selected_click_id_reason (unexplained), click_id_history (unexplained) | **NEW FINDING** |
+| wp-sibling-subdomain-internal-referrer | (empty) | click_id_history="[]" | click_id_history (unexplained) | **NEW FINDING** |
+| wp-template-macro-value-rejected | ft_source="facebook"; ft_medium="paid_social"; ft_channel="Facebook Ads"; ft_touch_timestamp="2026-08-23T10:15:00.000Z"; ft_landing_page="https://example.com/?… | ft_source="facebook"; ft_medium="paid_social"; ft_channel="Facebook Ads"; ft_landing_page="https://example.com/?utm_source=facebook&utm_medium=paid_social&utm_… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-timestamp-millisecond-precision | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_touch_timestamp="2026-08-23T10:00:00.000Z"; ft_landing_page="https://example.com/?utm_source=g… | ft_source="google"; ft_medium="cpc"; ft_channel="Google Ads"; ft_landing_page="https://example.com/?utm_source=google&utm_medium=cpc"; ft_touch_timestamp="2026… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-utm-key-case-insensitive | ft_source="google"; ft_campaign="spring"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T10:00:00.000Z"; ft_landing_page="https://example.com/?Utm_Source… | ft_source="google"; ft_campaign="spring"; ft_channel="Unknown"; ft_landing_page="https://example.com/?Utm_Source=google&UTM_CAMPAIGN=spring"; ft_touch_timestam… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-value-length-cap | ft_source="google"; ft_campaign="CAMP-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000… | ft_source="google"; ft_campaign="CAMP-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-whatsapp-social-engine-only | ft_source="wa.me"; ft_medium="referral"; ft_referrer="https://wa.me/351912345678"; ft_channel="Unknown"; ft_touch_timestamp="2026-08-23T11:25:00.000Z"; ft_land… | ft_source="whatsapp"; ft_medium="social"; ft_channel="WhatsApp"; ft_referrer="https://wa.me/351912345678"; ft_landing_page="https://example.com/"; ft_touch_tim… | click_id_history (unexplained) | **NEW FINDING** |
+| wp-www-internal-referrer | (empty) | click_id_history="[]" | click_id_history (unexplained) | **NEW FINDING** |
+| wp-yahoo-intl-label-match | ft_source="yahoo"; ft_medium="organic"; ft_referrer="https://search.yahoo.co.jp/search?p=test"; ft_channel="Yahoo"; ft_touch_timestamp="2026-08-23T11:05:00.000… | ft_source="yahoo"; ft_medium="organic"; ft_channel="Yahoo"; ft_referrer="https://search.yahoo.co.jp/search?p=test"; ft_landing_page="https://example.com/"; ft_… | click_id_history (unexplained) | **NEW FINDING** |
 
 ## Per-fixture detail
 
@@ -53,6 +53,7 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_channel | `"Unknown"` | `"Brave"` |
 | ft_medium | `"referral"` | `"organic"` |
 | ft_source | `"search.brave.com"` | `"brave"` |
@@ -64,31 +65,48 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-chatgpt-ai-assistant-referrer
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-click-id-mirror-on-merge
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| attribution_selected_click_id | `"(absent)"` | `"BBB"` |
+| attribution_selected_click_id_reason | `"(absent)"` | `"newest_valid"` |
+| click_id_history | `"(absent)"` | `"[{\"k\":\"gclid\",\"v\":\"BBB\",\"t\":\"2026-08-23T14:00:00.000Z\"}]"` |
 
 ### wp-duplicate-param-last-wins
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-empty-utm-values-dropped
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-fbclid-only-organic-facebook
 
@@ -97,18 +115,22 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
-| ft_channel | `"Facebook Organic"` | `"Facebook Ads"` |
-| ft_medium | `"(absent)"` | `"cpc"` |
+| attribution_selected_click_id | `"(absent)"` | `"IwARabc123"` |
+| attribution_selected_click_id_reason | `"(absent)"` | `"newest_valid"` |
+| click_id_history | `"(absent)"` | `"[{\"k\":\"fbclid\",\"v\":\"IwARabc123\",\"t\":\"2026-08-23T10:30:00.000Z\"}]"` |
+| ft_channel | `"Facebook Organic"` | `"Facebook"` |
 | ft_source | `"(absent)"` | `"facebook"` |
-| lt_channel | `"Facebook Organic"` | `"Facebook Ads"` |
-| lt_medium | `"(absent)"` | `"cpc"` |
+| lt_channel | `"Facebook Organic"` | `"Facebook"` |
 | lt_source | `"(absent)"` | `"facebook"` |
 
 ### wp-first-touch-guard-counts-click-ids
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-gclid-only-no-source-medium
 
@@ -117,6 +139,9 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| attribution_selected_click_id | `"(absent)"` | `"EAIaIQobChMTest"` |
+| attribution_selected_click_id_reason | `"(absent)"` | `"newest_valid"` |
+| click_id_history | `"(absent)"` | `"[{\"k\":\"gclid\",\"v\":\"EAIaIQobChMTest\",\"t\":\"2026-08-23T10:35:00.000Z\"}]"` |
 | ft_medium | `"(absent)"` | `"cpc"` |
 | ft_source | `"(absent)"` | `"google"` |
 | lt_medium | `"(absent)"` | `"cpc"` |
@@ -126,13 +151,19 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-last-touch-always-updates
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-mc-eid-mailchimp
 
@@ -141,6 +172,7 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_channel | `"Mailchimp"` | `"Unknown"` |
 | ft_mc_eid | `"abc123"` | `"(absent)"` |
 | lt_channel | `"Mailchimp"` | `"Unknown"` |
@@ -154,16 +186,18 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_term | `"best+clinic"` | `"best clinic"` |
 | lt_term | `"best+clinic"` | `"best clinic"` |
 
 ### wp-rdt-cid-extra-click-id
 
-- Engine satisfies fixture `expected`: **yes**
+- Engine satisfies fixture `expected`: **NO**
 - Plugin dataLayer push observed: yes
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_channel | `"Reddit Ads"` | `"(absent)"` |
 | ft_landing_page | `"https://example.com/?rdt_cid=ttd123456"` | `"(absent)"` |
 | ft_rdt_cid | `"ttd123456"` | `"(absent)"` |
@@ -178,13 +212,19 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-referrer-canonical-source-name
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-sc-click-id-alias-partial
 
@@ -193,36 +233,49 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
-| ft_channel | `"Unknown"` | `"Snapchat Ads"` |
-| ft_medium | `"(absent)"` | `"cpc"` |
+| attribution_selected_click_id | `"(absent)"` | `"SC991"` |
+| attribution_selected_click_id_reason | `"(absent)"` | `"newest_valid"` |
+| click_id_history | `"(absent)"` | `"[{\"k\":\"sccid\",\"v\":\"SC991\",\"t\":\"2026-08-23T11:30:00.000Z\"}]"` |
+| ft_channel | `"Unknown"` | `"Snapchat"` |
 | ft_source | `"(absent)"` | `"snapchat"` |
-| lt_channel | `"Unknown"` | `"Snapchat Ads"` |
-| lt_medium | `"(absent)"` | `"cpc"` |
+| lt_channel | `"Unknown"` | `"Snapchat"` |
 | lt_source | `"(absent)"` | `"snapchat"` |
 
 ### wp-sibling-subdomain-internal-referrer
 
-- Engine satisfies fixture `expected`: **yes**
+- Engine satisfies fixture `expected`: **NO**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-template-macro-value-rejected
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-timestamp-millisecond-precision
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-utm-key-case-insensitive
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-value-length-cap
 
@@ -231,6 +284,7 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_campaign | `"CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"` | `"CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"` |
 | lt_campaign | `"CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"` | `"CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"` |
 
@@ -241,6 +295,7 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 | Field | Plugin | Engine |
 |---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 | ft_channel | `"Unknown"` | `"WhatsApp"` |
 | ft_medium | `"referral"` | `"social"` |
 | ft_source | `"wa.me"` | `"whatsapp"` |
@@ -250,15 +305,21 @@ in a Node `vm` sandbox against all 25 draft fixtures, then ran the TS engine
 
 ### wp-www-internal-referrer
 
-- Engine satisfies fixture `expected`: **yes**
+- Engine satisfies fixture `expected`: **NO**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ### wp-yahoo-intl-label-match
 
 - Engine satisfies fixture `expected`: **yes**
 - Plugin dataLayer push observed: yes
-- No differing fields.
+
+| Field | Plugin | Engine |
+|---|---|---|
+| click_id_history | `"(absent)"` | `"[]"` |
 
 ## Sandbox shims (each traced to the plugin line that requires it)
 
@@ -305,4 +366,32 @@ browser global it touches had to be provided explicitly:
   confirmation before Phase 2 freezes.
 - **Timestamps compare exactly**: with the pinned Date the plugin emits the same
   millisecond ISO strings the engine stores (ruling #13 verified live, not just statically).
+
+## NEW FINDINGS — unruled deviations, flag loudly
+
+- **wp-brave-search-engine**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-browser-id-query-param**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-chatgpt-ai-assistant-referrer**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-click-id-mirror-on-merge**: `attribution_selected_click_id`, `attribution_selected_click_id_reason`, `click_id_history` — plugin=`"(absent)"`, engine=`"BBB"`
+- **wp-duplicate-param-last-wins**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-empty-utm-values-dropped**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-fbclid-only-organic-facebook**: `attribution_selected_click_id`, `attribution_selected_click_id_reason`, `click_id_history` — plugin=`"(absent)"`, engine=`"IwARabc123"`
+- **wp-first-touch-guard-counts-click-ids**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-gclid-only-no-source-medium**: `attribution_selected_click_id`, `attribution_selected_click_id_reason`, `click_id_history` — plugin=`"(absent)"`, engine=`"EAIaIQobChMTest"`
+- **wp-landing-page-includes-query**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-last-touch-always-updates**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-mc-eid-mailchimp**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-plus-sign-preserved**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-rdt-cid-extra-click-id**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-referral-medium-string**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-referrer-canonical-source-name**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-sc-click-id-alias-partial**: `attribution_selected_click_id`, `attribution_selected_click_id_reason`, `click_id_history` — plugin=`"(absent)"`, engine=`"SC991"`
+- **wp-sibling-subdomain-internal-referrer**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-template-macro-value-rejected**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-timestamp-millisecond-precision**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-utm-key-case-insensitive**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-value-length-cap**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-whatsapp-social-engine-only**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-www-internal-referrer**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
+- **wp-yahoo-intl-label-match**: `click_id_history` — plugin=`"(absent)"`, engine=`"[]"`
 

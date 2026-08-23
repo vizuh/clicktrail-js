@@ -10,9 +10,9 @@
   },
   "expected": {
     "ft_source": "facebook",
-    "ft_medium": "cpc",
+    "ft_medium": "",
     "fbclid": "IwARabc123",
-    "_channel": "paid_social",
-    "ft_channel": "Facebook Ads"
+    "_channel": "unknown",
+    "ft_channel": "Facebook"
   }
 }

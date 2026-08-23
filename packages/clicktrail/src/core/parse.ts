@@ -11,6 +11,7 @@ import {
   parseGaClientIdValue,
   resolveChannelLabel,
   type ReferrerRule,
+  PAID_MEDIUMS,
 } from './knowledge.js';
 import { areRelatedHosts, hostMatches, normalizeHost, sanitizeField } from './sanitize.js';
 
@@ -182,16 +183,27 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   // --- campaign-parameter path ---
   let channel: Channel;
   if (hasClickId) {
-    // Platform map decides channel; first matching click ID wins (deterministic order).
+    // Platform map decides; first matching click ID wins (deterministic order).
     const matched = CLICK_ID_KEYS.find((key) => Boolean(clickIds[key]));
     if (matched) {
       const plat = CLICK_ID_PLATFORMS[matched]!;
-      channel = plat.channel;
       if (!touch.source) touch.source = plat.source;
+      if (plat.certainty === 'certain') {
+        // Advertising-only identifier: paid classification is unambiguous.
+        channel = plat.paidChannel ?? 'unknown';
+        if (!touch.medium) touch.medium = 'cpc';
+      } else {
+        // Uncertain identifier (D2): proves the surface, not the payment.
+        // Channel stays UNKNOWN unless explicit paid evidence exists in UTMs;
+        // promotion uses the platform's own paid channel class.
+        channel =
+          PAID_MEDIUMS.includes(touch.medium.toLowerCase()) && plat.paidChannel
+            ? plat.paidChannel
+            : classifyUtmChannel(touch.medium);
+      }
     } else {
       channel = 'unknown';
     }
-    if (!touch.medium) touch.medium = 'cpc';
   } else {
     channel = classifyUtmChannel(touch.medium);
   }
