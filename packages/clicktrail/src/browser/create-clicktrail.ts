@@ -11,6 +11,22 @@ import { emptyAttribution } from '../core/merge.js';
 import type { ParsedTouch } from '../core/types.js';
 import type { AttributionPayload } from '../core/types.js';
 import { mergeAttributionTouch } from '../core/merge.js';
+import { createIdentityStore } from './identity.js';
+import type { IdentityStore, RandomBytesFn } from './identity.js';
+import {
+  loadAttributionPayload,
+  saveAttributionPayload,
+} from './payload-store.js';
+import type { IdentitySnapshot } from './identity.js';
+import {
+  clearAttributionStorage,
+  cookieStorage,
+  mirrorStorage,
+} from './storage.js';
+import type {
+  CookieAttributes,
+  StorageAdapter,
+} from './storage.js';
 import type { Destination } from './transport.js';
 import type { SessionSnapshot } from './global-adapter.js';
 import { buildEventPayload, type ClickTrailEvent } from './serialize.js';
@@ -32,6 +48,32 @@ export interface ClickTrailConfig {
   diagnosticsLevel?: DiagnosticsLevel;
   /** Where diagnostics go when level is 'warn'. Default: console.warn sink. */
   diagnosticSink?: DiagnosticSink;
+  /**
+   * First-party persistence. When present, start() hydrates the stored
+   * payload, owns visitor/session identity, and persists every merge.
+   * Nothing touches storage before start() (zero side effects).
+   */
+  storage?: ClickTrailStorageConfig;
+}
+
+export interface ClickTrailStorageConfig {
+  /** Retention days; ties the localStorage mirror expiry to retention. */
+  retentionDays?: number;
+  /** Attributes injected into every attribution cookie write. */
+  cookieAttrs?: CookieAttributes;
+  /**
+   * Adapter overrides (tests / custom stores). Defaults: first-party
+   * cookie (`attribution`) + expiry-metadata localStorage mirror.
+   */
+  primaryAdapter?: StorageAdapter;
+  mirrorAdapter?: StorageAdapter;
+  /**
+   * Injected random-byte source for UUID v4 identity generation
+   * (crypto.getRandomValues by default). Never Math.random.
+   */
+  randomBytes?: RandomBytesFn;
+  /** Injected wall clock (ms) for session rolls + mirror expiry. */
+  nowMs?: () => number;
 }
 
 export interface ClickTrailInstance {
@@ -63,6 +105,17 @@ function resolveSink(config: ClickTrailConfig): DiagnosticSink {
   return nullDiagnosticSink;
 }
 
+/** Injected-seam default: WebCrypto random bytes. Only invoked post-start(). */
+const defaultRandomBytes: RandomBytesFn = (byteLength) => {
+  const crypto = (globalThis as { crypto?: Crypto }).crypto;
+  if (!crypto?.getRandomValues) {
+    throw new Error(
+      'clicktrail: no crypto.getRandomValues available; inject config.storage.randomBytes.',
+    );
+  }
+  return crypto.getRandomValues(new Uint8Array(byteLength));
+};
+
 export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const destinations = [...config.destinations];
   const now = config.now;
@@ -72,6 +125,49 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let started = false;
   let payload: AttributionPayload = emptyAttribution();
   let consentDeniedReported = false;
+
+  // Storage wiring is lazy: nothing here runs until start().
+  const storageCfg = config.storage;
+  let adapters: { primary: StorageAdapter; mirror: StorageAdapter } | null = null;
+  let identity: IdentityStore | null = null;
+
+  const initStorage = (): void => {
+    if (!storageCfg || adapters !== null) return;
+    const nowMs = storageCfg.nowMs ?? (() => Date.now());
+    const primary =
+      storageCfg.primaryAdapter ??
+      cookieStorage(
+        storageCfg.cookieAttrs !== undefined
+          ? { attrs: storageCfg.cookieAttrs }
+          : {},
+      );
+    const mirror =
+      storageCfg.mirrorAdapter ??
+      mirrorStorage({
+        ...(storageCfg.retentionDays !== undefined
+          ? { retentionDays: storageCfg.retentionDays }
+          : {}),
+        nowMs,
+      });
+    adapters = { primary, mirror };
+    identity = createIdentityStore({
+      adapter: mirror,
+      randomBytes: storageCfg.randomBytes ?? defaultRandomBytes,
+      nowMs,
+    });
+  };
+
+  const persistPayload = (): void => {
+    if (!adapters) return;
+    saveAttributionPayload(adapters.primary, payload);
+    saveAttributionPayload(adapters.mirror, payload);
+  };
+
+  const snapshotFromIdentity = (snap: IdentitySnapshot): SessionSnapshot => ({
+    visitorId: snap.visitorId,
+    sessionId: snap.sessionId,
+    sessionNumber: String(snap.sessionNumber),
+  });
 
   const consentAllows = (): boolean => {
     if (!consentGate || consentGate()) {
@@ -85,6 +181,15 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         level: 'warn',
         message: 'Capture attempted while consent denied; event dropped.',
       });
+      // Contract: consent denied clears ALL attribution storage — the
+      // in-memory payload plus every cookie/mirror/identity key, including
+      // legacy-named surfaces (portable prompt "Storage rules";
+      // DATA-MODEL.md:122, :246).
+      payload = emptyAttribution();
+      if (adapters) {
+        clearAttributionStorage(adapters.primary, adapters.mirror);
+        identity?.clear();
+      }
     }
     return false;
   };
@@ -94,6 +199,17 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       if (started) return;
       started = true;
       for (const dest of destinations) dest.start?.();
+      if (storageCfg) {
+        initStorage();
+        // Hydrate persisted attribution: server-readable cookie first,
+        // expiry-metadata mirror as fallback for cached/dynamic pages.
+        const stored = loadAttributionPayload(adapters!.primary);
+        payload =
+          Object.keys(stored).length > 0
+            ? { ...emptyAttribution(), ...stored }
+            : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
+        persistPayload();
+      }
     },
 
     stop() {
@@ -124,6 +240,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
 
     mergeParsedTouch(touch) {
       payload = mergeAttributionTouch(payload, touch);
+      // Zero side effects until start(): pre-start merges stay in memory
+      // and are flushed to storage by the hydration step in start().
+      if (started && adapters) persistPayload();
     },
 
     getData: () => ({ ...payload }),
@@ -134,11 +253,18 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
 
     clearData() {
       payload = emptyAttribution();
+      if (started && adapters) {
+        clearAttributionStorage(adapters.primary, adapters.mirror);
+        identity?.clear();
+      }
     },
 
-    getSession() {
-      // Phase 2's storage adapter owns visitor/session ID generation; until
-      // then these read whatever the host merged into the payload.
+    getSession(): SessionSnapshot {
+      // Identifiers are created only while consent allows (DATA-MODEL.md:246);
+      // a denied gate yields an empty snapshot instead of regenerating.
+      if (started && identity && (!consentGate || consentGate())) {
+        return snapshotFromIdentity(identity.current());
+      }
       return {
         visitorId: payload['visitor_id'] ?? '',
         sessionId: payload['session_id'] ?? '',
