@@ -15,7 +15,7 @@ Rules for every task:
 
 | # | Item | Phase | Status | Notes |
 |---|---|---|---|---|
-| 1 | `/browser` subpath: payload serialization, fetch+sendBeacon batched transport, dataLayer destination, `window.ClickTrail` legacy global adapter, consent-gate interface wiring | 1b | IN PROGRESS (worker: build-browser-sdk) | Effects injected; unit tests with fake timers/injected clock |
+| 1 | `/browser` subpath: payload serialization, fetch+sendBeacon batched transport, dataLayer destination, `window.ClickTrail` legacy global adapter, consent-gate interface wiring | 1b | IN PROGRESS (worker: build-browser-sdk) | Done by build-browser-sdk: `src/browser/{serialize,transport,global-adapter,create-clicktrail,index}.ts` + 5 test files (39 tests green, typecheck clean). All effects injected (send fn, dataLayer array, clock, consent gate); dataLayer created only in start(); no window access outside page code. getSession() reads visitor_id/session_id/session_number payload keys — real generation deferred to #4. Status left for supervisor to flip. |
 | 2 | CI workflow `.github/workflows/ci.yml` (install, typecheck, test, build) + npm README polish + `.npmrc` publish config notes | 1b | IN PROGRESS (worker: build-ci-docs) | DONE by worker, awaiting supervisor review: ci.yml added (Node 20+22 matrix: pnpm cache, frozen-lockfile install, `pnpm -r exec tsc -p tsconfig.json --noEmit`, `pnpm -r test`, `pnpm -r build`); root README got CI badge placeholder + Quickstart + Why-deterministic (3 bullets); new packages/clicktrail/README.md (stable vs /incubating OTel-style example, WP plugin link, MIT); publish.yml added as fully commented-out OIDC trusted-publishing DRAFT with ARCHITECTURE preconditions (scope ownership + copyright provenance + versioning gates) in its header. No `.npmrc` created — publish config lives as documented comments in publish.yml (access public + provenance); add real `.npmrc` only when publishing is enabled. Both workflows parse-checked as valid YAML; no secrets; all referenced scripts exist. Tests + strict typecheck green after changes. Uncommitted. |
 | 3 | Playwright integration probe: build IIFE global bundle, load in real page, replay all golden fixtures end-to-end against window.ClickTrail | 1b exit criterion | QUEUED | Blocked by #1 |
 | 4 | Storage/session adapters: cookie+localStorage mirror with expiry metadata, visitor_id/session_id generation, 30-min session roll (injected clock) | 2 | QUEUED | |
@@ -31,3 +31,4 @@ Rules for every task:
 | Item | Commit |
 |---|---|
 | Phase 1a: conventions + pure core + fixtures harness | 621e164 |
+| #2 CI workflows + npm-facing docs | a144cf5 |

@@ -15,7 +15,11 @@
       "types": "./dist/incubating.d.ts",
       "default": "./dist/incubating.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "default": "./dist/browser/index.js"
+    }
   },
   "files": [
     "dist"
