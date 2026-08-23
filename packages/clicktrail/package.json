@@ -45,12 +45,14 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:global": "esbuild src/global-entry.ts --bundle --format=iife --outfile=dist/clicktrail.global.js",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
+    "fast-check": "^3.22.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0",
-    "fast-check": "^3.22.0"
+    "vitest": "^2.1.0"
   }
 }

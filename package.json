@@ -4,9 +4,12 @@
   "version": "0.0.0",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "build:global": "pnpm --filter @funnelsheet/clicktrail build:global",
+    "test": "pnpm -r test",
+    "probe": "pnpm --filter @funnelsheet/clicktrail build && pnpm --filter @funnelsheet/clicktrail build:global && node probe/run-probe.mjs"
   },
   "devDependencies": {
+    "playwright": "^1.62.1",
     "typescript": "^5.6.0"
   }
 }
