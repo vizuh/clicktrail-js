@@ -53,8 +53,8 @@ function journeyEvent(): ClickTrailEvent {
     [ATTR_CONVERSATION_ID]: 'cw-77',
     [ATTR_MESSAGE_ID]: 'm-1',
     timestamp: '2026-08-23T10:00:00.000Z',
-    schema_version: '1.1.0',
-    classifier_version: '1.1.0',
+    schema_version: '1.2.0',
+    classifier_version: '1.2.0',
   };
 }
 

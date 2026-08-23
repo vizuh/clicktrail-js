@@ -16,7 +16,7 @@
  * NOTE: 1.x is the UNPUBLISHED development line (package pre-release); these
  * bumps record semantic decisions, not published breaking releases.
  */
-export const SCHEMA_VERSION = '1.1.0' as const;
+export const SCHEMA_VERSION = '1.2.0' as const;
 
 /**
  * Version of the channel classification rules. Semantic changes are MAJOR
@@ -26,7 +26,7 @@ export const SCHEMA_VERSION = '1.1.0' as const;
  * query parsing, full-href landing page, click-ID-aware first-touch guard,
  * and the ft_channel/lt_channel label layer.
  */
-export const CLASSIFIER_VERSION = '1.1.0' as const;
+export const CLASSIFIER_VERSION = '1.2.0' as const;
 
 // --- first-touch attributes -------------------------------------------------
 

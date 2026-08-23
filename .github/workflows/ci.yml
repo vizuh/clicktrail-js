@@ -40,3 +40,66 @@ jobs:
 
       - name: Build
         run: pnpm -r build
+
+  integration:
+    name: Browser probe + parity + pack smoke
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      # Plugin repo is a SIBLING directory, not part of this repository: the
+      # parity harness needs assets/js/clicutcl-attribution.js at runtime.
+      # Until the plugin repo is public or vendored, parity runs only when the
+      # sibling exists (self-hosted runner / same-workspace checkout).
+      - name: Check plugin source availability
+        id: plugin
+        run: |
+          if [ -f "../click-trail-handler/assets/js/clicutcl-attribution.js" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build ESM + IIFE global bundle
+        run: |
+          pnpm --filter @funnelsheet/clicktrail build
+          pnpm --filter @funnelsheet/clicktrail build:global
+
+      - name: Playwright golden-fixture probe
+        run: node probe/run-probe.mjs
+
+      - name: WP runtime parity harness
+        if: steps.plugin.outputs.available == 'true'
+        run: pnpm parity
+
+      - name: npm pack + clean-room install smoke
+        run: |
+          cd packages/clicktrail
+          npm pack --pack-destination /tmp
+          cd "$(mktemp -d)"
+          echo '{"name":"smoke","type":"module","private":true}' > package.json
+          npm install /tmp/funnelsheet-clicktrail-*.tgz --silent
+          node --input-type=module -e "
+            const mod = await import('@funnelsheet/clicktrail');
+            const conv = await import('@funnelsheet/clicktrail/conversation');
+            const agent = await import('@funnelsheet/clicktrail/agent');
+            const otel = await import('@funnelsheet/clicktrail/otel');
+            if (!mod.parseAttributionUrl || !conv.createConversationTracker) process.exit(1);
+            console.log('pack smoke OK, classifier', mod.CLASSIFIER_VERSION);
+          "

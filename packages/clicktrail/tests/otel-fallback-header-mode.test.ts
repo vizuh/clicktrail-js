@@ -14,8 +14,8 @@ function event(messageId: string): ClickTrailEvent {
     event_name: 'handoff.human',
     [ATTR_MESSAGE_ID]: messageId,
     timestamp: '2026-08-23T10:00:00.000Z',
-    schema_version: '1.1.0',
-    classifier_version: '1.1.0',
+    schema_version: '1.2.0',
+    classifier_version: '1.2.0',
   };
 }
 
