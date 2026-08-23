@@ -1,0 +1,16 @@
+{
+  "name": "wp-chatgpt-ai-assistant-referrer",
+  "description": "[PLUGIN BEHAVIOR] AI-assistant referrers (ChatGPT, Perplexity, Copilot, Gemini, Claude, Grok, DeepSeek) get dedicated CHANNEL LABELS while keeping referral medium/source=host (clicutcl-attribution.js:347-360). Engine has no AI-assistant category.",
+  "quirk_decision": "UNDECIDED: should the TS engine adopt AI-assistant channels (and under what enum names), or treat them as plain referral? Fields below agree (source=host, medium=referral); only the channel taxonomy differs.",
+  "input": {
+    "url": "https://example.com/guides",
+    "referrer": "https://chatgpt.com/c/abc123",
+    "currentHost": "example.com",
+    "now": "2026-08-23T11:15:00Z"
+  },
+  "expected": {
+    "ft_source": "chatgpt.com",
+    "ft_medium": "referral",
+    "_channel": "ChatGPT"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "wp-landing-page-includes-query",
+  "description": "[PLUGIN BEHAVIOR] ft_landing_page / lt_landing_page store the FULL window.location.href including query string. Engine's safeOriginPath strips the query (origin+pathname only).",
+  "quirk_decision": "DISAGREEMENT: plugin keeps full href (applyTouch, clicutcl-attribution.js:1790-1794); engine drops the query. Conflicts with golden google-ads-utm-gclid expecting query-less landing page.",
+  "input": {
+    "url": "https://example.com/pricing?utm_source=google&utm_medium=cpc",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T12:10:00Z"
+  },
+  "expected": {
+    "ft_landing_page": "https://example.com/pricing?utm_source=google&utm_medium=cpc",
+    "lt_landing_page": "https://example.com/pricing?utm_source=google&utm_medium=cpc"
+  }
+}

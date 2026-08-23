@@ -1,0 +1,18 @@
+{
+  "name": "wp-utm-key-case-insensitive",
+  "description": "[PLUGIN BEHAVIOR] Query keys are lowercased by sanitizeKey(), so mixed-case UTM keys still create a touch. The TS engine reads keys case-sensitively via URLSearchParams and would see no signal.",
+  "quirk_decision": "DISAGREEMENT: plugin accepts any key casing (sanitizeKey lowercases, clicutcl-attribution.js:86-90,427-447); engine requires exact lowercase param names.",
+  "input": {
+    "url": "https://example.com/?Utm_Source=google&UTM_CAMPAIGN=spring",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T10:00:00Z"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_campaign": "spring",
+    "lt_source": "google",
+    "lt_campaign": "spring",
+    "_channel": "Unknown"
+  }
+}

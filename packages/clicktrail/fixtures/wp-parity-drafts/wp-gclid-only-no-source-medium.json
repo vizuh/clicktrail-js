@@ -1,0 +1,15 @@
+{
+  "name": "wp-gclid-only-no-source-medium",
+  "description": "[PLUGIN BEHAVIOR] A bare gclid with no UTMs writes ONLY the click ID field + channel label 'Google Ads'. The plugin never infers ft_source/ft_medium from click IDs.",
+  "quirk_decision": "DISAGREEMENT: engine's CLICK_ID_PLATFORMS infers source=google and medium=cpc for bare gclid; plugin leaves them empty.",
+  "input": {
+    "url": "https://example.com/landing?gclid=EAIaIQobChMTest",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T10:35:00Z"
+  },
+  "expected": {
+    "gclid": "EAIaIQobChMTest",
+    "_channel": "Google Ads"
+  }
+}

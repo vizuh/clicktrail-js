@@ -1,0 +1,16 @@
+{
+  "name": "wp-template-macro-value-rejected",
+  "description": "[PLUGIN BEHAVIOR] Values matching /^\\{\\{.+\\}\\}$/ (unsubstituted ad-platform macros like {{campaign.name}}) are rejected entirely. The TS engine sanitizes but keeps them literally.",
+  "quirk_decision": "DISAGREEMENT: plugin drops macro values (sanitizeValue macro guard, clicutcl-attribution.js:103-106); engine keeps the literal string.",
+  "input": {
+    "url": "https://example.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=%7B%7Bcampaign.name%7D%7D",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T10:15:00Z"
+  },
+  "expected": {
+    "ft_source": "facebook",
+    "ft_medium": "paid_social",
+    "_channel": "Facebook Ads"
+  }
+}

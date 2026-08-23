@@ -1,0 +1,16 @@
+{
+  "name": "wp-empty-utm-values-dropped",
+  "description": "Empty-valued UTM parameters are ignored by both plugin and engine; remaining non-empty UTMs still create the touch.",
+  "quirk_decision": "CONTRACT (agreement): empty values never create fields (plugin sanitizeValue '' -> skipped; engine raw !== '').",
+  "input": {
+    "url": "https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=&utm_content=",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T10:10:00Z"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "_channel": "Google Ads"
+  }
+}

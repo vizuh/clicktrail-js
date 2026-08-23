@@ -1,0 +1,18 @@
+{
+  "name": "wp-referrer-canonical-source-name",
+  "description": "[PLUGIN BEHAVIOR] Search-referrer classification writes CANONICAL source names ('google', 'bing'), not the referrer host. Engine writes the full referrer host ('google.com').",
+  "quirk_decision": "DISAGREEMENT: plugin ft_source='google' via SEARCH_REFERRER_RULES (clicutcl-attribution.js:66-74,267-291); engine ft_source='google.com' (host passthrough). Conflicts with golden organic-search-referrer.",
+  "input": {
+    "url": "https://example.com/services",
+    "referrer": "https://www.google.com/search?q=botox+nyc",
+    "currentHost": "example.com",
+    "now": "2026-08-23T11:00:00Z"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_medium": "organic",
+    "lt_source": "google",
+    "lt_medium": "organic",
+    "_channel": "Google Organic"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "wp-duplicate-param-last-wins",
+  "description": "[PLUGIN BEHAVIOR] The regex-based query parser processes pairs sequentially and later duplicates overwrite earlier ones (last occurrence wins). URLSearchParams.get() used by the engine returns the FIRST occurrence.",
+  "quirk_decision": "DISAGREEMENT: duplicate query params -- plugin last-wins, engine first-wins. Edge case; decide determinism contract.",
+  "input": {
+    "url": "https://example.com/?utm_source=newsletter&utm_source=renamed",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T12:15:00Z"
+  },
+  "expected": {
+    "ft_source": "renamed"
+  }
+}

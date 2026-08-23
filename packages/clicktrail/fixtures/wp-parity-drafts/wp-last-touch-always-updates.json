@@ -1,0 +1,26 @@
+{
+  "name": "wp-last-touch-always-updates",
+  "description": "[MERGE-LEVEL] Last touch always overwrites lt_ fields, timestamp, and landing page on each valid signal; first touch is untouched. Agreed behavior.",
+  "quirk_decision": "CONTRACT (agreement): plugin applyTouch('lt', ...) unconditional (clicutcl-attribution.js:1706-1707); engine mergeAttributionTouch last-touch block. NOTE: uses extra 'stored' key.",
+  "stored": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_touch_timestamp": "2026-08-01T09:00:00Z",
+    "lt_source": "newsletter",
+    "lt_medium": "email"
+  },
+  "input": {
+    "url": "https://example.com/spring?utm_source=meta&utm_medium=paid_social",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T12:05:00Z"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_touch_timestamp": "2026-08-01T09:00:00Z",
+    "lt_source": "meta",
+    "lt_medium": "paid_social",
+    "_channel": "Facebook Ads"
+  }
+}

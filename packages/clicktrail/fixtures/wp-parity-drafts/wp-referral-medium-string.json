@@ -1,0 +1,16 @@
+{
+  "name": "wp-referral-medium-string",
+  "description": "Unrecognized external referrer gets source=normalized-host and medium='referral' in both implementations.",
+  "quirk_decision": "CONTRACT (agreement): medium strings 'organic' / 'social' / 'referral' agree; only the separate channel-taxonomy layer differs (see channel-label fixtures).",
+  "input": {
+    "url": "https://example.com/",
+    "referrer": "https://partner-site.example.io/page",
+    "currentHost": "example.com",
+    "now": "2026-08-23T12:20:00Z"
+  },
+  "expected": {
+    "ft_source": "partner-site.example.io",
+    "ft_medium": "referral",
+    "_channel": "Unknown"
+  }
+}

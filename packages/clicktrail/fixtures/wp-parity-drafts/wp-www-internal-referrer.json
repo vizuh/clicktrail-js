@@ -1,0 +1,14 @@
+{
+  "name": "wp-www-internal-referrer",
+  "description": "www-stripped same-host referrer creates no touch in both implementations.",
+  "quirk_decision": "CONTRACT (agreement): both normalize leading www. before the related-host check.",
+  "input": {
+    "url": "https://example.com/contact",
+    "referrer": "https://www.example.com/pricing",
+    "currentHost": "example.com",
+    "now": "2026-08-23T11:35:00Z"
+  },
+  "expected": {
+    "_no_touch_reason": "internal_referrer"
+  }
+}
