@@ -27,6 +27,10 @@
     "./browser": {
       "types": "./dist/browser/index.d.ts",
       "default": "./dist/browser/index.js"
+    },
+    "./otel": {
+      "types": "./dist/otel/index.d.ts",
+      "default": "./dist/otel/index.js"
     }
   },
   "files": [

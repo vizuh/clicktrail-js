@@ -22,8 +22,8 @@ Rules for every task:
 | 5 | Form injection + link decoration (cross-domain continuity, approved domains) | 2 | DONE (7c5bc9b) | ct_ prefix verified vs plugin source; default field subset is documented deviation; extended fields via config |
 | 6 | WP parity fixture capture from live click-trail-handler plugin behavior | 2 gate | LIVE VALIDATION DONE (3e28135) | 14 MATCH / 8 RULED DIFF / 0 errors; 2 findings ruled -> follow-up item #12 |
 | 7 | `/conversation` subpath (Chatwoot journey attributes, captureContent=false default) | 3 | DONE (f8fd72f) | retry succeeded after silent no-op attempt; privacy guard fail-closed at construction time |
-| 8 | `/agent` subpath (agent_run events, actor model, tool-call metadata) | 3 | IN PROGRESS (worker: agent-subpath) | |
-| 9 | `/otel` subpath (traceparent correlation exporter) | 3 | QUEUED | Optional peer dep design |
+| 8 | `/agent` subpath (agent_run events, actor model, tool-call metadata) | 3 | DONE (202814b) | exact-key allowlist guard; ai.trace_id linking without OTel dep |
+| 9 | `/otel` subpath (traceparent correlation exporter) | 3 | IN PROGRESS (worker: otel-subpath) | Optional peer dep design |
 | 10 | `/apointoo` destination subpath | 3 | QUEUED | |
 | 12 | Implement runtime-finding rulings: core parses browser-ID URL params; adapter collects consent-gated cookie IDs; merge mirrors click IDs into ft_/lt_ fields; update fixtures; rerun `pnpm parity` expecting only ruled diffs | 2 freeze prep | DONE (fa3127b) | 16 MATCH/9 RULED DIFF/0 new; sticky-top-level-cid ruled as deviation D3 (Hugo gate) |
 | 11 | Core parity fixes per WP-PARITY-DRAFT.md SUPERVISOR RULINGS | 2 prep | DONE (396a1ad) | 13 drafts flipped to CONTRACT; 5 standing deviations pinned (incl. bare-click-id inference -> Hugo gate before WP swap); versions 1.1.0 |
@@ -43,3 +43,4 @@ Rules for every task:
 | #6 runtime parity harness (real plugin JS executed, 23 fixtures) | 3e28135 |
 | #12 ruling implementation (16 MATCH / 9 RULED DIFF / 0 unexplained) | fa3127b |
 | #7 /conversation subpath (journey store + Chatwoot builder, privacy fail-closed) | f8fd72f |
+| #8 /agent subpath (recorder + metadata-only guard) | 202814b |
