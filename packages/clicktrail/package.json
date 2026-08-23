@@ -19,6 +19,10 @@
       "types": "./dist/conversation/index.d.ts",
       "default": "./dist/conversation/index.js"
     },
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "default": "./dist/agent/index.js"
+    },
     "./package.json": "./package.json",
     "./browser": {
       "types": "./dist/browser/index.d.ts",
