@@ -6,7 +6,8 @@
     "build": "pnpm -r build",
     "build:global": "pnpm --filter @funnelsheet/clicktrail build:global",
     "test": "pnpm -r test",
-    "probe": "pnpm --filter @funnelsheet/clicktrail build && pnpm --filter @funnelsheet/clicktrail build:global && node probe/run-probe.mjs"
+    "probe": "pnpm --filter @funnelsheet/clicktrail build && pnpm --filter @funnelsheet/clicktrail build:global && node probe/run-probe.mjs",
+    "parity": "node tools/wp-runtime/run-parity.mjs"
   },
   "devDependencies": {
     "playwright": "^1.62.1",
