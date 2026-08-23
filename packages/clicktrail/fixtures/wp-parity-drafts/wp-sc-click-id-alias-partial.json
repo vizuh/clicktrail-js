@@ -1,7 +1,7 @@
 {
   "name": "wp-sc-click-id-alias-partial",
   "description": "[PARTIAL AGREEMENT] sc_click_id folds into sccid in BOTH plugin (CLICK_ID_ALIASES + mapQueryFields special case) and engine (PARAM_ALIASES). BUT plugin writes only the sccid field + channel 'Snapchat Ads'; engine additionally infers source=snapchat/medium=cpc.",
-  "quirk_decision": "DISAGREEMENT (partial, standing per ruling #2): sc_click_id -> sccid alias folding is shared contract; the engine additionally infers source=snapchat/medium=cpc for bare sccid -- intentional deviation requiring Hugo confirmation before WP runtime swap.",
+  "quirk_decision": "RULED DIFF standing (#2): sc_click_id -> sccid alias folding is shared contract; engine additionally infers source=snapchat/medium=cpc -- intentional deviation requiring Hugo confirmation before WP runtime swap. ft_sccid/lt_sccid mirror now IMPLEMENTED per ruling B -- no longer diffs.",
   "input": {
     "url": "https://example.com/promo?sc_click_id=SC991",
     "referrer": "",
@@ -14,6 +14,8 @@
     "ft_medium": "cpc",
     "ft_channel": "Snapchat Ads",
     "lt_channel": "Snapchat Ads",
-    "_channel": "paid_social"
+    "_channel": "paid_social",
+    "ft_sccid": "SC991",
+    "lt_sccid": "SC991"
   }
 }

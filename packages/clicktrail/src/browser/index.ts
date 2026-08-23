@@ -20,6 +20,12 @@ export type {
   LegacyGlobalInstance,
   SessionSnapshot,
 } from './global-adapter.js';
+export {
+  applyBrowserIdentifiers,
+  collectBrowserIdsFromCookies,
+  parseCookieMap,
+  parseGaSessionDataValue,
+} from './browser-ids.js';
 export { createClickTrail } from './create-clicktrail.js';
 export type {
   ClickTrailConfig,

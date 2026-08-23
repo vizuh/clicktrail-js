@@ -1,7 +1,7 @@
 {
   "name": "wp-fbclid-only-organic-facebook",
-  "description": "[PLUGIN BEHAVIOR] fbclid WITHOUT a paid utm_medium produces NO source/medium inference and channel 'Facebook Organic' (clicutcl-attribution.js:327-329,381-382). Only the bare fbclid field is written.",
-  "quirk_decision": "DISAGREEMENT (standing, ruled #2): engine infers source=facebook, medium=cpc, channel=paid_social and label 'Facebook Ads' from bare fbclid; plugin writes only the raw field + 'Facebook Organic'. Intentional engine deviation; requires Hugo confirmation before WP runtime swap. Original note: directly conflicts with golden meta-paid-fbclid-only (marked CONTRACT).",
+  "description": "[RULED] bare fbclid: engine infers source=facebook/medium=cpc/label 'Facebook Ads' (ruling #2, intentional deviation). Both engines now ALSO write the ft_/lt_ click-ID mirror (ruling B) and derive top-level fbc from fbclid ('fb.1.<epochMs>.<fbclid>', plugin BrowserIdentifiers.collect :860-866).",
+  "quirk_decision": "RULED DIFF standing (#2): engine's click-ID platform inference kept intentionally; requires Hugo confirmation before WP runtime swap. Click-ID ft_/lt_ mirror + fbc derivation now IMPLEMENTED per runtime-findings rulings A/B -- no longer diffs.",
   "input": {
     "url": "https://example.com/?fbclid=IwARabc123",
     "referrer": "",
@@ -14,6 +14,9 @@
     "ft_medium": "cpc",
     "ft_channel": "Facebook Ads",
     "lt_channel": "Facebook Ads",
-    "_channel": "paid_social"
+    "_channel": "paid_social",
+    "fbc": "fb.1.1787481000000.IwARabc123",
+    "ft_fbclid": "IwARabc123",
+    "lt_fbclid": "IwARabc123"
   }
 }

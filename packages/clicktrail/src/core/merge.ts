@@ -24,7 +24,13 @@ export function emptyAttribution(): AttributionPayload {
  *   overwritten. The emptiness guard counts ft_<clickid> keys too
  *   (ruling #17): a bare-gclid first landing IS a first touch.
  * - LAST touch always overwrites lt_ values when a valid touch arrives.
- * - Click IDs overwrite with the newest non-empty value.
+ * - Click IDs overwrite with the newest non-empty value. Each captured click
+ *   ID is ALSO mirrored into its `ft_<cid>` / `lt_<cid>` touch fields at
+ *   write time (RULING B, runtime findings 2026-08-23 — plugin contract,
+ *   applyTouch(mapQueryFields), clicutcl-attribution.js:1788-1799 +
+ *   :1813-1837). Empty click IDs never overwrite existing mirrors.
+ * - Browser IDs from the parsed touch are written top-level, newest
+ *   non-empty wins (RULING A part a; plugin mergeTopLevelIdentifiers :1797).
  * - The input is never mutated; a new object is returned.
  */
 export function mergeAttributionTouch(
@@ -52,6 +58,14 @@ export function mergeAttributionTouch(
     next[FT.referrer] = touch.referrer;
     next[FT.landingPage] = touch.landingPage;
     next[FT.touchTimestamp] = touch.touchTimestamp;
+
+    // First-touch write-time click-ID mirror (RULING B): applyTouch('ft')
+    // runs only when hasFirstTouch() is false (:1770-1782, :1793-1801), so
+    // the ft_<cid> mirrors follow the same write-once gate.
+    for (const key of CLICK_ID_KEYS) {
+      const value = touch.clickIds?.[key];
+      if (value) next[`ft_${key}`] = value;
+    }
   }
 
   // Last touch: overwrite on every valid signal.
@@ -69,9 +83,24 @@ export function mergeAttributionTouch(
   next[LT.landingPage] = touch.landingPage;
   next[LT.touchTimestamp] = touch.touchTimestamp;
 
+  // Last-touch write-time click-ID mirror (RULING B): applyTouch('lt')
+  // always runs on a valid signal, so lt_<cid> follows every capture.
+  for (const key of CLICK_ID_KEYS) {
+    const value = touch.clickIds?.[key];
+    if (value) next[`lt_${key}`] = value;
+  }
+
   // Click IDs: newest non-empty wins (from the touch itself; deterministic order).
   for (const key of CLICK_ID_KEYS) {
     const value = touch.clickIds?.[key];
+    if (value) next[key] = value;
+  }
+
+  // Browser IDs (RULING A part a): newest non-empty wins, same law as
+  // click IDs (plugin mergeTopLevelIdentifiers overwrites on any
+  // non-empty differing value, :1797-1811).
+  for (const key of BROWSER_ID_KEYS) {
+    const value = touch.browserIds?.[key];
     if (value) next[key] = value;
   }
 

@@ -1,0 +1,30 @@
+{
+  "name": "wp-click-id-mirror-on-merge",
+  "description": "[RULING B] merge mirrors each captured click ID into ft_<cid> AND lt_<cid> touch fields at write time (plugin contract: applyTouch(mapQueryFields), clicutcl-attribution.js:1788-1799 + :1813-1837). A UTM-only stored first touch blocks ft rewrites (ruling #17-style guard) while the lt_ side follows every capture.",
+  "quirk_decision": "CONTRACT (ruling B): click-ID mirror implemented in mergeAttributionTouch at both first- and last-touch writes; empty click IDs never overwrite existing mirrored values. NOTE (new observation, needs supervisor ruling): the plugin's TOP-LEVEL click-ID key is sticky -- withCanonicalClickIds (:171-197) prefers an existing bare value over the newest lt_<cid>, so repeat visits with a different click id keep the FIRST top-level value in the plugin while the engine applies newest-non-empty-wins. Not exercised here; see PARITY-RUN.md POST-RULING RERUN notes.",
+  "stored": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "ft_touch_timestamp": "2026-08-22T09:00:00.000Z",
+    "ft_landing_page": "https://example.com/landing"
+  },
+  "input": {
+    "url": "https://example.com/return?gclid=BBB&utm_source=google&utm_medium=cpc",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T14:00:00.000Z"
+  },
+  "expected": {
+    "gclid": "BBB",
+    "lt_gclid": "BBB",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "ft_touch_timestamp": "2026-08-22T09:00:00.000Z",
+    "lt_source": "google",
+    "lt_medium": "cpc",
+    "lt_channel": "Google Ads",
+    "_channel": "paid_search"
+  }
+}

@@ -37,6 +37,14 @@ export interface ParsedTouch extends AttributionTouch {
    * Carried here so downstream merge never needs the raw URL again.
    */
   clickIds: Record<string, string>;
+  /**
+   * Browser/platform identifiers found as URL QUERY PARAMS (fbc, fbp, ttp,
+   * li_gc, ga_*). RULING (runtime findings 2026-08-23): core populates these
+   * top-level deterministically; cookie-derived IDs are the /browser
+   * adapter's job behind the consent gate. Optional so hand-built touches
+   * (cross-domain continuation) stay valid without them.
+   */
+  browserIds?: Record<string, string>;
 }
 
 /** Inputs to {@link parseAttributionUrl}. All values come from the caller. */

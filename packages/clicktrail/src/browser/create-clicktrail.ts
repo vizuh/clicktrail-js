@@ -19,12 +19,19 @@ import {
 } from './payload-store.js';
 import type { IdentitySnapshot } from './identity.js';
 import {
+  applyBrowserIdentifiers,
+  collectBrowserIdsFromCookies,
+  parseCookieMap,
+} from './browser-ids.js';
+import {
   clearAttributionStorage,
   cookieStorage,
+  defaultCookieJar,
   mirrorStorage,
 } from './storage.js';
 import type {
   CookieAttributes,
+  CookieJar,
   StorageAdapter,
 } from './storage.js';
 import type { Destination } from './transport.js';
@@ -113,6 +120,12 @@ export interface ClickTrailStorageConfig {
   randomBytes?: RandomBytesFn;
   /** Injected wall clock (ms) for session rolls + mirror expiry. */
   nowMs?: () => number;
+  /**
+   * Cookie jar read ONLY for consent-gated browser-ID collection
+   * (_fbp/_ttp/li_gc/_ga* cookies; RULING A part b, runtime findings
+   * 2026-08-23). Default: document.cookie via defaultCookieJar().
+   */
+  browserIdCookieJar?: CookieJar;
 }
 
 export type ClickTrailFormsConfig =
@@ -240,6 +253,29 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     saveAttributionPayload(adapters.mirror, payload);
   };
 
+  /**
+   * RULING A part b (runtime findings 2026-08-23): cookie-derived browser
+   * IDs (_fbp/_fbc/_ttp/li_gc/_ga*) are collected ONLY here, behind the
+   * consent gate — a denied gate means NO cookie read at all. Merged
+   * top-level with the newest-non-empty-wins law (plugin
+   * mergeTopLevelIdentifiers) and persisted like any other payload change.
+   */
+  const mergeCookieBrowserIds = (): void => {
+    if (consentGate && !consentGate()) return;
+    let ids: Record<string, string>;
+    try {
+      const jar = storageCfg?.browserIdCookieJar ?? defaultCookieJar();
+      ids = collectBrowserIdsFromCookies(parseCookieMap(jar.read()));
+    } catch {
+      return; // Deterministic no-op: cookie reads must never break capture.
+    }
+    const merged = applyBrowserIdentifiers(payload, ids);
+    if (merged !== payload) {
+      payload = merged;
+      if (started && adapters) persistPayload();
+    }
+  };
+
   const snapshotFromIdentity = (snap: IdentitySnapshot): SessionSnapshot => ({
     visitorId: snap.visitorId,
     sessionId: snap.sessionId,
@@ -357,6 +393,8 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
             : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
         persistPayload();
       }
+      // Consent-gated cookie-derived browser IDs (RULING A part b).
+      mergeCookieBrowserIds();
       if (config.forms) {
         const { fields, overwrite, observer } = config.forms;
         formInjector = createFormInjector({
@@ -406,6 +444,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     },
 
     mergeParsedTouch(touch) {
+      // Capture path: refresh cookie-derived browser IDs first so a fresh
+      // _fbp/_ga* value lands top-level on the same write (RULING A part b).
+      mergeCookieBrowserIds();
       payload = mergeAttributionTouch(payload, touch);
       // Zero side effects until start(): pre-start merges stay in memory
       // and are flushed to storage by the hydration step in start().

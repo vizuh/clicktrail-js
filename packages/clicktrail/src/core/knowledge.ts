@@ -328,6 +328,49 @@ export const BROWSER_ID_KEYS: readonly string[] = [
   'fbc', 'fbp', 'ttp', 'li_gc', 'ga_client_id', 'ga_session_id', 'ga_session_number',
 ];
 
+/**
+ * Browser-ID query parameters -> canonical payload keys.
+ *
+ * Both bare and underscore-prefixed variants are recognized (plugin evidence:
+ * BrowserIdentifiers.collect reads params.fbp || params._fbp etc.,
+ * clicutcl-attribution.js:859-896). Insertion order is the plugin's
+ * preference order: for one canonical key the FIRST variant with a value
+ * wins. RULING (runtime findings 2026-08-23, split responsibility): these
+ * IDs are collected in CORE only when they appear as URL QUERY PARAMS;
+ * cookie-derived collection lives in /browser behind the consent gate.
+ */
+export const BROWSER_ID_PARAMS: Readonly<Record<string, string>> = {
+  fbc: 'fbc',
+  _fbc: 'fbc',
+  fbp: 'fbp',
+  _fbp: 'fbp',
+  ttp: 'ttp',
+  _ttp: 'ttp',
+  li_gc: 'li_gc',
+  ga_client_id: 'ga_client_id',
+  ga_session_id: 'ga_session_id',
+  ga_session_number: 'ga_session_number',
+};
+
+/**
+ * Validate/normalize a GA client ID (port of the plugin's
+ * parseGaClientId, clicutcl-attribution.js:826-846): keeps only the last
+ * two dot-separated parts when BOTH are numeric and at least four parts
+ * exist (e.g. 'GA1.1.1234567890.9876543210' -> '1234567890.9876543210').
+ * Pure string function - no cookie access (ruling: core never touches cookies).
+ */
+export function parseGaClientIdValue(raw: string): string {
+  const value = raw.trim();
+  if (!value) return '';
+  const parts = value.split('.');
+  if (parts.length >= 4) {
+    const left = parts[parts.length - 2]!;
+    const right = parts[parts.length - 1]!;
+    if (/^\d+$/.test(left) && /^\d+$/.test(right)) return `${left}.${right}`;
+  }
+  return '';
+}
+
 /** UTM query parameter -> touch field mapping. */
 export const UTM_PARAM_TO_FIELD: Readonly<Record<string, keyof TouchFieldMap>> = {
   utm_source: 'source',

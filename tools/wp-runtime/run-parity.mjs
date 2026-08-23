@@ -300,12 +300,11 @@ const RULED_DIFFS = {
   },
 };
 
-// Live-execution discovery folded into rulings #1/#2 scope: the plugin mirrors
+// RULING B (runtime findings 2026-08-23, IMPLEMENTED): the plugin mirrors
 // every captured click ID into ft_<cid>/lt_<cid> touch fields (applyTouch over
-// mapQueryFields output), while the TS engine stores click IDs top-level only
-// (mergeAttributionTouch). Every fixture this affects already falls under
-// ruling #1 or #2, so it is classified as explained — but recorded in the
-// report observations for supervisor confirmation.
+// mapQueryFields output); mergeAttributionTouch now does the same at write
+// time. The PLUGIN_CLICK_ID_KEYS branch below still explains mirror diffs for
+// keys the engine drops entirely (ruling #1 extras such as mc_eid/rdt_cid).
 function classifyDiffField(fixtureName, field) {
   const bare = field.replace(/^(ft|lt)_/, '');
   if (bare !== field && PLUGIN_CLICK_ID_KEYS.includes(bare)) {

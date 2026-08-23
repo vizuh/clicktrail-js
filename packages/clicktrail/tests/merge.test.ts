@@ -80,6 +80,65 @@ describe('first-touch guard counts click IDs (ruling #17)', () => {
   });
 });
 
+describe('click-ID ft_/lt_ mirror (ruling B, runtime findings 2026-08-23)', () => {
+  it('mirrors captured click IDs into ft_ and lt_ at write time', () => {
+    const stored = mergeAttributionTouch(
+      emptyAttribution(),
+      makeTouch({ clickIds: { gclid: 'G1' } }),
+    );
+    expect(stored.ft_gclid).toBe('G1');
+    expect(stored.lt_gclid).toBe('G1');
+    expect(stored.gclid).toBe('G1');
+  });
+
+  it('an existing first touch blocks ft_ mirror rewrites; lt_ mirror follows', () => {
+    const seeded = mergeAttributionTouch(
+      emptyAttribution(),
+      makeTouch({ source: 'g', medium: 'cpc', clickIds: { gclid: 'FIRST' } }),
+    );
+    const stored = mergeAttributionTouch(seeded, makeTouch({ clickIds: { gclid: 'SECOND' } }));
+    expect(stored.ft_gclid).toBe('FIRST');
+    expect(stored.lt_gclid).toBe('SECOND');
+    expect(stored.gclid).toBe('SECOND');
+  });
+
+  it('empty click IDs never overwrite existing mirrored values', () => {
+    const seeded = mergeAttributionTouch(
+      emptyAttribution(),
+      makeTouch({ source: 'g', medium: 'cpc', clickIds: { fbclid: 'F1' } }),
+    );
+    const stored = mergeAttributionTouch(seeded, makeTouch({ source: 'nl', medium: 'email' }));
+    expect(stored.ft_fbclid).toBe('F1');
+    expect(stored.lt_fbclid).toBe('F1');
+  });
+});
+
+describe('browser IDs top-level (ruling A part a, runtime findings 2026-08-23)', () => {
+  it('writes touch browserIds top-level, newest non-empty wins', () => {
+    let stored = mergeAttributionTouch(
+      emptyAttribution(),
+      makeTouch({ source: 'fb', medium: 'cpc', browserIds: { fbp: 'fbp-1', ga_client_id: '123.456' } }),
+    );
+    expect(stored.fbp).toBe('fbp-1');
+    expect(stored.ga_client_id).toBe('123.456');
+    stored = mergeAttributionTouch(
+      stored,
+      makeTouch({ source: 'fb', medium: 'cpc', browserIds: { fbp: 'fbp-2' } }),
+    );
+    expect(stored.fbp).toBe('fbp-2');
+    expect(stored.ga_client_id).toBe('123.456');
+  });
+
+  it('a touch without browserIds never clears existing values', () => {
+    const seeded = mergeAttributionTouch(
+      emptyAttribution(),
+      makeTouch({ browserIds: { ttp: 'T1' } }),
+    );
+    const stored = mergeAttributionTouch(seeded, makeTouch({ source: 'nl', medium: 'email' }));
+    expect(stored.ttp).toBe('T1');
+  });
+});
+
 describe('stampVersions', () => {
   it('stamps both versions without mutating input', () => {
     const base = { foo: 'bar' };

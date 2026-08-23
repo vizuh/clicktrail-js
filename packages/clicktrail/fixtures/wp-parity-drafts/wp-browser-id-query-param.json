@@ -1,0 +1,23 @@
+{
+  "name": "wp-browser-id-query-param",
+  "description": "[RULING A part a] Browser/platform IDs present as URL QUERY PARAMS populate the top-level payload keys deterministically in core parse (runtime findings ruling, split responsibility). Plugin evidence: BrowserIdentifiers.collect(params) reads fbp/_fbp, fbc/_fbc, ttp/_ttp, li_gc, ga_client_id (format-validated), ga_session_id, ga_session_number (clicutcl-attribution.js:859-906). Cookie-derived IDs are adapter-side behind consent and out of scope here.",
+  "quirk_decision": "CONTRACT (ruling A part a): core collects query-param browser IDs; /browser adapter owns cookie-derived IDs behind the consent gate. ga_client_id is reduced to its last two numeric dot parts exactly like the plugin's parseGaClientId (:826-846).",
+  "input": {
+    "url": "https://example.com/lp?utm_source=facebook&utm_medium=cpc&fbp=fb.1.1787480990000.987654321&_fbc=fb.1.1787480990000.ABC&ttp=ttp_XYZ&li_gc=MTswOzE&ga_client_id=GA1.1.1234567890.9876543210&ga_session_id=1787481000",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T10:30:00.000Z"
+  },
+  "expected": {
+    "fbp": "fb.1.1787480990000.987654321",
+    "fbc": "fb.1.1787480990000.ABC",
+    "ttp": "ttp_XYZ",
+    "li_gc": "MTswOzE",
+    "ga_client_id": "1234567890.9876543210",
+    "ga_session_id": "1787481000",
+    "ft_source": "facebook",
+    "ft_medium": "cpc",
+    "ft_channel": "Facebook Ads",
+    "_channel": "paid_other"
+  }
+}

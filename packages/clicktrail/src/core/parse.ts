@@ -1,12 +1,14 @@
 import type { Channel } from '../conventions/stable.js';
 import type { AttributionTouch, ParseAttributionInput, ParseResult, ParsedTouch } from './types.js';
 import {
+  BROWSER_ID_PARAMS,
   CLICK_ID_KEYS,
   CLICK_ID_PLATFORMS,
   PARAM_ALIASES,
   SEARCH_REFERRER_RULES,
   SOCIAL_REFERRER_RULES,
   UTM_PARAM_TO_FIELD,
+  parseGaClientIdValue,
   resolveChannelLabel,
   type ReferrerRule,
 } from './knowledge.js';
@@ -88,6 +90,8 @@ export function readQuery(url: string): QueryValues | null {
  *   referral with CANONICAL source names. Same-site or related-host
  *   referrers create NO new touch (symmetric check, ruling #8).
  * - A click ID without UTMs still yields a paid touch via its platform map.
+ * - Browser-ID query params (fbc/fbp/ttp/li_gc/ga_*) ride along on the parsed
+ *   touch and land top-level at merge time; bare fbclid derives an fbc.
  * - The landing page stores the FULL href including query string (ruling #12).
  */
 export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
@@ -121,6 +125,34 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   }
   const hasClickId = Object.keys(clickIds).length > 0;
 
+  // --- collect browser IDs present as URL QUERY PARAMS (ruling, runtime
+  // findings 2026-08-23): deterministic core-side collection. Plugin
+  // evidence: BrowserIdentifiers.collect(params) reads the same params
+  // (clicutcl-attribution.js:859-896). Cookie-derived IDs are NOT collected
+  // here — the /browser adapter owns them behind the consent gate.
+  const browserIds: Record<string, string> = {};
+  for (const [param, canonical] of Object.entries(BROWSER_ID_PARAMS)) {
+    if (browserIds[canonical]) continue; // plugin preference: bare variant wins over _-prefixed
+    const raw = query ? query.get(param) : undefined;
+    if (!raw) continue;
+    if (canonical === 'ga_client_id') {
+      // Plugin validates the GA format even for query-param values (:876).
+      const parsed = parseGaClientIdValue(sanitizeField(raw));
+      if (parsed) browserIds[canonical] = parsed;
+    } else {
+      browserIds[canonical] = sanitizeField(raw);
+    }
+  }
+  // Plugin evidence (:860-866): a bare fbclid derives an fbc when no explicit
+  // fbc exists: 'fb.1.' + epochMillis + '.' + fbclid. Deterministic here via
+  // the injected `now`; skipped when the clock is absent/unparseable.
+  if (!browserIds.fbc && clickIds.fbclid) {
+    const nowMs = now ? Date.parse(now) : NaN;
+    if (!Number.isNaN(nowMs)) {
+      browserIds.fbc = sanitizeField(`fb.1.${nowMs}.${clickIds.fbclid}`);
+    }
+  }
+
   if (!hasUtm && !hasClickId) {
     // --- referrer inference path ---
     const rHost = input.referrer ? referrerHostOf(input.referrer) : '';
@@ -143,7 +175,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     });
     return {
       kind: 'touch',
-      touch: { ...touch, clickIds: {}, channel: inferred.channel, channelLabel },
+      touch: { ...touch, clickIds: {}, browserIds, channel: inferred.channel, channelLabel },
     };
   }
 
@@ -168,7 +200,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const channelLabel = resolveChannelLabel({
     source: touch.source, medium: touch.medium, clickIds, referrer: input.referrer ?? '',
   });
-  const withClickIds: ParsedTouch = { ...touch, clickIds, channel, channelLabel };
+  const withClickIds: ParsedTouch = { ...touch, clickIds, browserIds, channel, channelLabel };
   return { kind: 'touch', touch: withClickIds };
 }
 

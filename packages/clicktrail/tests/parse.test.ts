@@ -33,6 +33,59 @@ describe('parseAttributionUrl', () => {
     expect(r.touch.channelLabel).toBe('Facebook Ads');
   });
 
+  it('collects browser-ID query params top-level (ruling A part a)', () => {
+    const r = parseAttributionUrl({
+      url: [
+        'https://example.com/lp?utm_source=facebook&utm_medium=cpc',
+        'fbp=fb.1.1787480990000.987654321',
+        '_fbc=fb.1.1787480990000.ABC',
+        'ttp=ttp_XYZ',
+        'li_gc=MTswOzE',
+        'ga_client_id=GA1.1.1234567890.9876543210',
+        'ga_session_id=1787481000',
+      ].join('&'),
+      now: '2026-08-23T10:30:00.000Z',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    // Plugin preference order: bare variant wins over the _-prefixed one.
+    expect(r.touch.browserIds).toEqual({
+      fbp: 'fb.1.1787480990000.987654321',
+      fbc: 'fb.1.1787480990000.ABC',
+      ttp: 'ttp_XYZ',
+      li_gc: 'MTswOzE',
+      ga_client_id: '1234567890.9876543210',
+      ga_session_id: '1787481000',
+    });
+  });
+
+  it('reduces ga_client_id to its last two numeric parts and rejects bad formats', () => {
+    const good = parseAttributionUrl({ url: 'https://example.com/?utm_source=a&utm_medium=cpc&ga_client_id=GA1.1.111.222' });
+    const bad = parseAttributionUrl({ url: 'https://example.com/?utm_source=a&utm_medium=cpc&ga_client_id=not-a-ga-id' });
+    if (good.kind !== 'touch' || bad.kind !== 'touch') throw new Error('expected touches');
+    expect(good.touch.browserIds?.ga_client_id).toBe('111.222');
+    expect(bad.touch.browserIds?.ga_client_id).toBeUndefined();
+  });
+
+  it('derives fbc from a bare fbclid (plugin BrowserIdentifiers evidence)', () => {
+    const withExplicit = parseAttributionUrl({
+      url: 'https://example.com/?fbclid=Abc&fbc=fbc-explicit',
+      now: '2026-08-23T10:00:00.000Z',
+    });
+    const derived = parseAttributionUrl({
+      url: 'https://example.com/?fbclid=Abc',
+      now: '2026-08-23T10:00:00.000Z',
+    });
+    const noClock = parseAttributionUrl({ url: 'https://example.com/?fbclid=Abc' });
+    if (withExplicit.kind !== 'touch' || derived.kind !== 'touch' || noClock.kind !== 'touch') {
+      throw new Error('expected touches');
+    }
+    expect(withExplicit.touch.browserIds?.fbc).toBe('fbc-explicit');
+    expect(derived.touch.browserIds?.fbc).toBe(`fb.1.${Date.parse('2026-08-23T10:00:00.000Z')}.Abc`);
+    // No injected clock -> no derivation (deterministic).
+    expect(noClock.touch.browserIds?.fbc).toBeUndefined();
+  });
+
   it('classifies a google referrer as organic search with canonical source name', () => {
     const r = parseAttributionUrl({
       url: 'https://example.com/',
