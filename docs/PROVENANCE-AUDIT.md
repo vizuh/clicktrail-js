@@ -201,11 +201,16 @@ Assessment per category-2 item, ASSUMING sole ownership holds:
   under the tool's terms. Question: confirm Anthropic/Claude terms of use
   assign output rights to you, and record the attestation beside this
   audit. Low risk; document it rather than solve it.
-- **B4 — npm scope + artifact hygiene.** Verify `@funnelsheet` scope
-  ownership (already a stated precondition) AND that the published tarball
-  excludes `tools/wp-runtime/` (which references and executes GPL plugin
-  code) — check `packages/clicktrail/package.json` `files` field before
-  publish.
+- **B4 — npm scope + artifact hygiene.** CORRECTED per Hugo review (2026-08-23):
+  an E404 for `@funnelsheet/clicktrail` proves only that the PACKAGE does not
+  exist — it does NOT prove the `funnelsheet` scope is available, or owned by
+  Hugo. Scope ownership requires verifying the AUTHENTICATED npm user and
+  organization membership separately (`npm whoami`, `npm org ls <scope>`) once
+  the permanent namespace decision is made. Artifact-hygiene half of B4 is
+  VERIFIED: the packed tarball contains only dist/, README.md and package.json;
+  tools/wp-runtime/ (which loads/executes GPL plugin JS at dev time) is outside
+  the published package and not referenced by it. Re-run the pack inspection on
+  every release candidate regardless.
 
 ## 6. Bottom line
 
