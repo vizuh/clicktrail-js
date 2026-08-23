@@ -102,3 +102,5 @@ Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing paylo
 | ft_<cid>/lt_<cid> click-ID mirror | PLUGIN is CONTRACT: merge mirrors each captured click ID into the touch fields at first- AND last-touch write time (matches applyTouch(mapQueryFields)). Redundant but required for WP-swap field-for-field parity; downstream consumers may read them. |
 
 Target after implementation: runtime harness diffs shrink to ONLY rulings #1/#2/#6/#7/#10/#14 standing deviations.
+
+| Sticky top-level click IDs | ENGINE keeps newest-non-empty-wins (consistent with last-touch philosophy; ft_/lt_ mirrors now give consumers BOTH first and latest values). Recorded as standing deviation D3 -> joins the Hugo confirmation gate before WP swap. |

@@ -40,6 +40,12 @@ export const SESSION_STATE_KEY = 'ct_session'; // DATA-MODEL.md:234, :240
  * withdrawn visitor leaves no tracking-capable state behind.
  */
 export const SIGNING_KEY_KEY = 'ct_signing_key';
+/**
+ * Durable cross-session journey id (`/conversation` subpath). Correlation
+ * state like every identity key: written only while consent allows and
+ * wiped on denial so a withdrawn visitor leaves nothing behind.
+ */
+export const JOURNEY_ID_KEY = 'ct_journey_id';
 
 /** Every surface `clearAttributionStorage` must wipe on consent denial. */
 export const ATTRIBUTION_STORAGE_KEYS: readonly string[] = [
@@ -49,6 +55,7 @@ export const ATTRIBUTION_STORAGE_KEYS: readonly string[] = [
   VISITOR_ID_FALLBACK_KEY,
   SESSION_STATE_KEY,
   SIGNING_KEY_KEY,
+  JOURNEY_ID_KEY,
 ];
 
 /** Delete every known attribution/identity key from the given adapters. */

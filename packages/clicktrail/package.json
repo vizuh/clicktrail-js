@@ -15,6 +15,10 @@
       "types": "./dist/incubating.d.ts",
       "default": "./dist/incubating.js"
     },
+    "./conversation": {
+      "types": "./dist/conversation/index.d.ts",
+      "default": "./dist/conversation/index.js"
+    },
     "./package.json": "./package.json",
     "./browser": {
       "types": "./dist/browser/index.d.ts",

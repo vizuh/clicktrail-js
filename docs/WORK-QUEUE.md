@@ -21,11 +21,11 @@ Rules for every task:
 | 4 | Storage/session adapters: cookie+localStorage mirror with expiry metadata, visitor_id/session_id generation, 30-min session roll (injected clock) | 2 | DONE by worker (storage-sessions), awaiting supervisor review | New `src/browser/{storage,payload-store,identity}.ts` + 4 test files; `create-clicktrail.ts` wired (`config.storage`: retentionDays, cookieAttrs, adapter/randomBytes/nowMs overrides) and `browser/index.ts` re-exported. 125 tests green, strict typecheck clean, build passes. LEGACY_KEY_ALIASES = first_*/last_* -> ft_*/lt_* per DATA-MODEL.md:123 (canonical wins when non-empty). Mirror envelope {v:1, expires_at, data}; legacy entries without metadata discarded on read. Consent denial clears payload + all 5 documented keys across both adapters incl. legacy ct_attribution. rollSession pure + table-driven (boundary rolls at elapsed==timeout; clock skew does not roll). All randomness/clock/document access behind injected seams. Uncommitted. |
 | 5 | Form injection + link decoration (cross-domain continuity, approved domains) | 2 | DONE (7c5bc9b) | ct_ prefix verified vs plugin source; default field subset is documented deviation; extended fields via config |
 | 6 | WP parity fixture capture from live click-trail-handler plugin behavior | 2 gate | LIVE VALIDATION DONE (3e28135) | 14 MATCH / 8 RULED DIFF / 0 errors; 2 findings ruled -> follow-up item #12 |
-| 7 | `/conversation` subpath (Chatwoot journey attributes, captureContent=false default) | 3 | QUEUED | |
+| 7 | `/conversation` subpath (Chatwoot journey attributes, captureContent=false default) | 3 | REQUEUED (first attempt completed without producing files or a reply) | |
 | 8 | `/agent` subpath (agent_run events, actor model, tool-call metadata) | 3 | QUEUED | |
 | 9 | `/otel` subpath (traceparent correlation exporter) | 3 | QUEUED | Optional peer dep design |
 | 10 | `/apointoo` destination subpath | 3 | QUEUED | |
-| 12 | Implement runtime-finding rulings: core parses browser-ID URL params; adapter collects consent-gated cookie IDs; merge mirrors click IDs into ft_/lt_ fields; update fixtures; rerun `pnpm parity` expecting only ruled diffs | 2 freeze prep | IN PROGRESS (worker: ruling-implementer) | |
+| 12 | Implement runtime-finding rulings: core parses browser-ID URL params; adapter collects consent-gated cookie IDs; merge mirrors click IDs into ft_/lt_ fields; update fixtures; rerun `pnpm parity` expecting only ruled diffs | 2 freeze prep | DONE (fa3127b) | 16 MATCH/9 RULED DIFF/0 new; sticky-top-level-cid ruled as deviation D3 (Hugo gate) |
 | 11 | Core parity fixes per WP-PARITY-DRAFT.md SUPERVISOR RULINGS | 2 prep | DONE (396a1ad) | 13 drafts flipped to CONTRACT; 5 standing deviations pinned (incl. bare-click-id inference -> Hugo gate before WP swap); versions 1.1.0 |
 
 ## Done
@@ -41,3 +41,4 @@ Rules for every task:
 | #4 storage + identity/session adapters (125 tests green) | 01b5a12 |
 | #5 form injection + cross-domain tokens (189 tests green) | 7c5bc9b |
 | #6 runtime parity harness (real plugin JS executed, 23 fixtures) | 3e28135 |
+| #12 ruling implementation (16 MATCH / 9 RULED DIFF / 0 unexplained) | fa3127b |
