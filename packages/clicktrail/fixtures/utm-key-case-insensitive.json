@@ -1,0 +1,17 @@
+{
+  "name": "utm-key-case-insensitive",
+  "description": "Mixed-case UTM keys are lowercased before lookup (ruling #9); values keep their original casing.",
+  "quirk_decision": "CONTRACT: ALL query keys lowercased before lookup; values preserved verbatim.",
+  "input": {
+    "url": "https://example.com/campaign?Utm_Source=fAcEbOoK&UTM_MEDIUM=paid_social",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T09:30:00.000Z"
+  },
+  "expected": {
+    "ft_source": "fAcEbOoK",
+    "ft_medium": "paid_social",
+    "ft_channel": "Facebook Ads",
+    "_channel": "paid_other"
+  }
+}

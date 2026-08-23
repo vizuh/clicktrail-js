@@ -1,15 +1,15 @@
 {
   "name": "wp-plus-sign-preserved",
   "description": "[PLUGIN BEHAVIOR] getQueryParams decodes values with decodeURIComponent only, so '+' stays literal. The TS engine uses URLSearchParams, which decodes '+' as space.",
-  "quirk_decision": "DISAGREEMENT: plugin stores 'best+clinic' (decodeURIComponent, clicutcl-attribution.js:430-437); engine stores 'best clinic'. Conflicts with golden fixture google-ads-utm-gclid which assumes engine behavior.",
+  "quirk_decision": "CONTRACT (ruled #10): '+' decodes as space (browser/URL standard; how ad platforms encode spaces). Plugin literal-'+' recorded as accident. Original note: decodeURIComponent vs URLSearchParams.",
   "input": {
     "url": "https://example.com/?utm_source=google&utm_term=best+clinic",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:05:00Z"
+    "now": "2026-08-23T10:05:00.000Z"
   },
   "expected": {
-    "ft_term": "best+clinic",
-    "lt_term": "best+clinic"
+    "ft_term": "best clinic",
+    "lt_term": "best clinic"
   }
 }

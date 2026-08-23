@@ -6,19 +6,21 @@
     "url": "https://example.com/pricing?utm_source=google&utm_medium=cpc&utm_campaign=botox-nyc&utm_term=best+clinic&gclid=EAIaIQobChMTest",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:00:00Z"
+    "now": "2026-08-23T10:00:00.000Z"
   },
   "expected": {
     "ft_source": "google",
     "ft_medium": "cpc",
     "ft_campaign": "botox-nyc",
     "ft_term": "best clinic",
-    "ft_landing_page": "https://example.com/pricing",
-    "ft_touch_timestamp": "2026-08-23T10:00:00Z",
+    "ft_landing_page": "https://example.com/pricing?utm_source=google&utm_medium=cpc&utm_campaign=botox-nyc&utm_term=best+clinic&gclid=EAIaIQobChMTest",
+    "ft_touch_timestamp": "2026-08-23T10:00:00.000Z",
     "lt_source": "google",
     "lt_medium": "cpc",
     "lt_campaign": "botox-nyc",
     "gclid": "EAIaIQobChMTest",
-    "_channel": "paid_search"
+    "_channel": "paid_search",
+    "lt_landing_page": "https://example.com/pricing?utm_source=google&utm_medium=cpc&utm_campaign=botox-nyc&utm_term=best+clinic&gclid=EAIaIQobChMTest",
+    "ft_channel": "Google Ads"
   }
 }

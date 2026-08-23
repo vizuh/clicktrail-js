@@ -28,6 +28,11 @@ export interface ParsedTouch extends AttributionTouch {
   /** Classification result derived from click IDs, UTMs, or referrer class. */
   channel: import('../conventions/stable.js').Channel;
   /**
+   * Human-readable channel label (CHANNEL_LABELS layer, e.g. 'Google Ads',
+   * 'Facebook Organic', 'ChatGPT'). Written to ft_channel / lt_channel by merge.
+   */
+  channelLabel: string;
+  /**
    * Click IDs found in the URL (canonical keys, aliases folded).
    * Carried here so downstream merge never needs the raw URL again.
    */
@@ -40,7 +45,12 @@ export interface ParseAttributionInput {
   referrer?: string;
   /** Host of the current page, used to ignore internal referrals. */
   currentHost?: string;
-  /** Injected timestamp (ISO-8601). Callers own the clock. */
+  /**
+   * Injected timestamp. FROZEN FORMAT: millisecond ISO-8601, i.e.
+   * '2026-08-23T10:00:00.000Z' — exactly what `new Date().toISOString()`
+   * emits (ruling #13). Callers own the clock and MUST pass millisecond
+   * precision; the engine stores the string verbatim.
+   */
   now?: string;
 }
 

@@ -20,7 +20,9 @@ export function emptyAttribution(): AttributionPayload {
  * Merge a parsed touch into a stored canonical payload.
  *
  * Contract (property-tested):
- * - FIRST touch is write-once: existing non-empty ft_ values are never overwritten.
+ * - FIRST touch is write-once: existing non-empty ft_ values are never
+ *   overwritten. The emptiness guard counts ft_<clickid> keys too
+ *   (ruling #17): a bare-gclid first landing IS a first touch.
  * - LAST touch always overwrites lt_ values when a valid touch arrives.
  * - Click IDs overwrite with the newest non-empty value.
  * - The input is never mutated; a new object is returned.
@@ -31,10 +33,11 @@ export function mergeAttributionTouch(
 ): AttributionPayload {
   const next: AttributionPayload = { ...stored };
 
-  // First touch: write-once.
+  // First touch: write-once. A stored click ID alone blocks the overwrite.
   const ftEmpty =
     !next[FT.source] && !next[FT.medium] && !next[FT.campaign] &&
-    !next[FT.referrer] && !next[FT.landingPage];
+    !next[FT.referrer] && !next[FT.landingPage] &&
+    CLICK_ID_KEYS.every((key) => !next[`ft_${key}`]);
   if (ftEmpty) {
     next[FT.source] = touch.source;
     next[FT.medium] = touch.medium;
@@ -45,6 +48,7 @@ export function mergeAttributionTouch(
     next[FT.utmSourcePlatform] = touch.utmSourcePlatform;
     next[FT.utmCreativeFormat] = touch.utmCreativeFormat;
     next[FT.utmMarketingTactic] = touch.utmMarketingTactic;
+    next[FT.channel] = touch.channelLabel;
     next[FT.referrer] = touch.referrer;
     next[FT.landingPage] = touch.landingPage;
     next[FT.touchTimestamp] = touch.touchTimestamp;
@@ -60,6 +64,7 @@ export function mergeAttributionTouch(
   next[LT.utmSourcePlatform] = touch.utmSourcePlatform;
   next[LT.utmCreativeFormat] = touch.utmCreativeFormat;
   next[LT.utmMarketingTactic] = touch.utmMarketingTactic;
+  next[LT.channel] = touch.channelLabel;
   next[LT.referrer] = touch.referrer;
   next[LT.landingPage] = touch.landingPage;
   next[LT.touchTimestamp] = touch.touchTimestamp;
@@ -75,16 +80,21 @@ export function mergeAttributionTouch(
 
 /**
  * Extract click IDs from a URL into canonical payload keys.
- * `sc_click_id` folds into `sccid`.
+ * `sc_click_id` folds into `sccid`. Keys are matched case-insensitively and
+ * the LAST occurrence of a duplicate parameter wins (rulings #9/#11).
  */
 export function extractClickIds(url: string): Record<string, string> {
   const out: Record<string, string> = {};
   try {
-    const params = new URL(url).searchParams;
-    for (const [rawKey, rawValue] of params.entries()) {
-      const key = rawKey === 'sc_click_id' ? 'sccid' : rawKey;
-      if ((CLICK_ID_KEYS as readonly string[]).includes(key) && rawValue) {
-        out[key] = sanitizeField(rawValue);
+    // Collect lowercased keys with last-occurrence-wins semantics.
+    const flat = new Map<string, string>();
+    for (const [rawKey, rawValue] of new URL(url).searchParams.entries()) {
+      flat.set(rawKey.toLowerCase(), rawValue);
+    }
+    for (const [key, value] of flat) {
+      const canonical = key === 'sc_click_id' ? 'sccid' : key;
+      if ((CLICK_ID_KEYS as readonly string[]).includes(canonical) && value) {
+        out[canonical] = sanitizeField(value);
       }
     }
   } catch {

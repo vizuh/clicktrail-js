@@ -1,12 +1,12 @@
 {
   "name": "wp-timestamp-millisecond-precision",
   "description": "[PLUGIN BEHAVIOR] Touch timestamps come from new Date().toISOString(), which ALWAYS carries milliseconds ('...T10:00:00.000Z'). Golden engine fixtures show second precision ('...Z' without millis).",
-  "quirk_decision": "DISAGREEMENT (minor, formatting): plugin emits millisecond-precision ISO-8601 (new Date().toISOString()); engine golden fixtures assume second precision. Choose one canonical format.",
+  "quirk_decision": "CONTRACT (ruling #13): millisecond ISO-8601 ('...T10:00:00.000Z') is the FROZEN timestamp format (plugin new Date().toISOString() + ISO standard). Callers own the clock and must pass millisecond precision; the engine stores the string verbatim (documented on ParseAttributionInput.now).",
   "input": {
     "url": "https://example.com/?utm_source=google&utm_medium=cpc",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:00:00Z"
+    "now": "2026-08-23T10:00:00.000Z"
   },
   "expected": {
     "ft_touch_timestamp": "2026-08-23T10:00:00.000Z",

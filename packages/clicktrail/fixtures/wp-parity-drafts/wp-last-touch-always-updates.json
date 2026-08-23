@@ -13,7 +13,7 @@
     "url": "https://example.com/spring?utm_source=meta&utm_medium=paid_social",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T12:05:00Z"
+    "now": "2026-08-23T12:05:00.000Z"
   },
   "expected": {
     "ft_source": "google",
@@ -21,6 +21,7 @@
     "ft_touch_timestamp": "2026-08-01T09:00:00Z",
     "lt_source": "meta",
     "lt_medium": "paid_social",
-    "_channel": "Facebook Ads"
+    "_channel": "paid_other",
+    "lt_channel": "Facebook Ads"
   }
 }

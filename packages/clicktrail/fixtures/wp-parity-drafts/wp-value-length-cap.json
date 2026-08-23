@@ -1,14 +1,14 @@
 {
   "name": "wp-value-length-cap",
   "description": "[PLUGIN BEHAVIOR] Field values pass two sanitizeValue passes: 256 chars at getQueryParams, then 128 at mapQueryFields -> effective cap 128 for touch fields. Referrers cap at 256. Engine caps everything at 512.",
-  "quirk_decision": "UNDECIDED: which length limit is contract? Plugin effective limits (128 touch / 256 referrer) vs engine uniform 512. The 131-char campaign value in input survives intact in the engine but is cut to 128 by the plugin.",
+  "quirk_decision": "CONTRACT (ruled 14+16): uniform 512-char cap kept; control chars deleted. Plugin's two-pass 128/256 caps recorded as accident/documented deviation. The 131-char campaign value survives intact.",
   "input": {
     "url": "https://example.com/?utm_source=google&utm_campaign=CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T12:25:00Z"
+    "now": "2026-08-23T12:25:00.000Z"
   },
   "expected": {
-    "ft_campaign": "CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    "ft_campaign": "CAMP-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
   }
 }

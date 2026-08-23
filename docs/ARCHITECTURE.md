@@ -72,6 +72,21 @@ These shape Phase 1b/2 APIs; core stays untouched:
 - **Logging**: bounded, retention-aware local logs; no PII beyond what
   attribution requires.
 
+## Frozen formats (WP-parity rulings, 2026-08-23)
+
+Binding rulings and their fixture-level pins live in `docs/WP-PARITY-DRAFT.md`
+(supervisor rulings table). Formats every caller must honor:
+
+- **Timestamps**: millisecond ISO-8601 (`'2026-08-23T10:00:00.000Z'`) — exactly
+  what `new Date().toISOString()` emits. Callers own the clock and must pass
+  millisecond precision; core stores the string verbatim.
+- **Channel labels**: `ft_channel` / `lt_channel` carry human-readable labels
+  ('Google Ads', 'Facebook Organic', AI-assistant names) from the versioned
+  `CHANNEL_LABELS` table; machine enum channels remain authoritative.
+- **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.1.0`. The 1.x
+  line is the UNPUBLISHED development line (package pre-release); these bumps
+  record semantic decisions, not published breaking releases.
+
 ## Fixture policy
 
 - Fixtures live under `packages/clicktrail/fixtures/` as JSON:

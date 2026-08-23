@@ -1,17 +1,18 @@
 {
   "name": "meta-paid-fbclid-only",
   "description": "Meta ad click with fbclid but no UTMs.",
-  "quirk_decision": "CONTRACT: click ID without UTMs yields paid touch via CLICK_ID_PLATFORMS.",
+  "quirk_decision": "CONTRACT: click ID without UTMs yields paid touch via CLICK_ID_PLATFORMS (supervisor ruling #2: intentional deviation from plugin; bare fbclid -> 'Facebook Organic' in the plugin is factually wrong attribution; Hugo must confirm before the WP runtime swap ships).",
   "input": {
     "url": "https://example.com/?fbclid=IwARabc123",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T11:00:00Z"
+    "now": "2026-08-23T11:00:00.000Z"
   },
   "expected": {
     "ft_source": "facebook",
     "ft_medium": "cpc",
     "fbclid": "IwARabc123",
-    "_channel": "paid_social"
+    "_channel": "paid_social",
+    "ft_channel": "Facebook Ads"
   }
 }

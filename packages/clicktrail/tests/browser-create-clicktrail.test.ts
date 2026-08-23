@@ -90,8 +90,9 @@ describe('createClickTrail', () => {
       utmMarketingTactic: '',
       referrer: '',
       landingPage: 'https://example.com/pricing',
-      touchTimestamp: '2026-08-23T10:00:00Z',
+      touchTimestamp: '2026-08-23T10:00:00.000Z',
       channel: 'paid_search',
+      channelLabel: 'Google Ads',
       clickIds: { gclid: 'GTEST' },
     });
     ct.track('page_view');

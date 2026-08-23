@@ -1,15 +1,19 @@
 {
   "name": "wp-fbclid-only-organic-facebook",
   "description": "[PLUGIN BEHAVIOR] fbclid WITHOUT a paid utm_medium produces NO source/medium inference and channel 'Facebook Organic' (clicutcl-attribution.js:327-329,381-382). Only the bare fbclid field is written.",
-  "quirk_decision": "DISAGREEMENT: engine infers source=facebook, medium=cpc, channel=paid_social from bare fbclid. Directly conflicts with golden fixture meta-paid-fbclid-only (marked CONTRACT). Supervisor must decide which is contract.",
+  "quirk_decision": "DISAGREEMENT (standing, ruled #2): engine infers source=facebook, medium=cpc, channel=paid_social and label 'Facebook Ads' from bare fbclid; plugin writes only the raw field + 'Facebook Organic'. Intentional engine deviation; requires Hugo confirmation before WP runtime swap. Original note: directly conflicts with golden meta-paid-fbclid-only (marked CONTRACT).",
   "input": {
     "url": "https://example.com/?fbclid=IwARabc123",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:30:00Z"
+    "now": "2026-08-23T10:30:00.000Z"
   },
   "expected": {
     "fbclid": "IwARabc123",
-    "_channel": "Facebook Organic"
+    "ft_source": "facebook",
+    "ft_medium": "cpc",
+    "ft_channel": "Facebook Ads",
+    "lt_channel": "Facebook Ads",
+    "_channel": "paid_social"
   }
 }

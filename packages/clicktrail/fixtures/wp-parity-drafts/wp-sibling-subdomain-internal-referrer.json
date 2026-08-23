@@ -1,12 +1,12 @@
 {
   "name": "wp-sibling-subdomain-internal-referrer",
   "description": "[PLUGIN BEHAVIOR] Related-host detection is SYMMETRIC: referrer example.com visiting shop.example.com is internal (either host endsWith the other). Engine's hostMatches only checks referrer-is-subdomain-of-current.",
-  "quirk_decision": "DISAGREEMENT: plugin -> no touch (areRelatedHosts symmetric, clicutcl-attribution.js:220-227); engine -> creates a referral touch because 'example.com' is not a subdomain of 'shop.example.com'.",
+  "quirk_decision": "CONTRACT (ruling #8): related-host detection is SYMMETRIC (either host equals or is a subdomain of the other) and external referrers must be http(s). Original note: engine's hostMatches only checked referrer-is-subdomain-of-current.",
   "input": {
     "url": "https://shop.example.com/product",
     "referrer": "https://example.com/blog",
     "currentHost": "shop.example.com",
-    "now": "2026-08-23T11:20:00Z"
+    "now": "2026-08-23T11:20:00.000Z"
   },
   "expected": {
     "_no_touch_reason": "internal_referrer"

@@ -1,7 +1,7 @@
 {
   "name": "wp-first-touch-guard-counts-click-ids",
   "description": "[MERGE-LEVEL][PLUGIN BEHAVIOR] hasFirstTouch() counts ft_<clickid> keys, so a stored payload holding ONLY ft_gclid blocks any new first touch. Engine's ftEmpty check looks only at source/medium/campaign/referrer/landingPage and would overwrite ft with the new touch.",
-  "quirk_decision": "DISAGREEMENT: plugin preserves original ft (click-ID-only first touch is still a first touch); engine overwrites ft fields with the newer UTM touch. NOTE: uses extra 'stored' key -- fixture harness must support stored state for merge scenarios.",
+  "quirk_decision": "CONTRACT (ruling #17): first-touch emptiness guard counts ft_<clickid> keys -- a bare-gclid landing IS a first touch. Original note: plugin preserves original ft; engine previously overwrote ft fields with the newer UTM touch. Fixture harness supports top-level 'stored'.",
   "stored": {
     "ft_gclid": "G-FIRST",
     "gclid": "G-FIRST"
@@ -10,12 +10,14 @@
     "url": "https://example.com/newsletter?utm_source=nl&utm_medium=email",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T12:00:00Z"
+    "now": "2026-08-23T12:00:00.000Z"
   },
   "expected": {
     "ft_gclid": "G-FIRST",
+    "gclid": "G-FIRST",
     "lt_source": "nl",
     "lt_medium": "email",
-    "_channel": "Unknown"
+    "lt_channel": "Unknown",
+    "_channel": "email"
   }
 }

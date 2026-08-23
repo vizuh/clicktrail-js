@@ -6,11 +6,12 @@
     "url": "https://example.com/services",
     "referrer": "https://www.google.com/search?q=botox+nyc",
     "currentHost": "example.com",
-    "now": "2026-08-23T12:00:00Z"
+    "now": "2026-08-23T12:00:00.000Z"
   },
   "expected": {
-    "ft_source": "google.com",
+    "ft_source": "google",
     "ft_medium": "organic",
-    "_channel": "organic_search"
+    "_channel": "organic_search",
+    "ft_channel": "Google Organic"
   }
 }

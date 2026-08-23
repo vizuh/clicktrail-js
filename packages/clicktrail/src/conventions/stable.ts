@@ -9,11 +9,24 @@
  * Naming scheme: ATTR_${attributeName}, ${NAME}_VALUE_${enum}, EVENT_${eventName}.
  */
 
-/** Schema version of the canonical flat payload. Additive changes only within a major. */
-export const SCHEMA_VERSION = '1.0.0' as const;
+/**
+ * Schema version of the canonical flat payload. Additive changes only within
+ * a major. 1.1.0 adds ft_channel / lt_channel (WP-parity channel-label layer).
+ *
+ * NOTE: 1.x is the UNPUBLISHED development line (package pre-release); these
+ * bumps record semantic decisions, not published breaking releases.
+ */
+export const SCHEMA_VERSION = '1.1.0' as const;
 
-/** Version of the channel classification rules. Semantic changes are MAJOR releases. */
-export const CLASSIFIER_VERSION = '1.0.0' as const;
+/**
+ * Version of the channel classification rules. Semantic changes are MAJOR
+ * releases once published; see the 1.x development-line note above.
+ * 1.1.0: canonical referrer source names, explicit domain-suffix rules,
+ * macro rejection, symmetric related-host check, case-insensitive/last-wins
+ * query parsing, full-href landing page, click-ID-aware first-touch guard,
+ * and the ft_channel/lt_channel label layer.
+ */
+export const CLASSIFIER_VERSION = '1.1.0' as const;
 
 // --- first-touch attributes -------------------------------------------------
 

@@ -1,0 +1,16 @@
+{
+  "name": "duplicate-param-last-wins",
+  "description": "Duplicate query parameters: LAST occurrence wins (ruling #11), matching plugin and server-parser convention.",
+  "quirk_decision": "CONTRACT: last occurrence of a duplicated parameter wins.",
+  "input": {
+    "url": "https://example.com/?utm_campaign=old-name&utm_medium=cpc&utm_campaign=renamed-campaign",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T09:20:00.000Z"
+  },
+  "expected": {
+    "ft_campaign": "renamed-campaign",
+    "lt_campaign": "renamed-campaign",
+    "ft_medium": "cpc"
+  }
+}

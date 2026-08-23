@@ -6,11 +6,12 @@
     "url": "https://example.com/",
     "referrer": "https://l.instagram.com/?u=https%3A%2F%2Fexample.com",
     "currentHost": "example.com",
-    "now": "2026-08-23T13:00:00Z"
+    "now": "2026-08-23T13:00:00.000Z"
   },
   "expected": {
-    "ft_source": "l.instagram.com",
+    "ft_source": "instagram",
     "ft_medium": "social",
-    "_channel": "organic_social"
+    "_channel": "organic_social",
+    "ft_channel": "Instagram Organic"
   }
 }

@@ -9,6 +9,7 @@ function makeTouch(overrides: Partial<ParsedTouch> = {}): ParsedTouch {
     utmId: '', utmSourcePlatform: '', utmCreativeFormat: '', utmMarketingTactic: '',
     referrer: '', landingPage: '', touchTimestamp: '2026-01-01T00:00:00Z',
     channel: 'direct' as never,
+    channelLabel: '',
     clickIds: {},
     ...overrides,
   };
@@ -63,12 +64,28 @@ describe('extractClickIds', () => {
   });
 });
 
+describe('first-touch guard counts click IDs (ruling #17)', () => {
+  it('a stored ft_<clickid> (plugin-format payload) blocks later ft overwrites but still updates lt', () => {
+    // Seed mirrors a payload migrated from the WP plugin, which stores ft_<clickid> keys.
+    const seeded = { ...emptyAttribution(), ft_gclid: 'G-FIRST' };
+    let stored = mergeAttributionTouch(seeded, makeTouch({ clickIds: { gclid: 'G2' } }));
+    expect(stored.ft_source).toBe('');
+    expect(stored.ft_gclid).toBe('G-FIRST');
+    stored = mergeAttributionTouch(stored, makeTouch({ source: 'nl', medium: 'email', channelLabel: 'Unknown' }));
+    expect(stored.ft_source).toBe('');
+    expect(stored.ft_gclid).toBe('G-FIRST');
+    expect(stored.lt_source).toBe('nl');
+    expect(stored.ft_channel).toBe('');
+    expect(stored.lt_channel).toBe('Unknown');
+  });
+});
+
 describe('stampVersions', () => {
   it('stamps both versions without mutating input', () => {
     const base = { foo: 'bar' };
     const out = stampVersions(base);
-    expect(out.schema_version).toBe('1.0.0');
-    expect(out.classifier_version).toBe('1.0.0');
+    expect(out.schema_version).toBe('1.1.0');
+    expect(out.classifier_version).toBe('1.1.0');
     expect(base).toEqual({ foo: 'bar' });
   });
 });

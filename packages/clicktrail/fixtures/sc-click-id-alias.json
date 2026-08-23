@@ -6,10 +6,11 @@
     "url": "https://example.com/promo?sc_click_id=SC991",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T15:00:00Z"
+    "now": "2026-08-23T15:00:00.000Z"
   },
   "expected": {
     "sccid": "SC991",
-    "_channel": "paid_social"
+    "_channel": "paid_social",
+    "ft_channel": "Snapchat Ads"
   }
 }

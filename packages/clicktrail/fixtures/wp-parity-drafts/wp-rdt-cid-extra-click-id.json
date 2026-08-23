@@ -1,15 +1,14 @@
 {
   "name": "wp-rdt-cid-extra-click-id",
   "description": "[PLUGIN BEHAVIOR] rdt_cid (Reddit) IS a captured click ID in the plugin JS (CLICK_ID_KEYS, clicutcl-attribution.js:27-31) and yields channel 'Reddit Ads', but it is NOT in the documented portable contract nor in the engine's CLICK_ID_KEYS.",
-  "quirk_decision": "DISAGREEMENT: plugin captures rdt_cid; engine ignores it (falls to referrer/no_signal). Contract-vs-accident: plugin events.js outbound allowlist (line 1879-1884) EXCLUDES rdt_cid, suggesting accidental inclusion in storage.",
+  "quirk_decision": "DISAGREEMENT (standing, ruled #1): rdt_cid is NOT in the engine's 10-key contract list; plugin capture was storage-only legacy (events.js outbound allowlist excludes it). Engine ignores it entirely -> no_signal.",
   "input": {
     "url": "https://example.com/?rdt_cid=ttd123456",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:20:00Z"
+    "now": "2026-08-23T10:20:00.000Z"
   },
   "expected": {
-    "rdt_cid": "ttd123456",
-    "_channel": "Reddit Ads"
+    "_no_touch_reason": "no_signal"
   }
 }

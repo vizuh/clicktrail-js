@@ -1,16 +1,17 @@
 {
   "name": "wp-mc-eid-mailchimp",
   "description": "[PLUGIN BEHAVIOR] mc_cid / mc_eid are captured click IDs and yield channel 'Mailchimp' (email-platform signals, clicutcl-attribution.js:332). Engine has neither key nor email-channel concept.",
-  "quirk_decision": "DISAGREEMENT: plugin captures mc_eid/mc_cid as click IDs + Mailchimp channel; engine ignores both.",
+  "quirk_decision": "DISAGREEMENT (standing, ruled #1): mc_cid/mc_eid are NOT captured click IDs in the engine (plugin extras dropped as storage-only legacy; documented portable contract lists exactly the engine's 10 keys). Engine keeps the UTM touch only; 'Mailchimp' label reserved but its mc_* trigger is gone.",
   "input": {
     "url": "https://example.com/?mc_eid=abc123&utm_source=mailchimp",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:25:00Z"
+    "now": "2026-08-23T10:25:00.000Z"
   },
   "expected": {
-    "mc_eid": "abc123",
     "ft_source": "mailchimp",
-    "_channel": "Mailchimp"
+    "ft_channel": "Unknown",
+    "lt_channel": "Unknown",
+    "_channel": "unknown"
   }
 }

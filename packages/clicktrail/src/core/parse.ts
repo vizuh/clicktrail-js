@@ -3,12 +3,14 @@ import type { AttributionTouch, ParseAttributionInput, ParseResult, ParsedTouch 
 import {
   CLICK_ID_KEYS,
   CLICK_ID_PLATFORMS,
-  ORGANIC_SEARCH_HOSTS,
-  ORGANIC_SOCIAL_HOSTS,
   PARAM_ALIASES,
+  SEARCH_REFERRER_RULES,
+  SOCIAL_REFERRER_RULES,
   UTM_PARAM_TO_FIELD,
+  resolveChannelLabel,
+  type ReferrerRule,
 } from './knowledge.js';
-import { hostMatches, normalizeHost, sanitizeField } from './sanitize.js';
+import { areRelatedHosts, hostMatches, normalizeHost, sanitizeField } from './sanitize.js';
 
 function emptyTouch(now?: string, landingPage = ''): AttributionTouch & { clickIds: Record<string, string> } {
   return {
@@ -19,20 +21,29 @@ function emptyTouch(now?: string, landingPage = ''): AttributionTouch & { clickI
   };
 }
 
+function matchesRule(referrerHost: string, rule: ReferrerRule): boolean {
+  return rule.domains.some((domain) => hostMatches(referrerHost, domain));
+}
+
+/** Canonical source names (ruling #4); explicit suffix rules incl. intl TLDs (ruling #5). */
 function classifyReferrerHost(referrerHost: string): { source: string; channel: Channel } {
-  for (const frag of ORGANIC_SEARCH_HOSTS) {
-    if (referrerHost.includes(frag)) return { source: referrerHost, channel: 'organic_search' };
+  for (const rule of SEARCH_REFERRER_RULES) {
+    if (matchesRule(referrerHost, rule)) return { source: rule.source, channel: 'organic_search' };
   }
-  for (const frag of ORGANIC_SOCIAL_HOSTS) {
-    if (referrerHost.includes(frag)) return { source: referrerHost, channel: 'organic_social' };
+  for (const rule of SOCIAL_REFERRER_RULES) {
+    if (matchesRule(referrerHost, rule)) return { source: rule.source, channel: 'organic_social' };
   }
   return { source: referrerHost, channel: 'referral' };
 }
 
-/** Extract the host portion of a referrer URL; '' when unparseable/same-page anchor. */
+/**
+ * Extract the host portion of a referrer URL; '' when unparseable/same-page
+ * anchor or when the protocol is not http(s) (ruling #8).
+ */
 export function referrerHostOf(referrer: string): string {
   try {
     const u = new URL(referrer);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
     return normalizeHost(u.host);
   } catch {
     return '';
@@ -44,14 +55,24 @@ interface QueryValues {
   keys(): string[];
 }
 
-/** Minimal deterministic query reader over a URL string (also unit-testable with synthetic maps). */
+/**
+ * Minimal deterministic query reader over a URL string.
+ *
+ * Contract (rulings #9/#11/#10):
+ * - ALL query keys are lowercased before lookup (mixed-case UTMs work).
+ * - The LAST occurrence of a duplicate parameter wins.
+ * - '+' decodes as space (URL standard; kept per ruling #10).
+ */
 export function readQuery(url: string): QueryValues | null {
   try {
-    const u = new URL(url);
-    const params = u.searchParams;
+    const flat = new Map<string, string>();
+    for (const [rawKey, rawValue] of new URL(url).searchParams.entries()) {
+      flat.set(rawKey.toLowerCase(), rawValue);
+    }
+    const sortedKeys = Array.from(flat.keys()).sort();
     return {
-      get: (k) => params.get(k) ?? undefined,
-      keys: () => Array.from(new Set(params.keys())),
+      get: (k) => flat.get(k.toLowerCase()),
+      keys: () => sortedKeys,
     };
   } catch {
     return null;
@@ -64,13 +85,15 @@ export function readQuery(url: string): QueryValues | null {
  * Rules (contract):
  * - URL campaign parameters or click IDs create a touch directly.
  * - Otherwise an EXTERNAL referrer infers organic_search / organic_social /
- *   referral. Same-site or related-host referrers create NO new touch.
+ *   referral with CANONICAL source names. Same-site or related-host
+ *   referrers create NO new touch (symmetric check, ruling #8).
  * - A click ID without UTMs still yields a paid touch via its platform map.
+ * - The landing page stores the FULL href including query string (ruling #12).
  */
 export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const now = input.now ? input.now : '';
   const query = readQuery(input.url);
-  const landingPage = safeOriginPath(input.url);
+  const landingPage = landingPageOf(input.url);
 
   // --- collect UTM fields ---
   let hasUtm = false;
@@ -105,7 +128,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
       return { kind: 'none', reason: 'no_signal' };
     }
     const pageHost = input.currentHost ? normalizeHost(input.currentHost) : '';
-    if (pageHost && hostMatches(rHost, pageHost)) {
+    if (pageHost && areRelatedHosts(rHost, pageHost)) {
       return { kind: 'none', reason: 'internal_referrer' };
     }
     const inferred = classifyReferrerHost(rHost);
@@ -115,7 +138,13 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
       : inferred.channel === 'organic_social' ? 'social'
       : 'referral';
     touch.referrer = sanitizeField(input.referrer ?? '');
-    return { kind: 'touch', touch: { ...touch, clickIds: {}, channel: inferred.channel } };
+    const channelLabel = resolveChannelLabel({
+      source: touch.source, medium: touch.medium, clickIds: {}, referrer: input.referrer ?? '',
+    });
+    return {
+      kind: 'touch',
+      touch: { ...touch, clickIds: {}, channel: inferred.channel, channelLabel },
+    };
   }
 
   // --- campaign-parameter path ---
@@ -136,7 +165,10 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   }
 
   touch.referrer = sanitizeField(input.referrer ?? '');
-  const withClickIds: ParsedTouch = { ...touch, clickIds, channel };
+  const channelLabel = resolveChannelLabel({
+    source: touch.source, medium: touch.medium, clickIds, referrer: input.referrer ?? '',
+  });
+  const withClickIds: ParsedTouch = { ...touch, clickIds, channel, channelLabel };
   return { kind: 'touch', touch: withClickIds };
 }
 
@@ -151,10 +183,14 @@ function classifyUtmChannel(medium: string): Channel {
   return 'unknown';
 }
 
-function safeOriginPath(url: string): string {
+/**
+ * Landing page stores the FULL href including query string (ruling #12).
+ * Privacy note: consent already gates storage upstream; revisit redaction
+ * if PII patterns are observed in query strings.
+ */
+function landingPageOf(url: string): string {
   try {
-    const u = new URL(url);
-    return sanitizeField(`${u.origin}${u.pathname}`);
+    return sanitizeField(new URL(url).href);
   } catch {
     return '';
   }

@@ -1,0 +1,14 @@
+{
+  "name": "sibling-subdomain-internal-referrer",
+  "description": "Symmetric related-host check (ruling #8): store.acme-shop.io visited from acme-shop.io is internal -- the CURRENT host being a subdomain of the referrer host must also suppress the touch.",
+  "quirk_decision": "CONTRACT: either host being equal-or-subdomain-of the other suppresses the referral touch.",
+  "input": {
+    "url": "https://store.acme-shop.io/checkout",
+    "referrer": "https://acme-shop.io/promo?utm_source=noise",
+    "currentHost": "store.acme-shop.io",
+    "now": "2026-08-23T09:40:00.000Z"
+  },
+  "expected": {
+    "_no_touch_reason": "internal_referrer"
+  }
+}

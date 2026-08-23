@@ -1,0 +1,24 @@
+{
+  "name": "ft-guard-with-click-id",
+  "description": "First-touch emptiness guard counts ft_<clickid> keys (ruling #17): a stored click-ID-only first touch blocks later first-touch writes.",
+  "quirk_decision": "CONTRACT: a bare-click-id landing IS a first touch; merge-level scenario via top-level 'stored'.",
+  "stored": {
+    "ft_ttclid": "TT-FIRST",
+    "ttclid": "TT-FIRST"
+  },
+  "input": {
+    "url": "https://example.com/newsletter?utm_source=nl&utm_medium=email",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T09:50:00.000Z"
+  },
+  "expected": {
+    "ft_source": "",
+    "ft_medium": "",
+    "ft_ttclid": "TT-FIRST",
+    "ttclid": "TT-FIRST",
+    "lt_source": "nl",
+    "lt_medium": "email",
+    "_channel": "email"
+  }
+}

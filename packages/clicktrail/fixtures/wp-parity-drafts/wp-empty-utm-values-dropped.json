@@ -6,11 +6,13 @@
     "url": "https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=&utm_content=",
     "referrer": "",
     "currentHost": "example.com",
-    "now": "2026-08-23T10:10:00Z"
+    "now": "2026-08-23T10:10:00.000Z"
   },
   "expected": {
     "ft_source": "google",
     "ft_medium": "cpc",
-    "_channel": "Google Ads"
+    "_channel": "paid_other",
+    "ft_channel": "Google Ads",
+    "lt_channel": "Google Ads"
   }
 }

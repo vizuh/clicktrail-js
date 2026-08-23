@@ -1,16 +1,18 @@
 {
   "name": "wp-yahoo-intl-label-match",
   "description": "[PLUGIN BEHAVIOR] Search engines google/yahoo/yandex are matched by LABEL anywhere in the host ((^|\\.)label\\.), so search.yahoo.co.jp classifies organic. Engine matches 'yahoo.com' by suffix only.",
-  "quirk_decision": "DISAGREEMENT: plugin -> organic (label match); engine -> referral ('search.yahoo.co.jp' does not end with 'yahoo.com').",
+  "quirk_decision": "CONTRACT (ruling #5): explicit domain-suffix rules incl. intl TLDs (search.yahoo.co.jp = yahoo); fragile label regex and .includes() fragments dropped. Canonical source name 'yahoo' per ruling #4.",
   "input": {
     "url": "https://example.com/",
     "referrer": "https://search.yahoo.co.jp/search?p=test",
     "currentHost": "example.com",
-    "now": "2026-08-23T11:05:00Z"
+    "now": "2026-08-23T11:05:00.000Z"
   },
   "expected": {
     "ft_source": "yahoo",
     "ft_medium": "organic",
-    "_channel": "Yahoo"
+    "ft_channel": "Yahoo",
+    "lt_channel": "Yahoo",
+    "_channel": "organic_search"
   }
 }

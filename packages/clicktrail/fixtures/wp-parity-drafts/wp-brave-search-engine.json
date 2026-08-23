@@ -1,16 +1,17 @@
 {
   "name": "wp-brave-search-engine",
   "description": "[ENGINE EXTENSION] The engine classifies search.brave.com (and startpage.com) as organic search. The plugin has no rule for either and treats them as plain referrals.",
-  "quirk_decision": "DISAGREEMENT: engine -> medium=social..no, medium=organic/channel organic_search; plugin -> source=search.brave.com, medium=referral. Decide if brave/startpage are contract additions in the TS classifier.",
+  "quirk_decision": "CONTRACT (ruling #6): engine addition kept -- original note: engine -> medium=organic/channel organic_search; plugin -> source=search.brave.com, medium=referral. Brave/Startpage are intentional classifier additions; canonical source name 'brave' per ruling #4.",
   "input": {
     "url": "https://example.com/",
     "referrer": "https://search.brave.com/search?q=test",
     "currentHost": "example.com",
-    "now": "2026-08-23T11:10:00Z"
+    "now": "2026-08-23T11:10:00.000Z"
   },
   "expected": {
-    "ft_source": "search.brave.com",
-    "ft_medium": "referral",
-    "_channel": "Unknown"
+    "ft_source": "brave",
+    "ft_medium": "organic",
+    "ft_channel": "Brave",
+    "_channel": "organic_search"
   }
 }

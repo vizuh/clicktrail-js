@@ -6,7 +6,7 @@
     "url": "https://example.com/contact",
     "referrer": "https://www.example.com/pricing",
     "currentHost": "example.com",
-    "now": "2026-08-23T11:35:00Z"
+    "now": "2026-08-23T11:35:00.000Z"
   },
   "expected": {
     "_no_touch_reason": "internal_referrer"

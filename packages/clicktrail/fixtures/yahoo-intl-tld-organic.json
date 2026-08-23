@@ -1,0 +1,18 @@
+{
+  "name": "yahoo-intl-tld-organic",
+  "description": "Intl TLD search engines match via explicit domain-suffix rules: search.yahoo.co.jp is Yahoo organic (ruling #5).",
+  "quirk_decision": "CONTRACT: explicit domain-suffix rules incl. intl TLDs; canonical source names; no label regex or .includes() fragments.",
+  "input": {
+    "url": "https://example.com/guides/kyoto",
+    "referrer": "https://search.yahoo.co.jp/search?p=kyoto+travel",
+    "currentHost": "example.com",
+    "now": "2026-08-23T09:00:00.000Z"
+  },
+  "expected": {
+    "ft_source": "yahoo",
+    "ft_medium": "organic",
+    "ft_channel": "Yahoo",
+    "lt_channel": "Yahoo",
+    "_channel": "organic_search"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "template-macro-rejected",
+  "description": "Unsubstituted ad-platform template macros ({{...}}) are rejected outright while sibling UTMs still create the touch (ruling #15).",
+  "quirk_decision": "CONTRACT: values matching the '{{...}}' macro pattern never create fields.",
+  "input": {
+    "url": "https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=%7B%7Badset.name%7D%7D&utm_content=%7B%7Bad.name%7D%7D-extra",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-08-23T09:10:00.000Z"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_campaign": "",
+    "ft_content": "{{ad.name}}-extra",
+    "ft_channel": "Google Ads",
+    "_channel": "paid_other"
+  }
+}

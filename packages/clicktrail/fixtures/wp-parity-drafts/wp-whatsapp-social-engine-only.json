@@ -1,16 +1,18 @@
 {
   "name": "wp-whatsapp-social-engine-only",
   "description": "[ENGINE EXTENSION] Engine classifies whatsapp.com/wa.me (also telegram, discord, threads, redd.it, pin.it, fb.com) as organic social. Plugin SOCIAL_REFERRER_RULES has only facebook, instagram, linkedin, twitter/t.co/x.com, reddit, pinterest.com, youtube, tiktok.",
-  "quirk_decision": "DISAGREEMENT: engine -> medium=social/organic_social; plugin -> source=wa.me, medium=referral.",
+  "quirk_decision": "CONTRACT (ruling #7): engine social-host breadth kept as intentional addition; each host pinned with its own fixture at freeze. Canonical source name 'whatsapp' per ruling #4.",
   "input": {
     "url": "https://example.com/",
     "referrer": "https://wa.me/351912345678",
     "currentHost": "example.com",
-    "now": "2026-08-23T11:25:00Z"
+    "now": "2026-08-23T11:25:00.000Z"
   },
   "expected": {
-    "ft_source": "wa.me",
-    "ft_medium": "referral",
-    "_channel": "Unknown"
+    "ft_source": "whatsapp",
+    "ft_medium": "social",
+    "ft_channel": "WhatsApp",
+    "lt_channel": "WhatsApp",
+    "_channel": "organic_social"
   }
 }
