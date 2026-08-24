@@ -57,4 +57,52 @@ describe('buildEventPayload', () => {
     expect(event['ft_source']).toBe('');
     expect(Object.keys(event)).toContain('schema_version');
   });
+
+  it('builds the normalized marketing trail envelope', () => {
+    const event = buildEventPayload(
+      {
+        ...emptyAttribution(),
+        visitor_id: 'visitor-1',
+        ft_source: 'google',
+        ft_medium: 'cpc',
+        ft_campaign: 'botox_new_york',
+        ft_landing_page: '/botox-consultation',
+        ft_referrer: 'https://google.com/',
+        gclid: 'gclid-1',
+      },
+      'lead.submitted',
+      {
+        event_id: 'evt_1',
+        occurred_at: '2026-08-24T16:30:00Z',
+        form_provider: 'elementor',
+        form_id: 'consultation',
+      },
+      {
+        workspaceId: 'ws_1',
+        siteId: 'site_1',
+        consent: { analytics: true, advertising: true },
+        identity: { visitorId: 'visitor-1' },
+      },
+    );
+
+    expect(event.marketing_trail).toEqual({
+      schema_version: 1,
+      event_id: 'evt_1',
+      trail_id: 'trl_visitor-1',
+      anonymous_id: 'anon_visitor-1',
+      lead_id: 'lead_1',
+      workspace_id: 'ws_1',
+      site_id: 'site_1',
+      event_name: 'lead_submitted',
+      occurred_at: '2026-08-24T16:30:00Z',
+      landing_page: '/botox-consultation',
+      referrer: 'https://google.com/',
+      source: 'google',
+      medium: 'cpc',
+      campaign: 'botox_new_york',
+      click_ids: { gclid: 'gclid-1' },
+      consent: { analytics: true, advertising: true },
+      form: { provider: 'elementor', form_id: 'consultation' },
+    });
+  });
 });

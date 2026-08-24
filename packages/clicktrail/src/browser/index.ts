@@ -5,8 +5,13 @@
  * deterministic core. Import-safe in SSR environments: no side effects
  * until createClickTrail(...).start().
  */
-export { buildEventPayload } from './serialize.js';
-export type { ClickTrailEvent } from './serialize.js';
+export { buildEventPayload, buildMarketingTrailEnvelope } from './serialize.js';
+export type {
+  ClickTrailEvent,
+  MarketingTrailContext,
+  MarketingTrailEnvelope,
+  StampedClickTrailEvent,
+} from './serialize.js';
 export { httpDestination, dataLayerDestination } from './transport.js';
 export type {
   Destination,

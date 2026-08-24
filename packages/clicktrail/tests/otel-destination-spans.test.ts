@@ -12,7 +12,7 @@ import {
 } from '../src/conventions/incubating.js';
 import { ATTR_EVENT_NAME, ATTR_EVENT_TIME, otelDestination } from '../src/otel/destination.js';
 import type { OtelSpanLike } from '../src/otel/destination.js';
-import type { ClickTrailEvent } from '../src/browser/serialize.js';
+import type { StampedClickTrailEvent } from '../src/browser/serialize.js';
 
 interface RecordedSpan {
   name: string;
@@ -46,7 +46,7 @@ function fakeTracer() {
   return { spans, tracer };
 }
 
-function journeyEvent(): ClickTrailEvent {
+function journeyEvent(): StampedClickTrailEvent {
   return {
     event_name: 'conversation.started',
     [ATTR_JOURNEY_ID]: 'j-abc',

@@ -142,6 +142,7 @@ export const DEFAULT_FORM_FIELDS: readonly string[] = [
   'li_fat_id',
   'sccid',
   'epik',
+  'trail_id',
   'visitor_id',
   'session_id',
   'session_number',
@@ -150,6 +151,7 @@ export const DEFAULT_FORM_FIELDS: readonly string[] = [
 /** Session-shaped value provider (mirrors SessionSnapshot fields). */
 export interface FormIdentityValues {
   visitorId?: string;
+  trailId?: string;
   sessionId?: string;
   sessionNumber?: string;
 }
@@ -200,6 +202,7 @@ export function resolveInjectionEntries(input: {
     let value = input.payload[key] ?? '';
     if (!value) {
       if (key === 'visitor_id') value = input.identity.visitorId ?? '';
+      else if (key === 'trail_id') value = input.identity.trailId ?? (input.identity.visitorId ? `trl_${input.identity.visitorId}` : '');
       else if (key === 'session_id') value = input.identity.sessionId ?? '';
       else if (key === 'session_number') value = input.identity.sessionNumber ?? '';
     }

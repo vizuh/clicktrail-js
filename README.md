@@ -15,7 +15,13 @@ shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | `0.1.0`: stable core plus browser and storage adapters; incubating journey, agent, OTEL and Apointoo subpaths |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | Source version `0.1.0`; npm publication pending. Stable core plus browser and storage adapters; journey, agent, OTEL and Apointoo subpaths remain incubating |
+
+The GitHub repository is public. The package is not published to npm yet, and
+has no Git tag or GitHub Release. The first planned publication is
+`0.1.0-rc.1` on npm dist-tag `next`, after the release gates in
+[`docs/FIRST-PUBLICATION-CHECKLIST.md`](docs/FIRST-PUBLICATION-CHECKLIST.md)
+and [`docs/PROVENANCE-AUDIT.md`](docs/PROVENANCE-AUDIT.md) are accepted.
 
 ## Architecture in one line
 
@@ -36,8 +42,10 @@ Design rules (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 ```bash
 pnpm install
+pnpm -r exec tsc -p tsconfig.json --noEmit
 pnpm -r test        # vitest, replays golden fixtures
 pnpm -r build       # tsc per package
+pnpm probe           # ESM + global bundle + 12-fixture browser probe
 ```
 
 Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.

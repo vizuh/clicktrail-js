@@ -82,5 +82,13 @@
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js#readme"
 }

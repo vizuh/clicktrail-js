@@ -10,9 +10,9 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] B3 attestation approved by Hugo verbatim (AI-assisted commits)
 
 ## 1. Repository
-- [ ] Remote created PRIVATE via prepared command (OWNER placeholder resolved)
-- [ ] Push succeeds; all 17+ commits present
-- [ ] License/provenance approved -> repo made public (required for npm provenance later)
+- [x] Public remote: `https://github.com/vizuh/clicktrail-js`
+- [x] Namespace decision recorded: `@vizuh/clicktrail`
+- [ ] License/provenance approved (required before npm publication)
 
 ## 2. Remote CI green
 - [ ] verify job green on Node 20 AND 22
@@ -22,7 +22,8 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] build reproducible on clean runner (no local filesystem assumptions)
 
 ## 3. Package
-- [ ] `npm version 0.1.0` is the package version after CI green
+- [ ] `npm version 0.1.0-rc.1` executed after CI and governance gates pass
+- [ ] Commit package version and create matching Git tag `v0.1.0-rc.1`
 - [ ] `npm pack --dry-run` tarball reviewed file-by-file: only dist/, README.md, package.json, LICENSE
 - [ ] leak scan re-run: no .env / credentials / private fixtures / internal docs
 - [ ] clean-room consumer project installs tarball; ALL subpath exports import (., /browser, /conversation, /agent, /otel, /apointoo, /incubating)
@@ -34,7 +35,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
 
 ## 5. First publish
-- [ ] `npm publish --access public` (first-ever scoped release needs --access public)
+- [ ] Push `v0.1.0-rc.1`; trusted-publishing workflow publishes with npm dist-tag `next`
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 

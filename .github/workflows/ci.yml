@@ -130,9 +130,25 @@ jobs:
           npm install /tmp/vizuh-clicktrail-*.tgz --silent
           node --input-type=module -e "
             const mod = await import('@vizuh/clicktrail');
+            const browser = await import('@vizuh/clicktrail/browser');
             const conv = await import('@vizuh/clicktrail/conversation');
             const agent = await import('@vizuh/clicktrail/agent');
             const otel = await import('@vizuh/clicktrail/otel');
-            if (!mod.parseAttributionUrl || !conv.createConversationTracker) process.exit(1);
-            console.log('pack smoke OK, classifier', mod.CLASSIFIER_VERSION);
+            const apointoo = await import('@vizuh/clicktrail/apointoo');
+            const incubating = await import('@vizuh/clicktrail/incubating');
+            const checks = [
+              ['root', mod.parseAttributionUrl],
+              ['browser', browser.createClickTrail],
+              ['conversation', conv.createConversationTracker],
+              ['agent', agent.createAgentRunRecorder],
+              ['otel', otel.otelDestination],
+              ['apointoo', apointoo.createApointooDestination],
+              ['incubating', incubating.ATTR_JOURNEY_ID],
+            ];
+            const missing = checks.filter(([, value]) => value === undefined).map(([name]) => name);
+            if (missing.length) {
+              console.error('Missing package exports:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('pack smoke OK, exports', checks.map(([name]) => name).join(', '));
           "
