@@ -3,7 +3,7 @@
  * Every fixture replays parse + merge against the engine and must match
  * field-for-field on the `expected` subset.
  *
- * Schema (extended per docs/WP-PARITY-DRAFT.md harness note):
+ * Schema (extended per docs/internal/WP-PARITY-DRAFT.md harness note):
  * - `input`: ParseAttributionInput.
  * - optional `stored`: pre-existing canonical payload. It is merged with
  *   emptyAttribution() and fed to mergeAttributionTouch BEFORE the parsed

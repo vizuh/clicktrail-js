@@ -71,8 +71,10 @@ const destination = dataLayerDestination({ dataLayer });
 ```
 
 Start the ClickTrail instance, then inspect the array in the host's test
-environment. ClickTrail does not inject Meta, Google, TikTok, LinkedIn,
-Pinterest, or Reddit pixel SDKs.
+environment. The bridge keeps canonical fields flat for GTM data-layer
+variables, publishes both `event` (the GTM custom-event key) and `event_name`,
+and carries `event_id` for deduplication wiring. ClickTrail does not inject
+Meta, Google, TikTok, LinkedIn, Pinterest, or Reddit pixel SDKs.
 
 ## Approved cross-domain continuity
 
@@ -86,4 +88,4 @@ before enabling the path.
 
 - [package README](../packages/clicktrail/README.md)
 - [architecture](ARCHITECTURE.md)
-- [release-readiness review](RELEASE-READINESS-REVIEW.md)
+- [release-readiness review](internal/RELEASE-READINESS-REVIEW.md)

@@ -1,0 +1,204 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const repoUrl = 'https://github.com/vizuh/clicktrail-js';
+const quickstartUrl = repoUrl + '#quickstart';
+const npmCore = 'https://www.npmjs.com/package/@vizuh/clicktrail';
+const npmAstro = 'https://www.npmjs.com/package/@clicktrail/astro';
+const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
+---
+
+<Layout
+  title="ClickTrail — first-party attribution you own"
+  description="Deterministic, consent-gated, first-party attribution. Know which ad made the sale, and keep the data on your infrastructure."
+>
+  <!-- hero -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="kicker">First-party attribution engine</p>
+      <h1>Know which ad made the sale.<br />Keep the data on <span class="accent">your infrastructure</span>.</h1>
+      <p class="lede">
+        ClickTrail captures UTMs and ad click IDs on the landing page, merges
+        first-touch and last-touch into one flat canonical payload, and carries
+        the full trail into every conversion. Deterministic engine,
+        consent-gated by design, entirely first-party.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href={quickstartUrl}>Get started on GitHub</a>
+        <a class="btn btn-secondary" href={npmCore}>@vizuh/clicktrail on npm</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>From ad click to conversion, one trail</h2>
+        <p>
+          The same deterministic engine that powers the WordPress plugin runs
+          anywhere Node or a browser runs. Same inputs always produce the same
+          payload &mdash; time, IDs, storage, consent, and network are injected,
+          never requested.
+        </p>
+      </div>
+      <div class="steps">
+        <article class="step">
+          <span class="step-num">01</span>
+          <h3>Capture</h3>
+          <p>
+            On landing, ClickTrail parses UTMs, ad click IDs
+            (<code>gclid</code>, <code>fbclid</code>, <code>ttclid</code>,
+            ...), and referrer classification into an attribution touch.
+          </p>
+        </article>
+        <article class="step">
+          <span class="step-num">02</span>
+          <h3>Merge</h3>
+          <p>
+            First touch is preserved, last touch is updated, and both collapse
+            into one flat canonical payload with
+            <code>ft_*</code> and <code>lt_*</code> fields.
+          </p>
+        </article>
+        <article class="step">
+          <span class="step-num">03</span>
+          <h3>Convert</h3>
+          <p>
+            Lead, booking, and purchase events carry the full trail &mdash;
+            attribution, click IDs, consent state, and form context ride along
+            on every conversion.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- packages -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">Packages</p>
+        <h2>Two entry points, one engine</h2>
+        <p>Both are release candidates <strong>0.1.0-rc.2</strong>, MIT licensed, ESM-only, Node &ge; 18.</p>
+      </div>
+      <div class="packages">
+        <article class="pkg">
+          <span class="pkg-name">@vizuh/clicktrail</span>
+          <span class="pkg-tag">engine + browser SDK</span>
+          <p>
+            Pure parser and merge engine plus the browser adapter: lifecycle,
+            storage, form injection, dataLayer, and HTTP destinations.
+          </p>
+          <code class="cmd">pnpm add @vizuh/clicktrail</code>
+        </article>
+        <article class="pkg">
+          <span class="pkg-name">@clicktrail/astro</span>
+          <span class="pkg-tag">Astro integration</span>
+          <p>
+            SDK injection on every page, view-transition page-view dedupe,
+            consent gate, optional first-party proxy route, server-side lead /
+            booking / purchase helpers.
+          </p>
+          <code class="cmd">npx astro add @clicktrail/astro</code>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- quick start -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">Quick start</p>
+        <h2>Parse a landing URL server-side</h2>
+        <p>
+          The core is pure: callers own the clock, storage, and network, so
+          attribution can be replayed fixture-by-fixture in CI.
+        </p>
+      </div>
+      <div class="code-card">
+        <div class="code-title"><span>parse-attribution.ts</span><span>@vizuh/clicktrail</span></div>
+        <pre class="code"><code><span class="tok-kw">import</span> &#123;
+  <span class="tok-fn">parseAttributionUrl</span>,
+  <span class="tok-fn">emptyAttribution</span>,
+  <span class="tok-fn">mergeAttributionTouch</span>,
+  <span class="tok-fn">stampVersions</span>,
+&#125; <span class="tok-kw">from</span> <span class="tok-str">'@vizuh/clicktrail'</span>;
+
+<span class="tok-com">// All inputs come from the caller; nothing reads the clock or network.</span>
+<span class="tok-kw">const</span> landingUrl =
+  <span class="tok-str">'https://example.com/pricing?utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=spring&amp;gclid=EAIa...'</span>;
+
+<span class="tok-kw">const</span> result = <span class="tok-fn">parseAttributionUrl</span>(&#123;
+  url: landingUrl,
+  referrer: <span class="tok-str">'https://www.google.com/'</span>,
+  currentHost: <span class="tok-str">'example.com'</span>,
+  now: <span class="tok-str">'2026-08-23T10:00:00Z'</span>, <span class="tok-com">// caller owns the clock</span>
+&#125;);
+
+<span class="tok-kw">if</span> (result.kind === <span class="tok-str">'touch'</span>) &#123;
+  <span class="tok-kw">const</span> stored = <span class="tok-fn">emptyAttribution</span>();
+  <span class="tok-kw">const</span> payload = <span class="tok-fn">stampVersions</span>(<span class="tok-fn">mergeAttributionTouch</span>(stored, result.touch));
+  <span class="tok-com">// payload holds ft_* / lt_* fields + schema_version + classifier_version</span>
+&#125;</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- comparison -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">Why not just GA4?</p>
+        <h2>Client-side tags vs. owned trails</h2>
+        <p>ClickTrail compared with GA4's client-side tag and generic server-side tagging.</p>
+      </div>
+      <div class="compare-wrap">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">GA4 (client-side)</th>
+              <th scope="col">Server-side tagging</th>
+              <th scope="col">ClickTrail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Data ownership</th>
+              <td>Google property; sampled and modeled reporting</td>
+              <td>Yours, but routed through a vendor container</td>
+              <td>Your infrastructure; flat payloads you store and replay</td>
+            </tr>
+            <tr>
+              <th scope="row">Determinism</th>
+              <td>Modeling and thresholds change reported numbers</td>
+              <td>Depends on the tagging setup</td>
+              <td>Same inputs produce the same output, verified by golden fixtures</td>
+            </tr>
+            <tr>
+              <th scope="row">Consent handling</th>
+              <td>Consent mode signals to Google</td>
+              <td>You wire it yourself</td>
+              <td>Built-in gate: nothing starts or persists before grant</td>
+            </tr>
+            <tr>
+              <th scope="row">Ad-blocker resilience</th>
+              <td>Tag commonly blocked</td>
+              <td>First-party endpoint helps</td>
+              <td>Capture happens on your own origin; optional first-party proxy</td>
+            </tr>
+            <tr>
+              <th scope="row">Cost model</th>
+              <td>Free tier, then GA360 pricing</td>
+              <td>Per-event container costs</td>
+              <td>Open source (MIT); you run the storage</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</Layout>

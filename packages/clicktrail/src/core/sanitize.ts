@@ -1,7 +1,7 @@
 /**
  * Deterministic field sanitization. No truncation surprises: limits are fixed.
  *
- * WP-parity rulings (docs/WP-PARITY-DRAFT.md):
+ * WP-parity rulings (docs/internal/WP-PARITY-DRAFT.md):
  * - Uniform 512 length cap kept; plugin two-pass 128/256 = accident (#14/#16).
  * - Control characters DELETED (not space-replaced).
  * - Values matching the unsubstituted-template-macro pattern '{{...}}'

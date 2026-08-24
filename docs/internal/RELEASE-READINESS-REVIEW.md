@@ -259,7 +259,7 @@ stability, version stamps, browser transport behavior, and AI workflow rules.
 
 - Severity: **High, publication gate**
 - Rule: MIT publication requires resolved copyright and provenance authority.
-- Location: `docs/PROVENANCE-AUDIT.md:180-222`.
+- Location: `PROVENANCE-AUDIT.md:180-222`.
 - Evidence: the audit still lists unresolved B1 ownership attestation, B2
   Apointoo license chain, B3 AI-authored material posture, and B4 scope/artifact
   verification. It concludes that MIT publication is conditional and does not

@@ -1,5 +1,7 @@
 # @clicktrail/astro
 
+[![Socket Badge](https://badge.socket.dev/npm/package/%40clicktrail%2Fastro)](https://socket.dev/npm/package/%40clicktrail%2Fastro)
+
 First-party attribution and conversion tracking for [Astro](https://astro.build).
 
 Injects the ClickTrail browser SDK (`@vizuh/clicktrail`), tracks page views across Astro view transitions without duplicates, preserves first-touch/last-touch attribution on every navigation, gates all tracking behind consent when configured, adds an optional first-party proxy endpoint, and ships server-side helpers for leads, bookings, and purchases.

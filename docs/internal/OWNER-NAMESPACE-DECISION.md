@@ -42,7 +42,7 @@ Current state assumes Option 2. Change matrix:
 | npm provenance (later) | repo must be public + URLs match | same | same |
 | GitHub org creation | create `apointoo` org if absent | use existing `vizuh` owner | none |
 | npm org creation | create `apointoo` org if absent | use existing `vizuh` org | none |
-| docs/WP-SWAP-STAGING-PLAN.md | no change (brand-neutral) | no change | no change |
+| WP-SWAP-STAGING-PLAN.md | no change (brand-neutral) | no change | no change |
 | WP plugin "Destinations" card copy (future) | mentions Apointoo destination only | unchanged | unchanged |
 
 NOTE: renaming AFTER first publish means `npm deprecate` + `npm dist-tag` migration

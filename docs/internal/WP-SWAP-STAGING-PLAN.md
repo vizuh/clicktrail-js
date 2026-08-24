@@ -6,7 +6,7 @@ authorizes nothing by existing.** It stages the swap of
 to the `@vizuh/clicktrail` engine, gated on:
 
 - Hugo gate rulings D2/D3 shipped in clicktrail-js (done, 01ae20e)
-- docs/PROVENANCE-AUDIT.md blockers B1-B4 resolved (npm publish preconditions)
+- PROVENANCE-AUDIT.md blockers B1-B4 resolved (npm publish preconditions)
 
 ## 1. Backup (pre-swap, per site)
 

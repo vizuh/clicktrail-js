@@ -262,7 +262,7 @@ function diffPayloads(pluginPayload, enginePayload) {
   return { diffs, pluginKeys: Object.keys(p), engineKeys: Object.keys(e), plugin: p, engine: e };
 }
 
-// Rulings that legitimately produce DIFFs (docs/WP-PARITY-DRAFT.md rulings table),
+// Rulings that legitimately produce DIFFs (docs/internal/WP-PARITY-DRAFT.md rulings table),
 // with the exact field patterns each ruling explains. Any differing field NOT
 // covered here (and not by the click-ID storage model below) is a NEW FINDING.
 const PLUGIN_CLICK_ID_KEYS = [
@@ -532,7 +532,7 @@ async function main() {
   lines.push('');
   lines.push('- Listeners never fire and DOM queries return empty: form injection, link decoration,');
   lines.push('  WhatsApp append and consent flows cannot be exercised here (all explicitly out of scope');
-  lines.push('  in docs/WP-PARITY-DRAFT.md). This harness proves QUERY/REFERRER CLASSIFICATION parity only.');
+  lines.push('  in docs/internal/WP-PARITY-DRAFT.md). This harness proves QUERY/REFERRER CLASSIFICATION parity only.');
   lines.push('- The plugin writes through its full storage stack (cookie + localStorage mirror +');
   lines.push('  sessionStorage fallback). We read the dataLayer push rather than re-reading storage, so');
   lines.push('  storage-envelope bugs would not surface here.');

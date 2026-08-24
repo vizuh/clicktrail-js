@@ -1,5 +1,7 @@
 # @vizuh/clicktrail
 
+[![Socket Badge](https://badge.socket.dev/npm/package/@vizuh/clicktrail/0.1.0)](https://socket.dev/npm/package/@vizuh/clicktrail/overview/0.1.0)
+
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
 Deterministic first-party attribution conventions and engine. Captures the

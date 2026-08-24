@@ -118,7 +118,7 @@ export function dataLayerDestination(
       arr ??= [];
     },
     deliver(event) {
-      (arr ??= []).push(event);
+      (arr ??= []).push({ ...event, event: event.event_name });
     },
     getArray() {
       return arr ??= [];

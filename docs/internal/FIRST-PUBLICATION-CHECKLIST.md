@@ -42,7 +42,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 ## 6. Post-first-publish
 - [ ] Configure GitHub Actions OIDC trusted publishing (impossible before package exists); enable staged releases if available
 - [ ] Remove any draft token-based publish path
-- [ ] Only then begin WP staging swap per docs/WP-SWAP-STAGING-PLAN.md (requires separate Hugo approval)
+- [ ] Only then begin WP staging swap per WP-SWAP-STAGING-PLAN.md (requires separate Hugo approval)
 - [ ] No production swap, no live Chatwoot/Apointoo pilots until staging plan passes
 
 ## Explicitly forbidden without separate written approval

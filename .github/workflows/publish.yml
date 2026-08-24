@@ -32,7 +32,8 @@ jobs:
         run: npm --version
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r exec tsc -p tsconfig.json --noEmit
+      - run: pnpm typecheck
+      - run: pnpm --filter @vizuh/clicktrail build:global
       - run: pnpm -r test
       - run: pnpm -r build
 
@@ -59,5 +60,11 @@ jobs:
       - name: Publish to npm with trusted publishing
         env:
           NPM_DIST_TAG: ${{ steps.npm-dist-tag.outputs.tag }}
-        run: npm publish --access public --tag "$NPM_DIST_TAG"
+        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
         working-directory: packages/clicktrail
+
+      - name: Publish @clicktrail/astro with trusted publishing
+        env:
+          NPM_DIST_TAG: ${{ steps.npm-dist-tag.outputs.tag }}
+        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
+        working-directory: packages/astro

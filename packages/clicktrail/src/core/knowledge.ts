@@ -4,7 +4,7 @@
  * These are DATA, not logic: frozen as versioned constants so golden
  * fixtures can pin their behavior. Changes here are classifier changes.
  *
- * WP-parity rulings (docs/WP-PARITY-DRAFT.md, supervisor 2026-08-23):
+ * WP-parity rulings (docs/internal/WP-PARITY-DRAFT.md, supervisor 2026-08-23):
  * - Referrer matching uses explicit domain-suffix rules incl. intl TLDs
  *   (search.yahoo.co.jp = yahoo). No label regex, no `.includes()` fragments.
  * - Referrer classification yields CANONICAL source names ('google',
