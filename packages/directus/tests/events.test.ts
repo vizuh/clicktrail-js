@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildOperationEvent, safeParseJsonObject, EVENT_NAMES } from '../src/lib/events.js';
-import { SCHEMA_VERSION, CLASSIFIER_VERSION } from '../../clicktrail/src/conventions/stable.js';
+import { SCHEMA_VERSION, CLASSIFIER_VERSION } from '@vizuh/clicktrail-core';
 
 describe('buildOperationEvent', () => {
   it('accepts every contract event name', () => {

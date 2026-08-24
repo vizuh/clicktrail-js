@@ -7,7 +7,7 @@ import {
   hasAttributionSignal,
   eventForCollection,
 } from '../src/lib/mapping.js';
-import { emptyAttribution } from '../../clicktrail/src/core/merge.js';
+import { emptyAttribution } from '@vizuh/clicktrail-core';
 
 describe('extractAttributionSignals', () => {
   it('finds flat ft_/lt_ keys verbatim', () => {

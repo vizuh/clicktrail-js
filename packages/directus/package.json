@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@vizuh/clicktrail": "workspace:^",
+    "@vizuh/clicktrail-core": "workspace:^",
     "vue": "^3.4.0"
   },
   "devDependencies": {
