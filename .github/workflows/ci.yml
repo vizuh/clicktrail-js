@@ -122,6 +122,7 @@ jobs:
         run: |
           pnpm --filter @vizuh/clicktrail build
           pnpm --filter @vizuh/clicktrail build:global
+          pnpm --filter @clicktrail/astro build
 
       - name: Playwright golden-fixture probe
         run: node probe/run-probe.mjs
