@@ -1,7 +1,10 @@
 # Owner & Namespace Decision — ClickTrail
 
-Status: DECISION REQUIRED (Hugo). This document prepares the choice; it decides nothing.
+Status: NAMESPACE DECIDED; COPYRIGHT/PROVENANCE GATES OPEN.
 Prepared: 2026-08-23. Related: PROVENANCE-AUDIT.md blockers B1-B4.
+
+Hugo decision (2026-08-24): npm package `@funnelsheet/clicktrail`; public GitHub
+repository `vizuh/clicktrail-js`.
 
 ## The two questions
 
@@ -16,10 +19,10 @@ Rule: choose the party that genuinely owns or has received the rights — not fo
 | Option | npm package | GitHub repo | Trade-offs |
 |---|---|---|---|
 | 1 | `@apointoo/clicktrail` | `apointoo/clicktrail-js` | Ties open infrastructure to the commercial product brand; strongest product alignment since ClickTrail is Apointoo's capture layer; requires an apointoo npm org + GitHub org |
-| 2 | `@funnelsheet/clicktrail` | `funnelsheet/clicktrail-js` | Keeps ClickTrail as neutral developer-brand infrastructure (current recommendation from strategy discussions); requires funnelsheet npm org + GitHub org; current code/metadata already uses it |
+| 2 | `@funnelsheet/clicktrail` | `vizuh/clicktrail-js` | Keeps ClickTrail as neutral developer-brand infrastructure; requires the `funnelsheet` npm scope; selected |
 | 3 | Personal scope (`@<hugo-npm-user>/clicktrail`) | personal GitHub account | Fastest to create; weakest long-term home; migrating a public package identity later is costly |
 
-Recommendation on record (external review): Option 1 IF Apointoo is intended as the
+Historical external recommendation (superseded by decision above): Option 1 IF Apointoo is intended as the
 public platform brand; Option 2 only if Funnelsheet is deliberately becoming the
 umbrella developer brand. Decision is Hugo's alone.
 
@@ -30,14 +33,14 @@ Current state assumes Option 2. Change matrix:
 | Field / file | Option 1 (@apointoo) | Option 2 (@funnelsheet) | Option 3 (personal) |
 |---|---|---|---|
 | `packages/clicktrail/package.json` -> name | `@apointoo/clicktrail` | no change | `@<user>/clicktrail` |
-| same -> repository.url | `github.com/apointoo/clicktrail-js` | no change | personal repo URL |
+| same -> repository.url | `github.com/apointoo/clicktrail-js` | `github.com/vizuh/clicktrail-js` | personal repo URL |
 | root `README.md` install snippets | change scope | no change | change scope |
 | `packages/clicktrail/README.md` install snippets | change scope | no change | change scope |
 | `LICENSE` copyright line | follows decision A | follows decision A | follows decision A |
 | `.github/workflows/publish.yml` (draft) environment/org references | update | verify | update |
 | `.github/workflows/ci.yml` | no change | no change | no change |
 | npm provenance (later) | repo must be public + URLs match | same | same |
-| GitHub org creation | create `apointoo` org if absent | create `funnelsheet` org if absent | none |
+| GitHub org creation | create `apointoo` org if absent | use existing `vizuh` owner | none |
 | npm org creation | create `apointoo` org if absent | create `funnelsheet` org if absent | none |
 | docs/WP-SWAP-STAGING-PLAN.md | no change (brand-neutral) | no change | no change |
 | WP plugin "Destinations" card copy (future) | mentions Apointoo destination only | unchanged | unchanged |

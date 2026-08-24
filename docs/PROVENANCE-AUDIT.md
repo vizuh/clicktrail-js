@@ -205,9 +205,10 @@ Assessment per category-2 item, ASSUMING sole ownership holds:
   an E404 for `@funnelsheet/clicktrail` proves only that the PACKAGE does not
   exist — it does NOT prove the `funnelsheet` scope is available, or owned by
   Hugo. Scope ownership requires verifying the AUTHENTICATED npm user and
-  organization membership separately (`npm whoami`, `npm org ls <scope>`) once
-  the permanent namespace decision is made. Artifact-hygiene half of B4 is
-  VERIFIED: the packed tarball contains only dist/, README.md and package.json;
+  organization membership separately (`npm whoami`, `npm org ls <scope>`); the
+  permanent package namespace is now `@funnelsheet/clicktrail`. Artifact-hygiene half of B4 is
+  VERIFIED: the packed tarball contains only LICENSE, dist/, README.md and
+  package.json;
   tools/wp-runtime/ (which loads/executes GPL plugin JS at dev time) is outside
   the published package and not referenced by it. Re-run the pack inspection on
   every release candidate regardless.
