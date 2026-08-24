@@ -122,7 +122,7 @@ jobs:
         run: |
           pnpm --filter @vizuh/clicktrail... build
           pnpm --filter @vizuh/clicktrail build:global
-          pnpm --filter @clicktrail/astro build
+          pnpm --filter @vizuh/clicktrail-astro build
 
       - name: Playwright golden-fixture probe
         run: node probe/run-probe.mjs
@@ -147,11 +147,11 @@ jobs:
           pnpm --filter @vizuh/clicktrail-core pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail-browser pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail pack --pack-destination /tmp/clicktrail-packs
-          pnpm --filter @clicktrail/astro pack --pack-destination /tmp/clicktrail-packs
+          pnpm --filter @vizuh/clicktrail-astro pack --pack-destination /tmp/clicktrail-packs
           core_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-core-*.tgz' -printf '%f\n')"
           browser_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-browser-*.tgz' -printf '%f\n')"
           umbrella_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-[0-9]*.tgz' -printf '%f\n')"
-          astro_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'clicktrail-astro-*.tgz' -printf '%f\n')"
+          astro_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-astro-*.tgz' -printf '%f\n')"
           cd "$(mktemp -d)"
           echo '{"name":"smoke","type":"module","private":true}' > package.json
           # zizmor: ignore[adhoc-packages] -- local release tarballs are the consumer-test subjects
@@ -169,7 +169,7 @@ jobs:
             const otel = await import('@vizuh/clicktrail/otel');
             const apointoo = await import('@vizuh/clicktrail/apointoo');
             const incubating = await import('@vizuh/clicktrail/incubating');
-            const astro = await import('@clicktrail/astro');
+            const astro = await import('@vizuh/clicktrail-astro');
             const checks = [
               ['root', mod.parseAttributionUrl],
               ['browser', browser.createClickTrail],

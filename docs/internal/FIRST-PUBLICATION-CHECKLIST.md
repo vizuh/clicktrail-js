@@ -2,6 +2,15 @@
 
 Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 
+## Current RC3 state
+
+Tag `v0.1.0-rc.3` exists, but publish run
+[32788003812](https://github.com/vizuh/clicktrail-js/actions/runs/32788003812)
+stopped at `@vizuh/clicktrail-core`: npm returned `E404` because the new package
+does not exist yet. No new ClickTrail package was published and no GitHub
+release was created. Do not rerun the tag until each first-wave package exists
+and has its own npm trusted-publisher configuration.
+
 ## 0. Governance (blocking everything)
 - [ ] Copyright holder decided (Hugo Carvalho personally vs Vizuh OÜ) -> LICENSE + package metadata updated
 - [ ] Namespace decided (@apointoo vs @vizuh vs personal) -> see OWNER-NAMESPACE-DECISION.md change matrix applied
@@ -33,9 +42,12 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] `npm login` done; 2FA enabled on the account
 - [ ] `npm whoami` returns expected user
 - [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
+- [ ] Each first-wave package exists on npm: core, browser, umbrella, Astro, Nuxt
+- [ ] Each first-wave package has trusted publisher configured for `vizuh/clicktrail-js`, `publish.yml`, environment `npm`, and `npm publish`
 
 ## 5. First publish
-- [ ] Push `v0.1.0-rc.3`; trusted-publishing workflow publishes `@vizuh/clicktrail` with npm dist-tag `next`
+- [ ] Complete one-time Hugo-authenticated npm 2FA bootstrap for any new package, then configure trusted publishing before CI retry
+- [ ] Retry the existing RC3 workflow only after the bootstrap checks pass; publish wave uses npm dist-tag `next`
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 

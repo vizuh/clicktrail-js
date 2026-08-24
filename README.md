@@ -196,7 +196,7 @@ transcripts.
 - [Architecture](docs/ARCHITECTURE.md) — design rules, frozen formats, WP-parity rulings
 - [Tutorials](docs/TUTORIALS.md) — deterministic replay, browser capture, forms, `dataLayer`
 - [`@vizuh/clicktrail` package README](packages/clicktrail/README.md) — entry points, usage, conventions
-- [`@clicktrail/astro` package README](packages/astro/README.md) — Astro integration setup and options
+- [`@vizuh/clicktrail-astro` package README](integrations/astro/README.md) — Astro integration setup and options
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 
 ## License
