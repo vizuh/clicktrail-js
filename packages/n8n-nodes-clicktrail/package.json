@@ -1,0 +1,63 @@
+{
+  "name": "n8n-nodes-clicktrail",
+  "version": "0.1.0-rc.2",
+  "description": "ClickTrail community node for n8n: send first-party attribution events (leads, conversions, consent) from n8n workflows to your ClickTrail collector.",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "n8n-community-node",
+    "n8n",
+    "clicktrail",
+    "attribution",
+    "first-party-analytics",
+    "conversion-tracking",
+    "consent",
+    "utm",
+    "gclid",
+    "automation"
+  ],
+  "n8n": {
+    "nodes": [
+      "dist/nodes/ClickTrail/ClickTrail.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/ClickTrailApi.credentials.js"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "packages/n8n-nodes-clicktrail"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/n8n-nodes-clicktrail#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp src/nodes/ClickTrail/clicktrail.svg dist/nodes/ClickTrail/clicktrail.svg",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vizuh/clicktrail": "workspace:^"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "^1.82.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "n8n-workflow": "^1.82.0",
+    "typescript": "^5.8.0",
+    "vitest": "^2.1.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
