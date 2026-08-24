@@ -70,7 +70,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "build:global": "esbuild src/global-entry.ts --bundle --format=iife --outfile=dist/clicktrail.global.js",
-    "test": "vitest run"
+    "test": "vitest run --config vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
