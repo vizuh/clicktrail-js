@@ -49,7 +49,7 @@ export type StampedClickTrailEvent = Record<string, unknown> & {
  * marketing envelope, then version stamps last-writer-wins.
  */
 export type ClickTrailEvent = StampedClickTrailEvent & {
-  marketing_trail?: MarketingTrailEnvelope;
+  marketing_trail: MarketingTrailEnvelope;
 };
 
 const CLICK_ID_KEYS = [

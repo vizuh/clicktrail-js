@@ -18,7 +18,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fxDir = join(repoRoot, 'packages/clicktrail/fixtures');
@@ -115,7 +115,12 @@ const baseUrl = `http://127.0.0.1:${server.address().port}`;
 const results = [];
 let failed = false;
 
-const browser = await chromium.launch();
+const browserName = process.env.CLICKTRAIL_BROWSER ?? 'chromium';
+const browserType = { chromium, firefox, webkit }[browserName];
+if (!browserType) {
+  throw new Error(`probe: unsupported CLICKTRAIL_BROWSER=${browserName}`);
+}
+const browser = await browserType.launch();
 try {
   const context = await browser.newContext();
   for (const fixture of fixtures) {

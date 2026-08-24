@@ -16,8 +16,8 @@ Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
 Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin is the
 WordPress distribution; this package is the shared engine beneath it.
 
-> Release candidate: `0.1.0-rc.1`. The matching GitHub tag publishes this
-> package to npm under the `next` dist-tag.
+> Release candidate: `0.1.0-rc.2`. GitHub release assets are prepared; npm
+> publication remains separately gated by trusted-publisher configuration.
 
 ## Install
 
@@ -111,11 +111,11 @@ clickTrail.start();
 ```
 
 Each tracked event keeps its backward-compatible flat payload and adds a
-`marketing_trail` envelope. The envelope contains `evt_`, `trl_`,
-`anon_`, and lead IDs, latest-touch attribution with first-touch fallback,
-click IDs, consent, and form context. `workspaceId` and `siteId` are
-optional config values; `trail_id` is a stable `trl_` namespace derived
-from the persistent visitor ID.
+`marketing_trail` envelope. The envelope contains `evt_`, `trl_`, `anon_`,
+and lead IDs, latest-touch attribution with first-touch fallback, click IDs,
+consent, and form context. `workspaceId` and `siteId` are optional config
+values; `trail_id` is a stable `trl_` namespace derived from the persistent
+visitor ID.
 
 ```ts
 const clickTrail = createClickTrail({

@@ -7,9 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { ATTR_MESSAGE_ID } from '../src/conventions/incubating.js';
 import { otelDestination } from '../src/otel/destination.js';
 import { extractTraceparent } from '../src/otel/traceparent.js';
-import type { ClickTrailEvent } from '../src/browser/serialize.js';
+import type { StampedClickTrailEvent } from '../src/browser/serialize.js';
 
-function event(messageId: string): ClickTrailEvent {
+function event(messageId: string): StampedClickTrailEvent {
   return {
     event_name: 'handoff.human',
     [ATTR_MESSAGE_ID]: messageId,

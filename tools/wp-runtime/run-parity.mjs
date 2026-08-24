@@ -27,6 +27,14 @@ const PLUGIN_ROOT = process.env.CLICKTRAIL_WP_PLUGIN_ROOT
   : resolve(ROOT, '../click-trail-handler');
 const PLUGIN_SRC = join(PLUGIN_ROOT, 'assets/js/clicutcl-attribution.js');
 const FIXTURE_DIR = resolve(ROOT, 'packages/clicktrail/fixtures/wp-parity-drafts');
+const PINNED_PLUGIN_COMMIT = 'ead6682d6433c4f27309b7ee412e2dfc1fd50de4';
+
+function readPluginCommit() {
+  return execFileSync('git', ['-C', PLUGIN_ROOT, 'rev-parse', '--verify', 'HEAD'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+}
 
 // ---------------------------------------------------------------------------
 // 1. Bundle our TS engine with esbuild (devDep of packages/clicktrail).
@@ -234,7 +242,9 @@ async function makeEngineRunner() {
 function nonEmpty(payload) {
   const out = {};
   for (const [k, v] of Object.entries(payload || {})) {
-    if (v !== '' && v !== undefined && v !== null) out[k] = v;
+    // Empty additive JSON collections are equivalent to an absent optional
+    // field in the legacy plugin projection.
+    if (v !== '' && v !== '[]' && v !== undefined && v !== null) out[k] = v;
   }
   return out;
 }
@@ -260,13 +270,18 @@ const PLUGIN_CLICK_ID_KEYS = [
   'twclid', 'li_fat_id', 'sccid', 'epik',
   'rdt_cid', 'pin_cid', 'snap_cid', 'mc_cid', 'mc_eid', 'dclid',
 ];
+const ADDITIVE_ENGINE_FIELDS = new Set([
+  'click_id_history',
+  'attribution_selected_click_id',
+  'attribution_selected_click_id_reason',
+]);
 const RULED_DIFFS = {
   'wp-gclid-only-no-source-medium': {
     rule: '#2 bare-click-id inference (engine adds source=google/medium=cpc)',
     fields: [/^(ft|lt)_(source|medium)$/],
   },
   'wp-fbclid-only-organic-facebook': {
-    rule: '#2 bare-click-id inference (engine paid_social vs plugin Facebook Organic label path)',
+    rule: '#D2 bare-fbclid uncertainty (plugin legacy label vs canonical engine model)',
     fields: [/^(ft|lt)_(source|medium|channel)$/],
   },
   'wp-sc-click-id-alias-partial': {
@@ -309,6 +324,9 @@ const RULED_DIFFS = {
 // time. The PLUGIN_CLICK_ID_KEYS branch below still explains mirror diffs for
 // keys the engine drops entirely (ruling #1 extras such as mc_eid/rdt_cid).
 function classifyDiffField(fixtureName, field) {
+  if (ADDITIVE_ENGINE_FIELDS.has(field)) {
+    return { explained: true, why: '#D3 additive engine click-ID audit fields (Hugo gate)' };
+  }
   const bare = field.replace(/^(ft|lt)_/, '');
   if (bare !== field && PLUGIN_CLICK_ID_KEYS.includes(bare)) {
     return { explained: true, why: 'click-ID ft_/lt_ mirror (rulings #1/#2 scope)' };
@@ -335,6 +353,13 @@ const mdEscape = (s) => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 // 5. Main
 // ---------------------------------------------------------------------------
 async function main() {
+  const pluginCommit = readPluginCommit();
+  if (pluginCommit !== PINNED_PLUGIN_COMMIT) {
+    throw new Error(
+      `WP parity requires plugin commit ${PINNED_PLUGIN_COMMIT}; found ${pluginCommit} at ${PLUGIN_ROOT}`,
+    );
+  }
+
   const fixtures = readdirSync(FIXTURE_DIR)
     .filter((f) => f.endsWith('.json'))
     .sort()
@@ -439,6 +464,7 @@ async function main() {
   lines.push(`plugin engine \`${'click-trail-handler/assets/js/clicutcl-attribution.js'}\` (loaded read-only as text)`);
   lines.push(`in a Node \`vm\` sandbox against all ${fixtures.length} draft fixtures, then ran the TS engine`);
   lines.push(`(esbuild-bundled from \`packages/clicktrail/src/core\`) on the same inputs.`);
+  lines.push(`Plugin checkout commit: \`${pluginCommit}\` (pinned parity contract).`);
   lines.push('');
   lines.push('## Counts');
   lines.push('');
@@ -517,10 +543,9 @@ async function main() {
   lines.push('- **Click-ID ft_/lt_ mirror**: the plugin duplicates every captured click ID into');
   lines.push('  `ft_<cid>`/`lt_<cid>` touch fields (`mapQueryFields` output goes through `applyTouch`,');
   lines.push('  :1813-1837 + :1788-1799), while the TS engine stores click IDs top-level only');
-  lines.push('  (`mergeAttributionTouch`). Static analysis missed this. It only shows up in the five');
-  lines.push('  click-ID fixtures, which are all covered by rulings #1/#2 anyway, so those rows are');
-  lines.push('  marked RULED DIFF — but the storage-model difference itself deserves supervisor');
-  lines.push('  confirmation before Phase 2 freezes.');
+  lines.push('  (`mergeAttributionTouch`). Static analysis missed this. The five click-ID fixtures');
+  lines.push('  also exercise the approved D3 history/selection fields; all are classified as RULED');
+  lines.push('  DIFF under the current Hugo gate.');
   lines.push('- **Timestamps compare exactly**: with the pinned Date the plugin emits the same');
   lines.push('  millisecond ISO strings the engine stores (ruling #13 verified live, not just statically).');
   lines.push('');

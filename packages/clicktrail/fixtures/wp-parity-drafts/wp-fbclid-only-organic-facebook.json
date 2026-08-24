@@ -1,6 +1,6 @@
 {
   "name": "wp-fbclid-only-organic-facebook",
-  "description": "[RULED] bare fbclid: engine infers source=facebook/medium=cpc/label 'Facebook Ads' (ruling #2, intentional deviation). Both engines now ALSO write the ft_/lt_ click-ID mirror (ruling B) and derive top-level fbc from fbclid ('fb.1.<epochMs>.<fbclid>', plugin BrowserIdentifiers.collect :860-866).",
+  "description": "[RULED] bare fbclid: engine preserves source=facebook but leaves medium/channel unknown unless paid evidence exists (Hugo gate D2). Both engines also write the ft_/lt_ click-ID mirror (ruling B) and derive top-level fbc from fbclid ('fb.1.<epochMs>.<fbclid>', plugin BrowserIdentifiers.collect :860-866).",
   "quirk_decision": "RULED DIFF standing (Hugo gate D2, 2026-08-23): bare fbclid is now classified source=facebook / channel=unknown / label 'Facebook' (paid status unknown). Plugin said 'Facebook Organic'; pre-D2 engine said 'Facebook Ads' \u2014 both were over-certain. Legacy plugin label available via legacyWordPressChannelLabel() only.",
   "input": {
     "url": "https://example.com/?fbclid=IwARabc123",

@@ -3,7 +3,7 @@
  * the injected/default `send` function or inside lifecycle methods called
  * only after `start()` — never at import time.
  */
-import type { ClickTrailEvent } from './serialize.js';
+import type { StampedClickTrailEvent } from './serialize.js';
 
 /** A consumer of stamped events. Hosts supply these to createClickTrail. */
 export interface Destination {
@@ -13,7 +13,7 @@ export interface Destination {
    * dataLayer array reference) HERE, never at factory/import time.
    */
   start?(): void;
-  deliver(event: ClickTrailEvent): void;
+  deliver(event: StampedClickTrailEvent): void;
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;
 }
@@ -33,7 +33,7 @@ export interface HttpDestinationConfig {
    */
   send?: SendFn;
   /** Called with a batch that could not be delivered. */
-  onDropped?: (events: readonly ClickTrailEvent[], error: unknown) => void;
+  onDropped?: (events: readonly StampedClickTrailEvent[], error: unknown) => void;
 }
 
 const DEFAULT_BATCH_SIZE = 10;
@@ -66,7 +66,7 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   const useBeacon = config.beacon ?? true;
   const send = config.send ?? defaultSend(useBeacon);
 
-  let batch: ClickTrailEvent[] = [];
+  let batch: StampedClickTrailEvent[] = [];
 
   const flushBatch = async (): Promise<void> => {
     if (batch.length === 0) return;

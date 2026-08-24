@@ -1,4 +1,4 @@
-# First Publication Checklist — @vizuh/clicktrail
+# First Publication Checklist — ClickTrail JS packages
 
 Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 
@@ -10,20 +10,21 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] B3 attestation approved by Hugo verbatim (AI-assisted commits)
 
 ## 1. Repository
-- [ ] Remote created PRIVATE via prepared command (OWNER placeholder resolved)
-- [ ] Push succeeds; all 17+ commits present
-- [ ] License/provenance approved -> repo made public (required for npm provenance later)
+- [x] Public remote: `https://github.com/vizuh/clicktrail-js`
+- [x] Namespace decision recorded: `@vizuh/clicktrail`
+- [ ] License/provenance approved (required before npm publication)
 
 ## 2. Remote CI green
-- [ ] verify job green on Node 20 AND 22
-- [ ] integration job green: Playwright probe 12/12 on clean runner
+- [ ] verify job green on Node 18, 20, and 22
+- [ ] integration job green: Chromium, Firefox, and WebKit probes 12/12 on clean runners
 - [ ] parity harness: either ran with sibling checkout, OR skipped WITH visible step-summary warning; require_parity dispatch exercised once successfully
-- [ ] pack smoke job green (clean-room install of every subpath export)
+- [ ] pack smoke job green (clean-room install of `@vizuh/clicktrail` and `@clicktrail/astro`)
 - [ ] build reproducible on clean runner (no local filesystem assumptions)
 
 ## 3. Package
-- [ ] `npm version 0.1.0` is the package version after CI green
-- [ ] `npm pack --dry-run` tarball reviewed file-by-file: only dist/, README.md, package.json, LICENSE
+- [ ] package versions set to `0.1.0-rc.2` after CI and governance gates pass
+- [ ] Commit package versions and create matching Git tag `v0.1.0-rc.2`
+- [ ] `pnpm pack --dry-run` tarballs reviewed file-by-file: only dist/, README.md, package.json, LICENSE
 - [ ] leak scan re-run: no .env / credentials / private fixtures / internal docs
 - [ ] clean-room consumer project installs tarball; ALL subpath exports import (., /browser, /conversation, /agent, /otel, /apointoo, /incubating)
 - [ ] stamps report expected schema_version/classifier_version
@@ -34,7 +35,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
 
 ## 5. First publish
-- [ ] `npm publish --access public` (first-ever scoped release needs --access public)
+- [ ] Push `v0.1.0-rc.2`; trusted-publishing workflow publishes with npm dist-tag `next`
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 

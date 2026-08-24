@@ -19,7 +19,7 @@
  * the injected tracer. Determinism: span ids derive from event identity via
  * journeySpanContext — CORRELATION ids, not high-entropy secrets.
  */
-import type { ClickTrailEvent } from '../browser/serialize.js';
+import type { StampedClickTrailEvent } from '../browser/serialize.js';
 import type { Destination } from '../browser/transport.js';
 import {
   ATTR_TRACEPARENT,
@@ -56,11 +56,11 @@ export interface OtelDestinationConfig {
    * Stable identity extractor. Default {@link defaultEventId} (message id →
    * agent run id → event name). MUST be deterministic across replays.
    */
-  eventId?: (event: ClickTrailEvent) => string;
+  eventId?: (event: StampedClickTrailEvent) => string;
   /**
    * Timestamp extractor feeding the id seed. Default {@link defaultEventTimestamp}.
    */
-  eventTime?: (event: ClickTrailEvent) => string | number | undefined;
+  eventTime?: (event: StampedClickTrailEvent) => string | number | undefined;
 }
 
 export interface OtelDestination extends Destination {
@@ -68,7 +68,7 @@ export interface OtelDestination extends Destination {
    * Delivered events, each enriched with the W3C `traceparent` key.
    * Inspection seam for tests and for hosts forwarding downstream.
    */
-  getEvents(): ClickTrailEvent[];
+  getEvents(): StampedClickTrailEvent[];
 }
 
 /** Attribute keys this destination always sets on emitted spans. */
@@ -83,7 +83,7 @@ export function otelDestination(config: OtelDestinationConfig = {}): OtelDestina
   const eventId = config.eventId ?? defaultEventId;
   const eventTime = config.eventTime ?? defaultEventTimestamp;
   const tracer = config.tracer;
-  const events: ClickTrailEvent[] = [];
+  const events: StampedClickTrailEvent[] = [];
 
   return {
     name: 'otel',
@@ -93,7 +93,7 @@ export function otelDestination(config: OtelDestinationConfig = {}): OtelDestina
         id: eventId(event),
         ...(time !== undefined ? { timestamp: time } : {}),
       });
-      const enriched: ClickTrailEvent = { ...event, [ATTR_TRACEPARENT]: ctx.traceparent };
+      const enriched: StampedClickTrailEvent = { ...event, [ATTR_TRACEPARENT]: ctx.traceparent };
       events.push(enriched);
 
       if (!tracer) return;

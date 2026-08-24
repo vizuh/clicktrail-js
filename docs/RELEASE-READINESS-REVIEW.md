@@ -1,17 +1,17 @@
 # ClickTrail JS Release Readiness Review
 
 Date: 2026-08-24
-Reviewed baseline: `0b00ca4`; follow-up fixes applied after review
-Package: `@vizuh/clicktrail@0.1.0`
+Reviewed baseline: current release-candidate worktree; follow-up fixes applied after review
+Packages: `@vizuh/clicktrail@0.1.0-rc.2`, `@clicktrail/astro@0.1.0-rc.2`
 Scope: clean installation, package exports, runtime compatibility, browser and
 Node behavior, CI/release workflow, supply-chain checks, privacy boundaries,
 enterprise integration, and AI workflow safety.
 
 ## Executive result
 
-The core package is installable and the identified technical blockers are now
-fixed. The provenance audit remains open and the live WP parity run still
-reports unruled differences, so neither should be described as closed.
+The core and Astro packages build, test, and install from clean release
+tarballs. The provenance audit and live WP parity differences remain explicit
+release boundaries; neither is described as closed by local source tests.
 
 The original release blockers were:
 
@@ -30,9 +30,31 @@ The original release blockers were:
 only under the owner's explicit decision to accept that unresolved provenance
 gate; this report does not invent the missing attestations.
 
+## Gate matrix
+
+Owners below are execution owners; Hugo retains publication and governance
+decisions.
+
+| Gate | Status | Owner | Required proof | Permitted target |
+| --- | --- | --- | --- | --- |
+| `AI-001` | Closed in follow-up | Codex | Full suite plus regression tests exclude prompts, completions, transcripts, and content from emitted events | Technical readiness only |
+| `XDOM-001` | Closed in follow-up | Codex | Cross-domain sign/verify test and browser probe pass | JS release candidate, not stable publication by itself |
+| `REL-001` | Closed in follow-up | Codex | Dispatchable CI parity workflow and recorded run | Release evidence when parity input is available |
+| `REL-002` | Closed in follow-up | Codex | Sender failure and dropped-batch behavior remain covered by tests | Technical readiness only |
+| `PRIV-001` | Closed in follow-up | Codex | Cookie defaults and HTTPS `Secure` behavior verified at host edge | Technical readiness only |
+| `API-001` | Closed in documentation | Codex | Node 18/20/22 import matrix and explicit ESM-only contract | JS release candidate |
+| `DOC-001` | Closed | Codex | README, subpath, version-stamp, and workflow claims match shipped behavior | JS release candidate |
+| `GOV-001` | Open | Hugo | Owner attestations close provenance audit items B1-B4 | No npm publication or `latest` tag |
+| WP parity | Open: 25 unruled differences | Codex | Resolve or explicitly scope differences before claiming field parity or swapping runtimes | No parity claim; SVN submission remains separately gated |
+
+Publication targets remain conditional: plugin GitHub release, JS
+`0.1.0-rc.2` GitHub release, npm `next`, and WordPress.org SVN submission each
+require their own reviewed evidence. A GitHub release does not prove npm
+publication or WordPress.org indexing.
+
 ## Verified passes
 
-- Local `pnpm test`: 33 files, 309 tests passed.
+- Local `pnpm test`: 39 files, 351 tests passed across core and Astro.
 - Local `pnpm build`: passed.
 - Local browser probe: 12/12 fixtures passed.
 - GitHub CI run [32757188605](https://github.com/vizuh/clicktrail-js/actions/runs/32757188605): Node 20 and 22 verification passed; browser probe and pack smoke passed. WP parity was skipped because the sibling checkout was absent.
@@ -43,8 +65,9 @@ gate; this report does not invent the missing attestations.
 - Built ESM subpaths imported successfully on Node `v18.20.8`.
 - `pnpm audit --prod --audit-level high`: no known production dependency
   vulnerabilities.
-- Follow-up `pnpm test`: 33 files, 311 tests passed; typecheck, build, and
-  browser probe (12/12) passed.
+- Release-candidate `pnpm test`: 39 files, 351 tests passed; strict typecheck,
+  build, Chromium and Firefox probes (12/12 each), production audit, and
+  clean-room pack smoke for both packages passed.
 - Follow-up local WP parity run: 0 harness errors, but 25 unruled differences
   remain in the generated `tools/wp-runtime/PARITY-RUN.md`; this is not a
   claim of field-for-field plugin parity.

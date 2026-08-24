@@ -16,22 +16,27 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   verify:
     name: Typecheck + test + build (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22]
+        node: [18, 20, 22]
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          version: 10
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -40,7 +45,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Strict typecheck (tsc --noEmit)
-        run: pnpm -r exec tsc -p tsconfig.json --noEmit
+        run: pnpm typecheck
 
       - name: Test (vitest)
         run: pnpm -r test
@@ -48,21 +53,35 @@ jobs:
       - name: Build
         run: pnpm -r build
 
+      - name: Production dependency audit
+        if: matrix.node == 22
+        run: pnpm audit --prod --audit-level high
+
   integration:
-    name: Browser probe + parity + pack smoke
+    name: ${{ matrix.browser }} probe + parity + pack smoke
     runs-on: ubuntu-latest
     needs: verify
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Checkout pinned WP plugin for required parity
         if: inputs.require_parity == true
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: vizuh/click-trail-handler
-          ref: f720bc9e586e730f777d52cd5a2b77ffb67d49d6
+          ref: ead6682d6433c4f27309b7ee412e2dfc1fd50de4
           path: click-trail-handler
           fetch-depth: 1
+          persist-credentials: false
 
       # Parity accepts either the pinned hosted checkout above or a sibling
       # checkout on a self-hosted runner.
@@ -86,11 +105,9 @@ jobs:
             echo "::warning::parity harness skipped: click-trail-handler checkout absent"
           fi
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: 22
           cache: pnpm
@@ -98,16 +115,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build ESM + IIFE global bundle
         run: |
           pnpm --filter @vizuh/clicktrail build
           pnpm --filter @vizuh/clicktrail build:global
+          pnpm --filter @clicktrail/astro build
 
       - name: Playwright golden-fixture probe
         run: node probe/run-probe.mjs
+        env:
+          CLICKTRAIL_BROWSER: ${{ matrix.browser }}
 
       - name: WP runtime parity harness
         if: steps.plugin.outputs.available == 'true'
@@ -122,17 +142,39 @@ jobs:
           exit 1
 
       - name: npm pack + clean-room install smoke
-        run: |
-          cd packages/clicktrail
-          npm pack --pack-destination /tmp
+        run: | # zizmor: ignore[adhoc-packages] -- local release tarballs are the consumer-test subjects
+          mkdir -p /tmp/clicktrail-packs
+          pnpm --filter @vizuh/clicktrail pack --pack-destination /tmp/clicktrail-packs
+          pnpm --filter @clicktrail/astro pack --pack-destination /tmp/clicktrail-packs
+          core_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-*.tgz' -printf '%f\n')"
+          astro_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'clicktrail-astro-*.tgz' -printf '%f\n')"
           cd "$(mktemp -d)"
           echo '{"name":"smoke","type":"module","private":true}' > package.json
-          npm install /tmp/vizuh-clicktrail-*.tgz --silent
+          # zizmor: ignore[adhoc-packages] -- local release tarballs are the consumer-test subjects
+          npm install --ignore-scripts "/tmp/clicktrail-packs/$core_tar" "/tmp/clicktrail-packs/$astro_tar" --silent
           node --input-type=module -e "
             const mod = await import('@vizuh/clicktrail');
+            const browser = await import('@vizuh/clicktrail/browser');
             const conv = await import('@vizuh/clicktrail/conversation');
             const agent = await import('@vizuh/clicktrail/agent');
             const otel = await import('@vizuh/clicktrail/otel');
-            if (!mod.parseAttributionUrl || !conv.createConversationTracker) process.exit(1);
-            console.log('pack smoke OK, classifier', mod.CLASSIFIER_VERSION);
+            const apointoo = await import('@vizuh/clicktrail/apointoo');
+            const incubating = await import('@vizuh/clicktrail/incubating');
+            const astro = await import('@clicktrail/astro');
+            const checks = [
+              ['root', mod.parseAttributionUrl],
+              ['browser', browser.createClickTrail],
+              ['conversation', conv.createConversationTracker],
+              ['agent', agent.createAgentRunRecorder],
+              ['otel', otel.otelDestination],
+              ['apointoo', apointoo.createApointooDestination],
+              ['incubating', incubating.ATTR_JOURNEY_ID],
+              ['astro', astro.clicktrailAstro],
+            ];
+            const missing = checks.filter(([, value]) => value === undefined).map(([name]) => name);
+            if (missing.length) {
+              console.error('Missing package exports:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('pack smoke OK, exports', checks.map(([name]) => name).join(', '));
           "

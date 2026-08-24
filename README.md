@@ -15,10 +15,14 @@ shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | `0.1.0-rc.1`: GitHub release candidate; npm `next` publication via matching tag |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | Release candidate `0.1.0-rc.2`; core, browser, storage, journey, agent, OTEL, and Apointoo subpaths |
+| [`@clicktrail/astro`](packages/astro/) | Release candidate `0.1.0-rc.2`; Astro integration, consent gate, page-view tracking, first-party proxy, and server helpers |
 
-The free browser layer now emits the normalized `marketing_trail` envelope
-alongside the backward-compatible flat event payload.
+The GitHub repository is public and the `v0.1.0-rc.2` release candidate is
+prepared for GitHub release assets. npm publication remains separately gated
+by trusted-publisher configuration and the provenance review in
+[`docs/PROVENANCE-AUDIT.md`](docs/PROVENANCE-AUDIT.md); do not infer npm
+publication from a GitHub tag.
 
 ## Architecture in one line
 
@@ -39,11 +43,15 @@ Design rules (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 ```bash
 pnpm install
+pnpm typecheck
 pnpm -r test        # vitest, replays golden fixtures
 pnpm -r build       # tsc per package
+pnpm probe           # ESM + global bundle + 12-fixture browser probe
+pnpm audit --prod --audit-level high
 ```
 
-Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.
+Strict typecheck: `pnpm typecheck` (builds the core package first so workspace
+package exports resolve before checking the Astro adapter).
 
 ## Use cases
 
