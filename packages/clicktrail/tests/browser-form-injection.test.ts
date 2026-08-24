@@ -147,6 +147,15 @@ describe('resolveInjectionEntries (pure)', () => {
     ]);
   });
 
+  it('derives a stable trail field from visitor identity', () => {
+    const entries = resolveInjectionEntries({
+      payload: emptyAttribution(),
+      identity: { visitorId: 'v-9' },
+      fields: ['trail_id'],
+    });
+    expect(entries).toEqual([['ct_trail_id', 'trl_v-9']]);
+  });
+
   it('payload value wins over identity fallback', () => {
     const payload = { ...emptyAttribution(), visitor_id: 'from-payload' };
     const entries = resolveInjectionEntries({
@@ -206,6 +215,7 @@ describe('createFormInjector', () => {
       'ft_source', 'lt_touch_timestamp', 'ft_channel', 'lt_referrer',
       'gclid', 'fbclid', 'epik',
       'visitor_id', 'session_id', 'session_number',
+      'trail_id',
     ]) {
       expect(DEFAULT_FORM_FIELDS).toContain(key);
     }

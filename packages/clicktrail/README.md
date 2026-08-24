@@ -16,6 +16,9 @@ Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
 Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin is the
 WordPress distribution; this package is the shared engine beneath it.
 
+> Release candidate: `0.1.0-rc.1`. The matching GitHub tag publishes this
+> package to npm under the `next` dist-tag.
+
 ## Install
 
 ```bash
@@ -25,6 +28,9 @@ pnpm add @vizuh/clicktrail
 
 Requires Node >= 18. This is an ESM-only package; use `import` or dynamic
 `import()`. CommonJS `require()` is not supported.
+
+The package ships declaration files for the root and every exported subpath,
+so TypeScript consumers can typecheck against the same public entry points.
 
 ## Entry points
 
@@ -102,6 +108,23 @@ const clickTrail = createClickTrail({
 });
 
 clickTrail.start();
+```
+
+Each tracked event keeps its backward-compatible flat payload and adds a
+`marketing_trail` envelope. The envelope contains `evt_`, `trl_`,
+`anon_`, and lead IDs, latest-touch attribution with first-touch fallback,
+click IDs, consent, and form context. `workspaceId` and `siteId` are
+optional config values; `trail_id` is a stable `trl_` namespace derived
+from the persistent visitor ID.
+
+```ts
+const clickTrail = createClickTrail({
+  destinations: [dataLayerDestination()],
+  workspaceId: 'ws_123',
+  siteId: 'site_123',
+  consentState: () => ({ analytics: true, advertising: true }),
+  storage: {},
+});
 ```
 
 The snippet shows the integration boundary only. Validate granted, denied,

@@ -15,7 +15,10 @@ shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | `0.1.0`: stable core plus browser and storage adapters; incubating journey, agent, OTEL and Apointoo subpaths |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | `0.1.0-rc.1`: GitHub release candidate; npm `next` publication via matching tag |
+
+The free browser layer now emits the normalized `marketing_trail` envelope
+alongside the backward-compatible flat event payload.
 
 ## Architecture in one line
 

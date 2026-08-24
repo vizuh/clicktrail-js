@@ -36,7 +36,7 @@ import type {
 } from './storage.js';
 import type { Destination } from './transport.js';
 import type { SessionSnapshot } from './global-adapter.js';
-import { buildEventPayload, type ClickTrailEvent } from './serialize.js';
+import { buildEventPayload, type ClickTrailEvent, type MarketingTrailContext } from './serialize.js';
 import {
   createFormInjector,
   defaultFormDocument,
@@ -78,6 +78,15 @@ export interface ClickTrailConfig {
    * denial streak. Omit only when the host handles consent elsewhere.
    */
   consentGate?: () => boolean;
+  /** Consent snapshot copied into each normalized marketing trail envelope. */
+  consentState?: () => {
+    analytics?: boolean;
+    advertising?: boolean;
+    marketing?: boolean;
+  };
+  /** Optional routing identifiers for the normalized envelope. */
+  workspaceId?: string;
+  siteId?: string;
   /** Injected clock returning ISO-8601 strings; stamps `event_time`. */
   now?: () => string;
   /** Diagnostics level. Default 'silent' (nothing reported). */
@@ -216,6 +225,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const now = config.now;
   const consentGate = config.consentGate;
   const sink = resolveSink(config);
+  let eventSequence = 0;
 
   let started = false;
   let payload: AttributionPayload = emptyAttribution();
@@ -313,6 +323,16 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     }
     return false;
   };
+
+  const generateEventId = (): string => {
+    const crypto = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    if (crypto?.randomUUID) return `evt_${crypto.randomUUID()}`;
+    eventSequence += 1;
+    return `evt_${Date.now().toString(36)}_${eventSequence}`;
+  };
+
+  const isLeadEvent = (eventName: string): boolean =>
+    ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
 
   /**
    * Cross-domain wiring (work-queue #5): landing-token consumption + outbound
@@ -452,7 +472,16 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       const eventData: Record<string, unknown> = {};
       if (now && data?.['event_time'] === undefined) eventData.event_time = now();
       Object.assign(eventData, data);
-      const event: ClickTrailEvent = buildEventPayload(payload, eventName, eventData);
+      eventData.event_id = eventData.event_id || generateEventId();
+      if (isLeadEvent(eventName) && !eventData.lead_id) {
+        eventData.lead_id = `lead_${String(eventData.event_id).replace(/^evt_/, '')}`;
+      }
+      const envelopeContext: MarketingTrailContext = { identity: instance.getSession() };
+      if (config.workspaceId !== undefined) envelopeContext.workspaceId = config.workspaceId;
+      if (config.siteId !== undefined) envelopeContext.siteId = config.siteId;
+      const consentState = config.consentState?.();
+      if (consentState !== undefined) envelopeContext.consent = consentState;
+      const event: ClickTrailEvent = buildEventPayload(payload, eventName, eventData, envelopeContext);
       for (const dest of destinations) dest.deliver(event);
     },
 
