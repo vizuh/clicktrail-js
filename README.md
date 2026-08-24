@@ -4,9 +4,10 @@
 
 First-party, deterministic attribution and customer-journey capture engine.
 
-Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by Funnelsheet.
-The WordPress plugin (`click-trail-handler`) is the WordPress distribution; this
-repository is the shared engine beneath it.
+Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by Vizuh.
+FunnelSheet is Vizuh's consulting branch. The WordPress plugin
+(`click-trail-handler`) is the WordPress distribution; this repository is the
+shared engine beneath it.
 
 ## Packages
 

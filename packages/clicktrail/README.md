@@ -11,8 +11,8 @@ That is what makes golden-fixture replay testing possible (see
 [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)).
 
 Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
-Funnelsheet. The WordPress plugin is the WordPress distribution; this package
-is the shared engine beneath it.
+Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin is the
+WordPress distribution; this package is the shared engine beneath it.
 
 ## Install
 
