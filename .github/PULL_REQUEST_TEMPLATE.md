@@ -5,7 +5,7 @@
 ## Affected packages
 
 - [ ] `@vizuh/clicktrail`
-- [ ] `@clicktrail/astro`
+- [ ] `@vizuh/clicktrail-astro`
 - [ ] CI / security / release
 - [ ] Documentation
 

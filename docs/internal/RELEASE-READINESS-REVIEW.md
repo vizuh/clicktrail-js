@@ -1,8 +1,8 @@
 # ClickTrail JS Release Readiness Review
 
-Date: 2026-08-24
+Date: 2026-08-25
 Reviewed baseline: current release-candidate worktree; follow-up fixes applied after review
-Packages: `@vizuh/clicktrail@0.1.0-rc.3`; `@clicktrail/astro@0.1.0-rc.2` remains unpublished
+Packages: first wave is versioned `0.1.0-rc.3`; new packages remain unpublished
 Scope: clean installation, package exports, runtime compatibility, browser and
 Node behavior, CI/release workflow, supply-chain checks, privacy boundaries,
 enterprise integration, and AI workflow safety.
@@ -12,6 +12,13 @@ enterprise integration, and AI workflow safety.
 The core and Astro packages build, test, and install from clean release
 tarballs. The provenance audit and live WP parity differences remain explicit
 release boundaries; neither is described as closed by local source tests.
+
+The RC3 tag was created and its GitHub publish workflow completed all build and
+test gates, but npm rejected the first new package with `E404` because
+`@vizuh/clicktrail-core` does not exist yet. No new package was published and no
+GitHub release was created. Trusted-publisher configuration is package-specific;
+the one-time npm 2FA bootstrap must happen before CI can publish new package
+names.
 
 The original release blockers were:
 
@@ -65,6 +72,10 @@ publication or WordPress.org indexing.
 - Built ESM subpaths imported successfully on Node `v18.20.8`.
 - `pnpm audit --prod --audit-level high`: no known production dependency
   vulnerabilities.
+- RC3 GitHub tag `v0.1.0-rc.3`: present; publish run
+  [32788003812](https://github.com/vizuh/clicktrail-js/actions/runs/32788003812)
+  failed only at npm package bootstrap after typecheck, tests, build, and
+  version checks passed.
 - Release-candidate `pnpm test`: 39 files, 351 tests passed; strict typecheck,
   build, Chromium and Firefox probes (12/12 each), production audit, and
   clean-room pack smoke for both packages passed.
@@ -290,3 +301,5 @@ deviations, and the provenance audit is not closed.
    field parity or starting the WordPress runtime swap.
 3. Re-run tarball install, subpath imports, Node 18/20/22 checks, CI, and
    `npm publish --dry-run` before each publication.
+4. Bootstrap each new npm package with Hugo's 2FA, configure its trusted
+   publisher, then rerun the RC3 publish workflow; do not use a token fallback.

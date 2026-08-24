@@ -37,6 +37,23 @@ jobs:
       - run: pnpm -r test
       - run: pnpm -r build
 
+      - name: Verify npm package bootstrap state
+        shell: bash
+        run: |
+          set -euo pipefail
+          for package_json in \
+            packages/core/package.json \
+            packages/browser/package.json \
+            packages/clicktrail/package.json \
+            integrations/astro/package.json \
+            integrations/nuxt/package.json; do
+            package_name="$(node -p "require('./$package_json').name")"
+            if ! npm view "$package_name" version >/dev/null 2>&1; then
+              echo "::error::$package_name does not exist on npm. Complete Hugo's one-time 2FA bootstrap and configure its trusted publisher before retrying this release."
+              exit 1
+            fi
+          done
+
       - name: Verify tag matches every published package version
         shell: bash
         run: |
