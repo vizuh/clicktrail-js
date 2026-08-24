@@ -110,7 +110,7 @@ jobs:
           npm pack --pack-destination /tmp
           cd "$(mktemp -d)"
           echo '{"name":"smoke","type":"module","private":true}' > package.json
-          npm install /tmp/funnelsheet-clicktrail-*.tgz --silent
+          npm install /tmp/vizuh-clicktrail-*.tgz --silent
           node --input-type=module -e "
             const mod = await import('@vizuh/clicktrail');
             const conv = await import('@vizuh/clicktrail/conversation');
