@@ -51,6 +51,5 @@ Rules for every task:
 
 All items done. Remaining work is DECISION-gated, not buildable:
 - Hugo gate: deviation D2 (bare-click-id inference labels) + D3 (newest-wins top-level click IDs) before WP runtime swap
-- Hugo gate: npm publish preconditions (@funnelsheet scope ownership, copyright provenance)
+- Hugo gate: npm publish preconditions (@vizuh scope ownership, copyright provenance)
 - Deferred: wiring probe+parity into CI; WP plugin swap execution; live Chatwoot/Apointoo integration pilots
-

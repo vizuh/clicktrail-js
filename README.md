@@ -12,7 +12,7 @@ repository is the shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@funnelsheet/clicktrail`](packages/clicktrail/) | Phase 1a — stable attribution conventions + pure core engine |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | Phase 1a — stable attribution conventions + pure core engine |
 
 ## Architecture in one line
 

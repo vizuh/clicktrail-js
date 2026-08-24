@@ -1,5 +1,5 @@
 /**
- * @funnelsheet/clicktrail/otel - UNSTABLE entry point.
+ * @vizuh/clicktrail/otel - UNSTABLE entry point.
  *
  * Correlation bridge between ClickTrail journeys and OpenTelemetry-SHAPED
  * context WITHOUT requiring the OTel SDK. "OpenTelemetry-compatible, not

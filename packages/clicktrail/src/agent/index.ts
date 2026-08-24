@@ -1,5 +1,5 @@
 /**
- * @funnelsheet/clicktrail/agent - UNSTABLE entry point.
+ * @vizuh/clicktrail/agent - UNSTABLE entry point.
  *
  * Server-side recording of agent/automation runs tied to a ClickTrail
  * journey: agent.run.started / agent.run.finished through an injected

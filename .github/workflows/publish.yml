@@ -20,7 +20,7 @@ jobs:
 # PRECONDITIONS (from docs/ARCHITECTURE.md, "One-way doors") — verify ALL
 # before removing comments and enabling this workflow:
 #
-#   1. SCOPE OWNERSHIP: confirm the `@funnelsheet` npm scope is owned by the
+#   1. SCOPE OWNERSHIP: confirm the `@vizuh` npm scope is owned by the
 #      funnelsheet org and that trusted publishing is registered for this
 #      repository + workflow + environment on npmjs.com.
 #   2. COPYRIGHT PROVENANCE: complete the contributor copyright chain
@@ -71,7 +71,7 @@ jobs:
 #
 #       # npm >= 11.5.1 supports OIDC trusted publishing; no token needed.
 #       # The package must have `publishConfig.access: public` or use --access.
-#       - name: Publish @funnelsheet/clicktrail
+#       - name: Publish @vizuh/clicktrail
 #         run: |
 #           npm install -g npm@latest
 #           cd packages/clicktrail

@@ -1,5 +1,5 @@
 /**
- * @funnelsheet/clicktrail/apointoo — UNSTABLE entry point.
+ * @vizuh/clicktrail/apointoo — UNSTABLE entry point.
  *
  * The commercial loop: verified outcomes (appointments/sales) flow back to
  * Apointoo carrying the original journey attribution captured by ClickTrail.

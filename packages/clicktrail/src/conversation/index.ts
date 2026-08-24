@@ -1,5 +1,5 @@
 /**
- * @funnelsheet/clicktrail/conversation — UNSTABLE entry point.
+ * @vizuh/clicktrail/conversation — UNSTABLE entry point.
  * Journey-aware conversation tracking for Chatwoot-style surfaces.
  *
  * Effects live here (storage/clock/randomness defaults are lazy seams),

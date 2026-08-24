@@ -3,7 +3,7 @@
 Status: DRAFT, 2026-08-24. **EXECUTION REQUIRES HUGO APPROVAL. This document
 authorizes nothing by existing.** It stages the swap of
 `click-trail-handler`'s browser runtime (`assets/js/clicutcl-attribution.js`)
-to the `@funnelsheet/clicktrail` engine, gated on:
+to the `@vizuh/clicktrail` engine, gated on:
 
 - Hugo gate rulings D2/D3 shipped in clicktrail-js (done, 01ae20e)
 - docs/PROVENANCE-AUDIT.md blockers B1-B4 resolved (npm publish preconditions)

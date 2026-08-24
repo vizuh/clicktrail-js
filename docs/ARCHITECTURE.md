@@ -9,12 +9,12 @@ Prompt contract.
 
 | Axis | Verdict | Notes |
 |---|---|---|
-| Packaging | One public package `@funnelsheet/clicktrail`, subpath exports | Split into multiple packages only when a consumer needs independent lifecycles |
+| Packaging | One public package `@vizuh/clicktrail`, subpath exports | Split into multiple packages only when a consumer needs independent lifecycles |
 | Implementation | Fresh TypeScript written against the documented contract; NEVER a literal port of the plugin IIFEs | Ported minified code launders legacy bugs into the "new" engine |
 | Spec mechanism | Golden fixtures captured from live plugin behavior ARE the executable spec | Before freezing goldens, decide explicitly (in writing) which legacy quirks are contract vs accident |
 | Versioning | Two independent stamps on every payload: `schema_version` (additive) and `classifier_version` (semantic) | A classifier behavior change ships only as a major release |
 | License | MIT (whole repo), after copyright-provenance verification | WP plugin stays GPL-2.0-or-later; MIT embeds cleanly into GPL |
-| Preconditions | Verify npm scope `@funnelsheet` ownership + contributor copyright chain before first publish | One-way doors |
+| Preconditions | Verify npm scope `@vizuh` ownership + contributor copyright chain before first publish | One-way doors |
 
 ## Determinism rule (core law #1)
 
@@ -39,8 +39,8 @@ against the frozen contract, never inside core.
 
 | Import | Stability | Contents |
 |---|---|---|
-| `@funnelsheet/clicktrail` | stable, semver-protected | Stable ATTR_/EVENT_/VALUE_ constants, payload schema types, pure core engine |
-| `@funnelsheet/clicktrail/incubating` | unstable, may break between minors | Journey/conversation/agent conventions, experimental attributes |
+| `@vizuh/clicktrail` | stable, semver-protected | Stable ATTR_/EVENT_/VALUE_ constants, payload schema types, pure core engine |
+| `@vizuh/clicktrail/incubating` | unstable, may break between minors | Journey/conversation/agent conventions, experimental attributes |
 
 Constant naming follows the OTel convention:
 `ATTR_${name}`, `${NAME}_VALUE_${enum}`, `EVENT_${name}`.

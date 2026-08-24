@@ -3,7 +3,7 @@
 Status: NAMESPACE DECIDED; COPYRIGHT/PROVENANCE GATES OPEN.
 Prepared: 2026-08-23. Related: PROVENANCE-AUDIT.md blockers B1-B4.
 
-Hugo decision (2026-08-24): npm package `@funnelsheet/clicktrail`; public GitHub
+Hugo decision (2026-08-24): npm package `@vizuh/clicktrail`; public GitHub
 repository `vizuh/clicktrail-js`.
 
 ## The two questions
@@ -19,7 +19,7 @@ Rule: choose the party that genuinely owns or has received the rights — not fo
 | Option | npm package | GitHub repo | Trade-offs |
 |---|---|---|---|
 | 1 | `@apointoo/clicktrail` | `apointoo/clicktrail-js` | Ties open infrastructure to the commercial product brand; strongest product alignment since ClickTrail is Apointoo's capture layer; requires an apointoo npm org + GitHub org |
-| 2 | `@funnelsheet/clicktrail` | `vizuh/clicktrail-js` | Keeps ClickTrail as neutral developer-brand infrastructure; requires the `funnelsheet` npm scope; selected |
+| 2 | `@vizuh/clicktrail` | `vizuh/clicktrail-js` | Uses Vizuh as legal owner, npm scope, and GitHub owner; selected |
 | 3 | Personal scope (`@<hugo-npm-user>/clicktrail`) | personal GitHub account | Fastest to create; weakest long-term home; migrating a public package identity later is costly |
 
 Historical external recommendation (superseded by decision above): Option 1 IF Apointoo is intended as the
@@ -30,7 +30,7 @@ umbrella developer brand. Decision is Hugo's alone.
 
 Current state assumes Option 2. Change matrix:
 
-| Field / file | Option 1 (@apointoo) | Option 2 (@funnelsheet) | Option 3 (personal) |
+| Field / file | Option 1 (@apointoo) | Option 2 (@vizuh) | Option 3 (personal) |
 |---|---|---|---|
 | `packages/clicktrail/package.json` -> name | `@apointoo/clicktrail` | no change | `@<user>/clicktrail` |
 | same -> repository.url | `github.com/apointoo/clicktrail-js` | `github.com/vizuh/clicktrail-js` | personal repo URL |
@@ -41,7 +41,7 @@ Current state assumes Option 2. Change matrix:
 | `.github/workflows/ci.yml` | no change | no change | no change |
 | npm provenance (later) | repo must be public + URLs match | same | same |
 | GitHub org creation | create `apointoo` org if absent | use existing `vizuh` owner | none |
-| npm org creation | create `apointoo` org if absent | create `funnelsheet` org if absent | none |
+| npm org creation | create `apointoo` org if absent | use existing `vizuh` org | none |
 | docs/WP-SWAP-STAGING-PLAN.md | no change (brand-neutral) | no change | no change |
 | WP plugin "Destinations" card copy (future) | mentions Apointoo destination only | unchanged | unchanged |
 

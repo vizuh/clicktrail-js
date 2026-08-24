@@ -1,5 +1,5 @@
 /**
- * @funnelsheet/clicktrail/browser — thin browser layer.
+ * @vizuh/clicktrail/browser — thin browser layer.
  *
  * Effects live here (clock/network/dataLayer), built against the frozen
  * deterministic core. Import-safe in SSR environments: no side effects

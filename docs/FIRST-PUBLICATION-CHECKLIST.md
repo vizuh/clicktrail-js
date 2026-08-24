@@ -4,7 +4,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 
 ## 0. Governance (blocking everything)
 - [ ] Copyright holder decided (Hugo Carvalho personally vs Vizuh OÜ) -> LICENSE + package metadata updated
-- [ ] Namespace decided (@apointoo vs @funnelsheet vs personal) -> see OWNER-NAMESPACE-DECISION.md change matrix applied
+- [ ] Namespace decided (@apointoo vs @vizuh vs personal) -> see OWNER-NAMESPACE-DECISION.md change matrix applied
 - [ ] B1 attestation approved by Hugo verbatim (historical contributors)
 - [ ] B2 attestation approved by Hugo verbatim (Apointoo channel-classify.ts) OR implementation independently rewritten
 - [ ] B3 attestation approved by Hugo verbatim (AI-assisted commits)

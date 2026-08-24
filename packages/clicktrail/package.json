@@ -1,5 +1,5 @@
 {
-  "name": "@funnelsheet/clicktrail",
+  "name": "@vizuh/clicktrail",
   "version": "0.1.0",
   "description": "Deterministic first-party attribution conventions and engine. Captures the trail from ad click to conversion.",
   "license": "MIT",

@@ -202,11 +202,11 @@ Assessment per category-2 item, ASSUMING sole ownership holds:
   assign output rights to you, and record the attestation beside this
   audit. Low risk; document it rather than solve it.
 - **B4 — npm scope + artifact hygiene.** CORRECTED per Hugo review (2026-08-23):
-  an E404 for `@funnelsheet/clicktrail` proves only that the PACKAGE does not
+  an E404 for `@vizuh/clicktrail` proves only that the PACKAGE does not
   exist — it does NOT prove the `funnelsheet` scope is available, or owned by
   Hugo. Scope ownership requires verifying the AUTHENTICATED npm user and
   organization membership separately (`npm whoami`, `npm org ls <scope>`); the
-  permanent package namespace is now `@funnelsheet/clicktrail`. Artifact-hygiene half of B4 is
+  permanent package namespace is now `@vizuh/clicktrail`. Artifact-hygiene half of B4 is
   VERIFIED: the packed tarball contains only LICENSE, dist/, README.md and
   package.json;
   tools/wp-runtime/ (which loads/executes GPL plugin JS at dev time) is outside

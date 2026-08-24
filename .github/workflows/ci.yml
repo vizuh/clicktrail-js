@@ -88,8 +88,8 @@ jobs:
 
       - name: Build ESM + IIFE global bundle
         run: |
-          pnpm --filter @funnelsheet/clicktrail build
-          pnpm --filter @funnelsheet/clicktrail build:global
+          pnpm --filter @vizuh/clicktrail build
+          pnpm --filter @vizuh/clicktrail build:global
 
       - name: Playwright golden-fixture probe
         run: node probe/run-probe.mjs
@@ -112,10 +112,10 @@ jobs:
           echo '{"name":"smoke","type":"module","private":true}' > package.json
           npm install /tmp/funnelsheet-clicktrail-*.tgz --silent
           node --input-type=module -e "
-            const mod = await import('@funnelsheet/clicktrail');
-            const conv = await import('@funnelsheet/clicktrail/conversation');
-            const agent = await import('@funnelsheet/clicktrail/agent');
-            const otel = await import('@funnelsheet/clicktrail/otel');
+            const mod = await import('@vizuh/clicktrail');
+            const conv = await import('@vizuh/clicktrail/conversation');
+            const agent = await import('@vizuh/clicktrail/agent');
+            const otel = await import('@vizuh/clicktrail/otel');
             if (!mod.parseAttributionUrl || !conv.createConversationTracker) process.exit(1);
             console.log('pack smoke OK, classifier', mod.CLASSIFIER_VERSION);
           "

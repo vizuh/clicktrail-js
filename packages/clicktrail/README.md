@@ -1,4 +1,4 @@
-# @funnelsheet/clicktrail
+# @vizuh/clicktrail
 
 Deterministic first-party attribution conventions and engine. Captures the
 trail from ad click to conversion — UTMs, ad click IDs (gclid, fbclid,
@@ -17,15 +17,15 @@ is the shared engine beneath it.
 ## Install
 
 ```bash
-pnpm add @funnelsheet/clicktrail
-# or: npm install @funnelsheet/clicktrail
+pnpm add @vizuh/clicktrail
+# or: npm install @vizuh/clicktrail
 ```
 
 Requires Node >= 18.
 
 ## Usage
 
-### Stable entry point (`@funnelsheet/clicktrail`)
+### Stable entry point (`@vizuh/clicktrail`)
 
 Stable constants, types, and the pure core engine. Protected by semver 2.0:
 breaking changes only in major releases.
@@ -36,7 +36,7 @@ import {
   emptyAttribution,
   mergeAttributionTouch,
   stampVersions,
-} from '@funnelsheet/clicktrail';
+} from '@vizuh/clicktrail';
 
 // All inputs come from the caller; nothing here reads the clock or network.
 const landingUrl =
@@ -56,7 +56,7 @@ if (result.kind === 'touch') {
 }
 ```
 
-### Incubating entry point (`@funnelsheet/clicktrail/incubating`)
+### Incubating entry point (`@vizuh/clicktrail/incubating`)
 
 UNSTABLE. May break between minor versions — same guidance as OpenTelemetry:
 do not depend on it from published libraries; copy definitions into your
@@ -67,7 +67,7 @@ import {
   ATTR_JOURNEY_ID,
   ATTR_CONVERSATION_ID,
   ACTOR_TYPE_VALUE_AGENT,
-} from '@funnelsheet/clicktrail/incubating';
+} from '@vizuh/clicktrail/incubating';
 ```
 
 ## Conventions

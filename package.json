@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "scripts": {
     "build": "pnpm -r build",
-    "build:global": "pnpm --filter @funnelsheet/clicktrail build:global",
+    "build:global": "pnpm --filter @vizuh/clicktrail build:global",
     "test": "pnpm -r test",
-    "probe": "pnpm --filter @funnelsheet/clicktrail build && pnpm --filter @funnelsheet/clicktrail build:global && node probe/run-probe.mjs",
+    "probe": "pnpm --filter @vizuh/clicktrail build && pnpm --filter @vizuh/clicktrail build:global && node probe/run-probe.mjs",
     "parity": "node tools/wp-runtime/run-parity.mjs"
   },
   "devDependencies": {

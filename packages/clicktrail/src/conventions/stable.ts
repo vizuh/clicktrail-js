@@ -3,7 +3,7 @@
  *
  * Modeled on OpenTelemetry semantic-conventions:
  * - the main entry point is STABLE and follows semver 2.0 strictly;
- * - experimental concepts live in `@funnelsheet/clicktrail/incubating`;
+ * - experimental concepts live in `@vizuh/clicktrail/incubating`;
  * - constants exist so IDE autocomplete and greps stay readable.
  *
  * Naming scheme: ATTR_${attributeName}, ${NAME}_VALUE_${enum}, EVENT_${eventName}.
