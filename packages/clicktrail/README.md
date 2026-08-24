@@ -88,5 +88,5 @@ this repository's executable spec.
 
 ## License
 
-MIT — see the root [LICENSE](../../LICENSE). The WordPress plugin remains
+MIT — see [LICENSE](LICENSE). The WordPress plugin remains
 GPL-2.0-or-later; MIT embeds cleanly into GPL.

@@ -1,6 +1,6 @@
 # ClickTrail JS
 
-[![CI](https://github.com/funnelsheet/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/funnelsheet/clicktrail-js/actions/workflows/ci.yml) <!-- badge placeholder: activates once pushed to GitHub -->
+[![CI](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml) <!-- badge placeholder: activates once pushed to GitHub -->
 
 First-party, deterministic attribution and customer-journey capture engine.
 
