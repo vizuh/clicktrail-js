@@ -101,7 +101,14 @@ Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing paylo
 | Browser-ID collection missing | SPLIT: (a) URL-param browser IDs (fbc, fbp, ttp, li_gc, ga_* as query params) populate top-level payload keys in CORE parse — deterministic, fixture-pinnable. (b) Cookie-derived IDs (fbp/ttp/li_gc cookies, GA ids) collected by the /browser adapter behind consent gate and merged top-level. Core never touches cookies. |
 | ft_<cid>/lt_<cid> click-ID mirror | PLUGIN is CONTRACT: merge mirrors each captured click ID into the touch fields at first- AND last-touch write time (matches applyTouch(mapQueryFields)). Redundant but required for WP-swap field-for-field parity; downstream consumers may read them. |
 
-Target after implementation: runtime harness diffs shrink to ONLY rulings #1/#2/#6/#7/#10/#14 standing deviations.
+Target after implementation: runtime harness diffs shrink to approved standing deviations (#1/#2/#6/#7/#10/#14), plus explicit Hugo gate D2/D3 fields.
+
+Runtime parity gate:
+
+- Local and CI runs must execute plugin commit `f720bc9e586e730f777d52cd5a2b77ffb67d49d6`; the harness fails on any other checkout and records the commit in `PARITY-RUN.md`.
+- The legacy parity projection treats optional empty `click_id_history` (`[]`) as equivalent to an absent plugin field. Non-empty history remains visible.
+- D3 fields (`click_id_history`, `attribution_selected_click_id`, `attribution_selected_click_id_reason`) are additive engine-contract checks, reported as ruled differences rather than hidden.
+- The classifier follows Hugo gate D2: bare `fbclid` is platform-known but paid status remains unknown without explicit paid evidence.
 
 | Sticky top-level click IDs | ENGINE keeps newest-non-empty-wins (consistent with last-touch philosophy; ft_/lt_ mirrors now give consumers BOTH first and latest values). Recorded as standing deviation D3 -> joins the Hugo confirmation gate before WP swap. |
 

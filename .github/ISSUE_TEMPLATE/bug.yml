@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible ClickTrail JS problem
+title: "[Bug]: "
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package and version
+      placeholder: "@vizuh/clicktrail 0.1.0-rc.2"
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime and browser
+      placeholder: "Node 22, Chromium 130"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include a minimal example without secrets or visitor data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

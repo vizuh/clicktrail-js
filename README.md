@@ -15,13 +15,14 @@ shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | Source version `0.1.0`; npm publication pending. Stable core plus browser and storage adapters; journey, agent, OTEL and Apointoo subpaths remain incubating |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | Release candidate `0.1.0-rc.2`; core, browser, storage, journey, agent, OTEL, and Apointoo subpaths |
+| [`@clicktrail/astro`](packages/astro/) | Release candidate `0.1.0-rc.2`; Astro integration, consent gate, page-view tracking, first-party proxy, and server helpers |
 
-The GitHub repository is public. The package is not published to npm yet, and
-has no Git tag or GitHub Release. The first planned publication is
-`0.1.0-rc.1` on npm dist-tag `next`, after the release gates in
-[`docs/FIRST-PUBLICATION-CHECKLIST.md`](docs/FIRST-PUBLICATION-CHECKLIST.md)
-and [`docs/PROVENANCE-AUDIT.md`](docs/PROVENANCE-AUDIT.md) are accepted.
+The GitHub repository is public and the `v0.1.0-rc.2` release candidate is
+prepared for GitHub release assets. npm publication remains separately gated
+by trusted-publisher configuration and the provenance review in
+[`docs/PROVENANCE-AUDIT.md`](docs/PROVENANCE-AUDIT.md); do not infer npm
+publication from a GitHub tag.
 
 ## Architecture in one line
 
@@ -46,6 +47,7 @@ pnpm -r exec tsc -p tsconfig.json --noEmit
 pnpm -r test        # vitest, replays golden fixtures
 pnpm -r build       # tsc per package
 pnpm probe           # ESM + global bundle + 12-fixture browser probe
+pnpm audit --prod --audit-level high
 ```
 
 Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.
