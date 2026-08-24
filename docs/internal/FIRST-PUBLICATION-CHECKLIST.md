@@ -18,12 +18,12 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] verify job green on Node 18, 20, and 22
 - [ ] integration job green: Chromium, Firefox, and WebKit probes 12/12 on clean runners
 - [ ] parity harness: either ran with sibling checkout, OR skipped WITH visible step-summary warning; require_parity dispatch exercised once successfully
-- [ ] pack smoke job green (clean-room install of `@vizuh/clicktrail` and `@clicktrail/astro`)
+- [ ] pack smoke job green (clean-room install of `@vizuh/clicktrail`; Astro package deferred)
 - [ ] build reproducible on clean runner (no local filesystem assumptions)
 
 ## 3. Package
-- [ ] package versions set to `0.1.0-rc.2` after CI and governance gates pass
-- [ ] Commit package versions and create matching Git tag `v0.1.0-rc.2`
+- [ ] `@vizuh/clicktrail` version set to `0.1.0-rc.3` after CI and governance gates pass
+- [ ] Commit package version and create matching Git tag `v0.1.0-rc.3`
 - [ ] `pnpm pack --dry-run` tarballs reviewed file-by-file: only dist/, README.md, package.json, LICENSE
 - [ ] leak scan re-run: no .env / credentials / private fixtures / internal docs
 - [ ] clean-room consumer project installs tarball; ALL subpath exports import (., /browser, /conversation, /agent, /otel, /apointoo, /incubating)
@@ -35,14 +35,14 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
 
 ## 5. First publish
-- [ ] Push `v0.1.0-rc.2`; trusted-publishing workflow publishes with npm dist-tag `next`
+- [ ] Push `v0.1.0-rc.3`; trusted-publishing workflow publishes `@vizuh/clicktrail` with npm dist-tag `next`
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 
 ## 6. Post-first-publish
 - [ ] Configure GitHub Actions OIDC trusted publishing (impossible before package exists); enable staged releases if available
 - [ ] Remove any draft token-based publish path
-- [ ] Only then begin WP staging swap per docs/WP-SWAP-STAGING-PLAN.md (requires separate Hugo approval)
+- [ ] Only then begin WP staging swap per WP-SWAP-STAGING-PLAN.md (requires separate Hugo approval)
 - [ ] No production swap, no live Chatwoot/Apointoo pilots until staging plan passes
 
 ## Explicitly forbidden without separate written approval

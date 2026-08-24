@@ -41,10 +41,8 @@ jobs:
         shell: bash
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
-          for package_json in packages/clicktrail/package.json packages/astro/package.json; do
-            package_version="$(node -p "require('./$package_json').version")"
-            test "$tag_version" = "$package_version"
-          done
+          package_version="$(node -p "require('./packages/clicktrail/package.json').version")"
+          test "$tag_version" = "$package_version"
 
       - name: Select npm dist-tag
         id: npm-dist-tag
@@ -60,5 +58,5 @@ jobs:
       - name: Publish to npm with trusted publishing
         env:
           NPM_DIST_TAG: ${{ steps.npm-dist-tag.outputs.tag }}
-        run: npm publish --access public --tag "$NPM_DIST_TAG"
+        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
         working-directory: packages/clicktrail

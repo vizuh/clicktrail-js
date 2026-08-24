@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClickTrail static-page demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.5; }
+    code { background: #f2f2f2; padding: 0.1em 0.35em; border-radius: 4px; }
+    pre { background: #14161a; color: #d6e2f0; padding: 1rem; overflow-x: auto; border-radius: 8px; font-size: 0.85rem; }
+    label { display: flex; gap: 0.5rem; align-items: center; margin: 1rem 0; font-weight: 600; }
+    button { padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>ClickTrail static-page demo</h1>
+
+  <p>This single file loads the built IIFE bundle (<code>clicktrail.global.js</code>,
+     copied from <code>packages/clicktrail/dist/</code>) which exposes
+     <code>window.ClickTrail</code>. Events go to a
+     <strong>dataLayer destination</strong> backed by the host-owned
+     <code>window.dataLayer</code> array — the same bridge GTM reads.</p>
+
+  <!-- Host-owned dataLayer. Declare BEFORE the SDK script so it is ready. -->
+  <script>window.dataLayer = window.dataLayer || [];</script>
+
+  <!-- Built IIFE bundle (no module system needed). -->
+  <script src="clicktrail.global.js"></script>
+
+  <label>
+    <input type="checkbox" id="consent" />
+    I consent to first-party attribution tracking (analytics + advertising)
+  </label>
+
+  <p>Consent drives the instance lifecycle: checking the box calls
+     <code>clicktrail.start()</code>; unchecking calls
+     <code>clicktrail.stop()</code>. While started, the button below pushes a
+     demo conversion event into <code>window.dataLayer</code>.</p>
+
+  <button id="demo-event">Fire demo <code>lead_submitted</code> event</button>
+
+  <h2>Latest dataLayer push</h2>
+  <pre id="out">// nothing yet — grant consent, then fire the demo event</pre>
+
+  <script>
+    (function () {
+      var consentBox = document.getElementById('consent');
+      var out = document.getElementById('out');
+      var clickTrail = null;
+
+      // window.ClickTrail is attached by clicktrail.global.js:
+      // { ...browser exports (createClickTrail, destinations, storage, forms),
+      //   parseAttributionUrl }.
+      function buildInstance() {
+        return ClickTrail.createClickTrail({
+          // Push canonical events into the host's own array (GTM reads this).
+          destinations: [ClickTrail.dataLayerDestination({ dataLayer: window.dataLayer })],
+          workspaceId: 'ws_demo',
+          siteId: 'static-demo',
+          // Consent snapshot copied into each marketing_trail envelope.
+          consentState: function () {
+            return { analytics: consentBox.checked, advertising: consentBox.checked };
+          },
+          // First-party persistence so ft_* survives reloads (http(s) only;
+          // cookies are not written on file:// pages).
+          storage: {
+            cookieAttrs: { path: '/', sameSite: 'Lax', secure: true },
+          },
+          diagnosticsLevel: 'warn',
+        });
+      }
+
+      function showLastPush() {
+        var last = window.dataLayer[window.dataLayer.length - 1];
+        if (!last) return;
+        out.textContent = JSON.stringify(last, null, 2);
+      }
+
+      // Surface every push in the viewer (GTM would read these instead).
+      var nativePush = Array.prototype.push;
+      Object.defineProperty(window.dataLayer, 'push', {
+        value: function (entry) {
+          var r = nativePush.call(this, entry);
+          showLastPush();
+          return r;
+        },
+      });
+
+      consentBox.addEventListener('change', function () {
+        if (consentBox.checked) {
+          if (!clickTrail) clickTrail = buildInstance();
+          clickTrail.start(); // zero side effects happened before this line
+        } else if (clickTrail) {
+          clickTrail.stop(); // flushes buffered events, stops delivering
+        }
+      });
+
+      document.getElementById('demo-event').addEventListener('click', function () {
+        if (!clickTrail || !clickTrail.isStarted()) {
+          out.textContent = '// grant consent first — the instance is stopped';
+          return;
+        }
+        clickTrail.track('lead_submitted', {
+          lead_context: { form_id: 'demo-form' },
+        });
+      });
+
+      // Show what the pure core can do without any browser effects:
+      if (window.ClickTrail && ClickTrail.parseAttributionUrl) {
+        var parsed = ClickTrail.parseAttributionUrl({
+          url: location.href,
+          referrer: document.referrer,
+          currentHost: location.hostname,
+          now: new Date().toISOString(),
+        });
+        console.log('parsed landing URL:', parsed.kind === 'touch' ? parsed.touch : parsed.reason);
+      }
+    })();
+  </script>
+</body>
+</html>

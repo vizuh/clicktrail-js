@@ -16,7 +16,10 @@ describe('dataLayerDestination', () => {
     dest.deliver(e1);
     dest.deliver(e2);
 
-    expect(dataLayer).toEqual([e1, e2]);
+    expect(dataLayer).toEqual([
+      { ...e1, event: 'page_view' },
+      { ...e2, event: 'lead.submitted' },
+    ]);
   });
 
   it('creates its backing array only when started (lazy, never at import)', () => {
@@ -26,5 +29,6 @@ describe('dataLayerDestination', () => {
     dest.start?.();
     dest.deliver(buildEventPayload({}, 'page_view'));
     expect(dest.getArray()).toHaveLength(1);
+    expect((dest.getArray()[0] as Record<string, unknown>)['event']).toBe('page_view');
   });
 });

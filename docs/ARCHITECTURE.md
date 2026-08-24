@@ -80,7 +80,7 @@ These shape Phase 1b/2 APIs; core stays untouched:
 
 ## Frozen formats (WP-parity rulings, 2026-08-23)
 
-Binding rulings and their fixture-level pins live in `docs/WP-PARITY-DRAFT.md`
+Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DRAFT.md`
 (supervisor rulings table). Formats every caller must honor:
 
 - **Timestamps**: millisecond ISO-8601 (`'2026-08-23T10:00:00.000Z'`) — exactly

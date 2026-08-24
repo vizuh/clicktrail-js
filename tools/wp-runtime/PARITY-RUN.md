@@ -300,7 +300,7 @@ browser global it touches had to be provided explicitly:
 
 - Listeners never fire and DOM queries return empty: form injection, link decoration,
   WhatsApp append and consent flows cannot be exercised here (all explicitly out of scope
-  in docs/WP-PARITY-DRAFT.md). This harness proves QUERY/REFERRER CLASSIFICATION parity only.
+  in docs/internal/WP-PARITY-DRAFT.md). This harness proves QUERY/REFERRER CLASSIFICATION parity only.
 - The plugin writes through its full storage stack (cookie + localStorage mirror +
   sessionStorage fallback). We read the dataLayer push rather than re-reading storage, so
   storage-envelope bugs would not surface here.

@@ -1,0 +1,112 @@
+---
+import '../styles/site.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const repoUrl = 'https://github.com/vizuh/clicktrail-js';
+const npmCore = 'https://www.npmjs.com/package/@vizuh/clicktrail';
+const npmAstro = 'https://www.npmjs.com/package/@clicktrail/astro';
+const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/png" href="/clicktrail-icon.png" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <!--
+      ClickTrail self-tracking (fallback path): the @clicktrail/astro client
+      hardcodes an HTTP destination, which has nowhere to deliver on a static
+      host. This site instead boots the prebuilt global bundle with a GTM
+      dataLayer destination so its own page views are observable in-page.
+      See README.md.
+    -->
+    <script is:inline src="/clicktrail.global.js"></script>
+    <script is:inline>
+      (() => {
+        const CT = window.ClickTrail;
+        if (!CT) return;
+
+        window.dataLayer = window.dataLayer || [];
+
+        const consoleDestination = {
+          name: 'console',
+          deliver(event) {
+            console.info('[clicktrail]', event.event_name ?? event.name ?? 'event', event);
+          },
+        };
+
+        const clickTrail = CT.createClickTrail({
+          siteId: 'clicktrail-site',
+          destinations: [CT.dataLayerDestination({ dataLayer: window.dataLayer }), consoleDestination],
+          storage: {
+            cookieAttrs: { path: '/', sameSite: 'Lax', secure: true },
+          },
+        });
+
+        clickTrail.start();
+
+        // Page views across full loads and Astro-style view transitions,
+        // mirroring attachPageViewTracking from @clicktrail/astro:
+        // URL-keyed dedupe, first-touch preserved / last-touch merged.
+        let lastKey = null;
+        const trackView = () => {
+          const key = location.pathname + location.search;
+          if (key === lastKey) return;
+          lastKey = key;
+
+          const result = CT.parseAttributionUrl({
+            url: location.href,
+            ...(document.referrer ? { referrer: document.referrer } : {}),
+            currentHost: location.host,
+            now: new Date().toISOString(),
+          });
+          if (result.kind === 'touch') {
+            clickTrail.mergeParsedTouch(result.touch);
+          }
+          clickTrail.track('page_view', { page_location: location.href });
+        };
+
+        trackView();
+        document.addEventListener('astro:page-load', trackView);
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="/">
+          <img src="/clicktrail-icon.png" alt="" width="30" height="30" />
+          Click<strong>Trail</strong>
+        </a>
+        <nav class="nav-links">
+          <a href={repoUrl}>GitHub</a>
+          <a href={npmCore}>npm</a>
+          <a href={wpPlugin}>WordPress plugin</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <span>Vizuh O&Uuml; &middot; MIT license</span>
+        <nav class="footer-links">
+          <a href={repoUrl}>GitHub</a>
+          <a href={wpPlugin}>WordPress plugin</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
