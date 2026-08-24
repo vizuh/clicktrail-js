@@ -91,5 +91,9 @@
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js#readme"
+  "homepage": "https://github.com/vizuh/clicktrail-js#readme",
+  "dependencies": {
+    "@vizuh/clicktrail-browser": "workspace:^",
+    "@vizuh/clicktrail-core": "workspace:^"
+  }
 }

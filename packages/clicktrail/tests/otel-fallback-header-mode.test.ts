@@ -4,10 +4,10 @@
  * propagate correlation; no span machinery is required.
  */
 import { describe, expect, it } from 'vitest';
-import { ATTR_MESSAGE_ID } from '../src/conventions/incubating.js';
+import { ATTR_MESSAGE_ID } from '@vizuh/clicktrail-core';
 import { otelDestination } from '../src/otel/destination.js';
 import { extractTraceparent } from '../src/otel/traceparent.js';
-import type { StampedClickTrailEvent } from '../src/browser/serialize.js';
+import type { StampedClickTrailEvent } from '@vizuh/clicktrail-browser';
 
 function event(messageId: string): StampedClickTrailEvent {
   return {

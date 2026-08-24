@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ClickTrailServer.trackLead` / `trackBooking` / `trackPurchase`).
 - Provenance-enabled npm publishing workflow (OIDC trusted publishing).
 - Socket supply-chain badge for the published `@vizuh/clicktrail` package.
+- `@vizuh/clicktrail-nuxt` package (Phase 2 layout: `integrations/*`): Nuxt module mirroring the Astro integration —
+  SSR-safe client boot with cookie-backed consent gating (`ct_consent`),
+  router-aware page views with URL-keyed dedupe, an optional first-party
+  Nitro proxy route, and server-side conversion helpers.
+- `n8n-nodes-clicktrail` (`integrations/n8n`): community node with lead/conversion/consent
+  operations, offline conversion sending, API-key credentials, and six
+  triggers explicitly deferred until stable outbound webhooks exist.
+- `@vizuh/clicktrail-piece` (`integrations/activepieces`): Activepieces piece (eight actions) sharing
+  the same event-builders contract; triggers deferred.
+- `@vizuh/clicktrail-typebot` (`integrations/typebot`): Typebot block logic with variable mapping,
+  pure event builders, and a ready-to-post upstream issue draft.
+- `directus-extension-clicktrail` (`integrations/directus`): Flow operation, attribution hook,
+  campaign-to-sale funnel panel, settings module, and trust-model notes.
+- Canonical event contract ratified (`docs/EVENT-CONTRACT.md`) and phased
+  restructure plan ratified by council review (`docs/RESTRUCTURE-PLAN.md`).
 
 ## [0.1.0-rc.3] - 2026-08-24
 

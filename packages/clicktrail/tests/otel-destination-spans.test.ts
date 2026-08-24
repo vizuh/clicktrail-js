@@ -9,10 +9,10 @@ import {
   ATTR_CONVERSATION_ID,
   ATTR_JOURNEY_ID,
   ATTR_MESSAGE_ID,
-} from '../src/conventions/incubating.js';
+} from '@vizuh/clicktrail-core';
 import { ATTR_EVENT_NAME, ATTR_EVENT_TIME, otelDestination } from '../src/otel/destination.js';
 import type { OtelSpanLike } from '../src/otel/destination.js';
-import type { StampedClickTrailEvent } from '../src/browser/serialize.js';
+import type { StampedClickTrailEvent } from '@vizuh/clicktrail-browser';
 
 interface RecordedSpan {
   name: string;

@@ -4,7 +4,7 @@
  * blank trace ids throw.
  */
 import { describe, expect, it } from 'vitest';
-import { ATTR_AI_TRACE_ID } from '../src/conventions/incubating.js';
+import { ATTR_AI_TRACE_ID } from '@vizuh/clicktrail-core';
 import { linkTrace } from '../src/agent/trace.js';
 
 describe('linkTrace', () => {

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ClickTrail">
+  <rect width="64" height="64" rx="14" fill="#14171d"/>
+  <path d="M37 21 A13 13 0 1 0 37 43" fill="none" stroke="#ff5358" stroke-width="6" stroke-linecap="round"/>
+  <path d="M38 19 H56 M47 19 V45" fill="none" stroke="#f7f8fa" stroke-width="6" stroke-linecap="round"/>
+</svg>

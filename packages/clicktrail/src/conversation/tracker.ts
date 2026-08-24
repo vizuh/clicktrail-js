@@ -23,13 +23,13 @@ import {
   EVENT_CONVERSATION_STARTED,
   EVENT_HUMAN_HANDOFF,
   EVENT_LEAD_QUALIFIED,
-} from '../conventions/incubating.js';
-import type { ActorType } from '../conventions/incubating.js';
-import { ATTR_SESSION_ID, ATTR_VISITOR_ID } from '../conventions/stable.js';
-import type { RandomBytesFn } from '../browser/identity.js';
-import type { StorageAdapter } from '../browser/storage.js';
-import { mirrorStorage } from '../browser/storage.js';
-import type { AttributionPayload } from '../core/types.js';
+} from '@vizuh/clicktrail-core';
+import type { ActorType } from '@vizuh/clicktrail-core';
+import { ATTR_SESSION_ID, ATTR_VISITOR_ID } from '@vizuh/clicktrail-core';
+import type { RandomBytesFn } from '@vizuh/clicktrail-browser';
+import type { StorageAdapter } from '@vizuh/clicktrail-browser';
+import { mirrorStorage } from '@vizuh/clicktrail-browser';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import { createJourneyStore } from './journey-store.js';
 import type { JourneyStore } from './journey-store.js';
 

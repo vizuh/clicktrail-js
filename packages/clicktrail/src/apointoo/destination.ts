@@ -33,7 +33,7 @@
  * DROPPED-BATCH LAW: when retries are exhausted the batch is surfaced via
  * `onDropped` — never silently discarded.
  */
-import type { Destination } from '../browser/transport.js';
+import type { Destination } from '@vizuh/clicktrail-browser';
 import {
   buildOutcomeEvent,
   isOutcomeEvent,

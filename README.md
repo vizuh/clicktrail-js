@@ -118,7 +118,16 @@ host adapter until their contracts are stabilized.
 | Package | Status |
 |---|---|
 | [`@vizuh/clicktrail`](packages/clicktrail/) | Stable subpaths `.` and `/browser`; incubating `/conversation`, `/agent`, `/otel`, `/apointoo` |
-| [`@clicktrail/astro`](packages/astro/) | Astro integration: consent gate, view-transition page views, first-party proxy, server helpers |
+| [`@vizuh/clicktrail-astro`](integrations/astro/) | Astro integration: consent gate, view-transition page views, first-party proxy, server helpers |
+| [`@vizuh/clicktrail-nuxt`](integrations/nuxt/) | Nuxt module: consent gate, router-aware page views, first-party Nitro proxy, server helpers |
+| [`n8n-nodes-clicktrail`](integrations/n8n/) | n8n community node: lead/conversion/consent operations, offline conversions; triggers deferred pending outbound webhooks |
+| [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Activepieces piece: eight actions incl. sale/refund/consent; triggers deferred |
+| [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Typebot block logic + upstream issue draft: variable mapping, never-throws send guarantee |
+| [`directus-extension-clicktrail`](integrations/directus/) |
+| [`@vizuh/clicktrail-core`](packages/core/) | Deterministic engine, canonical event contract, idempotent event ids |
+| [`@vizuh/clicktrail-browser`](packages/browser/) | Browser SDK (consent-aware capture, storage, forms, destinations) |
+| [`@vizuh/clicktrail-consent`](packages/consent/) | Consent state types, gates, listener hub |
+| [`@vizuh/clicktrail-server`](packages/server/) | Server ingestion client + conversion builders | Directus extension: Flow operation, attribution hook, funnel panel, settings module |
 | [Examples](./examples) | Runnable integration examples |
 | [Site](./site) | Project site |
 

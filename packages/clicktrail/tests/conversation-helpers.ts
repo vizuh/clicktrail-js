@@ -3,7 +3,7 @@
  * No Date.now / Math.random / window / document anywhere: clock, random
  * bytes, storage, and consent are all injected.
  */
-import type { StorageAdapter } from '../src/browser/storage.js';
+import type { StorageAdapter } from '@vizuh/clicktrail-browser';
 import type { ConversationHost } from '../src/conversation/tracker.js';
 
 const UUID_RE = /^(.{8})(.{4})(.{4})(.{4})(.{12})$/;

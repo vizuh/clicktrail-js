@@ -25,9 +25,9 @@ import {
   ATTR_JOURNEY_ID,
   EVENT_AGENT_RUN_FINISHED,
   EVENT_AGENT_RUN_STARTED,
-} from '../conventions/incubating.js';
-import { generateId } from '../browser/identity.js';
-import type { RandomBytesFn } from '../browser/identity.js';
+} from '@vizuh/clicktrail-core';
+import { generateId } from '@vizuh/clicktrail-browser';
+import type { RandomBytesFn } from '@vizuh/clicktrail-browser';
 import { validateToolCall, validateToolCalls } from './tool-call.js';
 import type { ToolCallSummary } from './tool-call.js';
 

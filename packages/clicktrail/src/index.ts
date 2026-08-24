@@ -1,8 +1,7 @@
 /**
  * @vizuh/clicktrail — stable entry point.
  *
- * Stable semantic conventions + pure deterministic core engine.
+ * Umbrella re-export of the deterministic engine (@vizuh/clicktrail-core).
  * Experimental conventions: `@vizuh/clicktrail/incubating`.
  */
-export * from './conventions/stable.js';
-export * from './core/index.js';
+export * from '@vizuh/clicktrail-core';

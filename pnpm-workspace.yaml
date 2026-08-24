@@ -1,2 +1,5 @@
 packages:
   - "packages/*"
+  - "integrations/*"
+  # Activepieces currently pulls unpatched expr-eval through its SDK.
+  - "!integrations/activepieces"

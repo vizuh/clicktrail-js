@@ -10,8 +10,8 @@
  * here touches document/cookies/network. Instances are created by calling
  * ClickTrail.createClickTrail(...).start() from page code.
  */
-import * as clicktrailBrowser from './browser/index.js';
-import { parseAttributionUrl } from './core/parse.js';
+import * as clicktrailBrowser from '@vizuh/clicktrail-browser';
+import { parseAttributionUrl } from '@vizuh/clicktrail-core';
 
 const globals = globalThis as unknown as Record<string, unknown>;
 globals['ClickTrail'] = { ...clicktrailBrowser, parseAttributionUrl };

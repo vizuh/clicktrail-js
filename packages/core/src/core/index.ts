@@ -1,0 +1,12 @@
+export { parseAttributionUrl, readQuery, referrerHostOf } from './parse.js';
+export { mergeAttributionTouch, extractClickIds, emptyAttribution, stampVersions } from './merge.js';
+export { sanitizeField, normalizeHost, hostMatches, areRelatedHosts } from './sanitize.js';
+export { resolveChannelLabel, CHANNEL_LABELS, CHANNEL_LABELS_VERSION } from './knowledge.js';
+export type { ChannelLabelInput } from './knowledge.js';
+export { SEARCH_REFERRER_RULES, SOCIAL_REFERRER_RULES } from './knowledge.js';
+export type { ReferrerRule } from './knowledge.js';
+export { DIAGNOSTIC_CODES, nullDiagnosticSink } from './diagnostics.js';
+export type { Diagnostic, DiagnosticLevel, DiagnosticSink } from './diagnostics.js';
+export type { AttributionPayload, AttributionTouch, ParseAttributionInput, ParseResult, ParsedTouch } from './types.js';
+export { CLICK_ID_KEYS, BROWSER_ID_KEYS, parseGaClientIdValue, touchKeys } from './knowledge.js';
+export { LEGACY_WP_LABEL_VERSION, PAID_MEDIUMS, CLICK_ID_PLATFORMS, CLICK_ID_HISTORY_KEY, ATTRIBUTION_SELECTED_CLICK_ID_KEY, ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY, CLICK_ID_HISTORY_LIMIT, BROWSER_ID_PARAMS, UTM_PARAM_TO_FIELD, PARAM_ALIASES } from './knowledge.js';

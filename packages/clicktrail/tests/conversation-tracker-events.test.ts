@@ -14,18 +14,18 @@ import {
   EVENT_CONVERSATION_STARTED,
   EVENT_HUMAN_HANDOFF,
   EVENT_LEAD_QUALIFIED,
-} from '../src/conventions/incubating.js';
+} from '@vizuh/clicktrail-core';
 import {
   ATTR_SESSION_ID,
   ATTR_VISITOR_ID,
   CLASSIFIER_VERSION,
   SCHEMA_VERSION,
-} from '../src/conventions/stable.js';
-import { JOURNEY_ID_KEY } from '../src/browser/storage.js';
+} from '@vizuh/clicktrail-core';
+import { JOURNEY_ID_KEY } from '@vizuh/clicktrail-browser';
 import { createConversationTracker } from '../src/conversation/tracker.js';
 import { fakeAdapter, fakeHost, uuidFromByte } from './conversation-helpers.js';
-import { createClickTrail } from '../src/browser/create-clicktrail.js';
-import { dataLayerDestination } from '../src/browser/transport.js';
+import { createClickTrail } from '@vizuh/clicktrail-browser';
+import { dataLayerDestination } from '@vizuh/clicktrail-browser';
 
 function makeTracker(host = fakeHost(), adapter = fakeAdapter(), time = ['2026-08-23T10:00:00.000Z']) {
   let tick = 0;

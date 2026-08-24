@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ATTRIBUTION_STORAGE_KEYS,
   JOURNEY_ID_KEY,
-} from '../src/browser/storage.js';
+} from '@vizuh/clicktrail-browser';
 import { createConversationTracker } from '../src/conversation/tracker.js';
 import { createJourneyStore } from '../src/conversation/journey-store.js';
 import { fakeAdapter, fakeHost, uuidFromByte } from './conversation-helpers.js';
