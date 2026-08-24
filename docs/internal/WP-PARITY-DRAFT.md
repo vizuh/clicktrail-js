@@ -3,7 +3,7 @@
 Status: DRAFT, 2026-08-23. Work queue item #6 (preparation stage for Phase 2 parity gate).
 
 - **Source of truth analyzed**: `click-trail-handler/assets/js/clicutcl-attribution.js` (v1.8.x line refs below) + `clicutcl-events.js` (outbound attribution allowlist only) + `docs/guides/TRACKING-ATTRIBUTION-PORTABLE-PROMPT.md`.
-- **Compared against**: `clicktrail-js/packages/clicktrail/src/core/{parse,knowledge,merge,sanitize}.ts`.
+- **Compared against**: `clicktrail-js/packages/core/src/core/{parse,knowledge,merge,sanitize}.ts`.
 - **Artifacts**: 23 draft fixtures in `packages/clicktrail/fixtures/wp-parity-drafts/`, same schema as the existing goldens.
 - Method: static read-only analysis of the plugin JS. Nothing in the plugin repo was modified; nothing was built or committed.
 
