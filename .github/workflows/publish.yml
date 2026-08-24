@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish @vizuh/clicktrail
+    name: Publish ClickTrail wave (core, browser, umbrella, astro, nuxt)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: npm
@@ -37,12 +37,21 @@ jobs:
       - run: pnpm -r test
       - run: pnpm -r build
 
-      - name: Verify tag matches package version
+      - name: Verify tag matches every published package version
         shell: bash
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
-          package_version="$(node -p "require('./packages/clicktrail/package.json').version")"
-          test "$tag_version" = "$package_version"
+          for package_json in \
+            packages/clicktrail/package.json \
+            packages/core/package.json \
+            packages/browser/package.json \
+            integrations/astro/package.json \
+            integrations/nuxt/package.json; do
+            package_version="$(node -p "require('./$package_json').version")"
+            test "$tag_version" = "$package_version" || {
+              echo "version mismatch in $package_json: $package_version != $tag_version"; exit 1;
+            }
+          done
 
       - name: Select npm dist-tag
         id: npm-dist-tag
@@ -55,8 +64,18 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish to npm with trusted publishing
+      - name: Publish wave to npm with trusted publishing
         env:
           NPM_DIST_TAG: ${{ steps.npm-dist-tag.outputs.tag }}
-        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
-        working-directory: packages/clicktrail
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in \
+            packages/core \
+            packages/browser \
+            packages/clicktrail \
+            integrations/astro \
+            integrations/nuxt; do
+            echo "Publishing from $dir"
+            (cd "$dir" && npm publish --access public --provenance --tag "$NPM_DIST_TAG")
+          done
