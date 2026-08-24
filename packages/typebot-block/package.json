@@ -1,0 +1,55 @@
+{
+  "name": "@clicktrail/typebot-block",
+  "version": "0.1.0-rc.2",
+  "description": "Typebot block for ClickTrail: maps Typebot variables (email, phone, lead id, UTM campaign, gclid, quoted value, marketing consent) onto ClickTrail attribution events and sends them to a first-party endpoint. Never breaks the chat flow.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "typebot",
+    "chatbot",
+    "conversational-forms",
+    "lead-generation",
+    "attribution",
+    "analytics",
+    "first-party-data",
+    "conversion-tracking",
+    "consent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "packages/typebot-block"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/typebot-block#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
