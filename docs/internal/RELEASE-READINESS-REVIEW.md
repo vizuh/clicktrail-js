@@ -2,7 +2,7 @@
 
 Date: 2026-08-24
 Reviewed baseline: current release-candidate worktree; follow-up fixes applied after review
-Packages: `@vizuh/clicktrail@0.1.0-rc.2`, `@clicktrail/astro@0.1.0-rc.2`
+Packages: `@vizuh/clicktrail@0.1.0-rc.3`; `@clicktrail/astro@0.1.0-rc.2` remains unpublished
 Scope: clean installation, package exports, runtime compatibility, browser and
 Node behavior, CI/release workflow, supply-chain checks, privacy boundaries,
 enterprise integration, and AI workflow safety.
@@ -45,10 +45,10 @@ decisions.
 | `API-001` | Closed in documentation | Codex | Node 18/20/22 import matrix and explicit ESM-only contract | JS release candidate |
 | `DOC-001` | Closed | Codex | README, subpath, version-stamp, and workflow claims match shipped behavior | JS release candidate |
 | `GOV-001` | Open | Hugo | Owner attestations close provenance audit items B1-B4 | No npm publication or `latest` tag |
-| WP parity | Open: 25 unruled differences | Codex | Resolve or explicitly scope differences before claiming field parity or swapping runtimes | No parity claim; SVN submission remains separately gated |
+| WP parity | Open: 10 approved ruled deviations, 0 unruled findings | Codex | Keep approved deviations explicit before claiming field parity or swapping runtimes | No full field-parity claim; SVN submission remains separately gated |
 
 Publication targets remain conditional: plugin GitHub release, JS
-`0.1.0-rc.2` GitHub release, npm `next`, and WordPress.org SVN submission each
+`0.1.0-rc.3` GitHub release, npm `next`, and WordPress.org SVN submission each
 require their own reviewed evidence. A GitHub release does not prove npm
 publication or WordPress.org indexing.
 
@@ -68,9 +68,9 @@ publication or WordPress.org indexing.
 - Release-candidate `pnpm test`: 39 files, 351 tests passed; strict typecheck,
   build, Chromium and Firefox probes (12/12 each), production audit, and
   clean-room pack smoke for both packages passed.
-- Follow-up local WP parity run: 0 harness errors, but 25 unruled differences
-  remain in the generated `tools/wp-runtime/PARITY-RUN.md`; this is not a
-  claim of field-for-field plugin parity.
+- Follow-up local WP parity run: 0 harness errors, 15 matches, 10 approved
+  ruled deviations, and 0 unruled findings in `tools/wp-runtime/PARITY-RUN.md`;
+  this is not a claim of field-for-field plugin parity.
 - Tarball dry-run: 152 files, limited to `LICENSE`, `README.md`,
   `package.json`, and `dist/` contents. No source, fixtures, tools, or
   credentials were included.
@@ -280,13 +280,13 @@ stability, version stamps, browser transport behavior, and AI workflow rules.
 **Technically installable, testable, and ready for an explicit first-publication
 decision.** The AI metadata boundary, cross-domain failure mode, HTTP failure
 visibility, cookie defaults, CI parity dispatch, and public API documentation
-now match their stated contracts. WP parity still has 25 unruled differences,
-and the provenance audit is not closed.
+now match their stated contracts. WP parity retains 10 approved ruled
+deviations, and the provenance audit is not closed.
 
 ### Required next slice
 
 1. Decide whether to accept unresolved `GOV-001` before publication.
-2. Reconcile the 25 unruled WP parity differences before claiming plugin
+2. Preserve the 10 approved WP parity deviations before claiming plugin
    field parity or starting the WordPress runtime swap.
 3. Re-run tarball install, subpath imports, Node 18/20/22 checks, CI, and
    `npm publish --dry-run` before each publication.

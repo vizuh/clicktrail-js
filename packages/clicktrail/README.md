@@ -18,7 +18,7 @@ Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
 Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin is the
 WordPress distribution; this package is the shared engine beneath it.
 
-> Release candidate: `0.1.0-rc.2`. GitHub release assets are prepared; npm
+> Release candidate: `0.1.0-rc.3`. GitHub release assets are prepared; npm
 > publication remains separately gated by trusted-publisher configuration.
 
 ## Install

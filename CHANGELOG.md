@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provenance-enabled npm publishing workflow (OIDC trusted publishing).
 - Socket supply-chain badge for the published `@vizuh/clicktrail` package.
 
+## [0.1.0-rc.3] - 2026-08-24
+
+### Fixed
+
+- Publish workflow now validates and publishes only `@vizuh/clicktrail`.
+- Standalone product site dependencies move to Astro 7.2.6 with sharp 0.35.3
+  override for the current OSV findings.
+
 ## [0.1.0] - 2026-08-24
 
 ### Added
@@ -38,4 +46,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   into GPL.
 
 [Unreleased]: https://github.com/vizuh/clicktrail-js/compare/v0.1.0...HEAD
+[0.1.0-rc.3]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0-rc.3
 [0.1.0]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0
