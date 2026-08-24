@@ -1,4 +1,5 @@
 packages:
   - "packages/*"
+  - "integrations/*"
   # Activepieces currently pulls unpatched expr-eval through its SDK.
-  - "!packages/piece-clicktrail"
+  - "!integrations/activepieces"

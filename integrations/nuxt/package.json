@@ -1,0 +1,98 @@
+{
+  "name": "@vizuh/clicktrail-nuxt",
+  "version": "0.1.0-rc.2",
+  "description": "First-party attribution and conversion tracking for Nuxt. Boots the ClickTrail browser SDK SSR-safely, tracks page views across router navigations without duplicates, gates on consent via a shared cookie, adds an optional first-party Nitro proxy route, and ships server-side helpers for leads, bookings, and purchases.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./nitro": {
+      "types": "./dist/nitro-utils.d.ts",
+      "default": "./dist/nitro-utils.js"
+    },
+    "./composable": {
+      "types": "./dist/composable.d.ts",
+      "default": "./dist/composable.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugins/client.d.ts",
+      "default": "./dist/plugins/client.js"
+    },
+    "./runtime/proxy.handler": {
+      "types": "./dist/runtime/proxy.handler.d.ts",
+      "default": "./dist/runtime/proxy.handler.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "vue",
+    "ssr",
+    "attribution",
+    "analytics",
+    "first-party-analytics",
+    "conversion-tracking",
+    "utm",
+    "gclid",
+    "fbclid",
+    "server-side-tracking",
+    "consent",
+    "gdpr",
+    "marketing",
+    "click-id",
+    "nitro"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "integrations/nuxt"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/nuxt#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp src/runtime-config.d.ts dist/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vizuh/clicktrail": "workspace:^",
+    "@vizuh/clicktrail-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@vizuh/clicktrail": "workspace:^",
+    "nuxt": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "nuxt": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.6"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

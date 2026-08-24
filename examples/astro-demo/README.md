@@ -2,7 +2,7 @@
 
 This folder intentionally contains **no installable project**. It is a
 condensed, copy-ready walkthrough of the official Astro integration,
-[`@clicktrail/astro`](https://www.npmjs.com/package/@clicktrail/astro)
+[`@vizuh/clicktrail-astro`](https://www.npmjs.com/package/@vizuh/clicktrail-astro)
 (source: [`packages/astro/README.md`](../../packages/astro/README.md)). A full
 runnable Astro starter lives in the repo's
 [`site/`](../../site/) folder.
@@ -16,9 +16,9 @@ What you learn:
 ## 1. Install
 
 ```sh
-npx astro add @clicktrail/astro
+npx astro add @vizuh/clicktrail-astro
 # or
-npm install @clicktrail/astro
+npm install @vizuh/clicktrail-astro
 ```
 
 ## 2. Add the integration
@@ -26,7 +26,7 @@ npm install @clicktrail/astro
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import clicktrail from '@clicktrail/astro';
+import clicktrail from '@vizuh/clicktrail-astro';
 
 export default defineConfig({
   integrations: [
@@ -68,7 +68,7 @@ state; the SDK's denial path also wipes attribution storage.
 ## 5. Server-side conversions
 
 ```ts
-import { ClickTrailServer, parseIdentityFromCookies } from '@clicktrail/astro/server';
+import { ClickTrailServer, parseIdentityFromCookies } from '@vizuh/clicktrail-astro/server';
 
 const server = new ClickTrailServer({
   endpoint: 'https://collector.example.com/v1/events',

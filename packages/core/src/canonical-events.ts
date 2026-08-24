@@ -20,7 +20,7 @@ export const CANONICAL_EVENT_NAMES = [
 export type CanonicalEventName = (typeof CANONICAL_EVENT_NAMES)[number];
 
 /** Permitted non-canonical events (consumers may ignore; integrations may emit). */
-export const EXTENSION_EVENT_NAMES = ['lead_updated', 'lead_merged'] as const;
+export const EXTENSION_EVENT_NAMES = ['lead_updated', 'lead_merged', 'visitor_anonymized'] as const;
 
 export type KnownEventName = CanonicalEventName | (typeof EXTENSION_EVENT_NAMES)[number];
 
@@ -28,11 +28,20 @@ export type KnownEventName = CanonicalEventName | (typeof EXTENSION_EVENT_NAMES)
  * Translation table: pre-contract scaffold names -> canonical events.
  * One mapping module so renames stay one-file changes (council ruling).
  */
-export const LEGACY_EVENT_NAME_MAP: Readonly<Record<string, CanonicalEventName>> = {
+export const EXTENSION_EVENT_NAME_MAP: Readonly<Record<string, string>> = {
+  // R2 default adopted: stage changes + visitor merges are EXTENSION events
+  // outside the canonical nine (consumers may ignore).
+  'lead.stage_updated': 'lead_updated',
+  'lead.merged': 'lead_merged',
+  'visitor.anonymized': 'visitor_anonymized',
+};
+
+export const LEGACY_EVENT_NAME_MAP: Readonly<Record<string, string>> = {
   lead: 'lead_created',
+  'form.started': 'form_started',
   'form.submitted': 'lead_created',
   'lead.attribution_attached': 'lead_created',
-  'lead.merged': 'lead_created',
+  ...EXTENSION_EVENT_NAME_MAP,
   'lead.qualified': 'lead_qualified',
   booking: 'booking_created',
   'appointment.booked': 'booking_created',

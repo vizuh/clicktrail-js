@@ -25,14 +25,14 @@ copied from `packages/clicktrail/dist/clicktrail.global.js`) loaded in
 `dataLayer` destination plus a console mirror, tracks `page_view` events, and
 re-parses attribution touches across navigations (URL-keyed dedupe,
 first-touch preserved / last-touch merged) — the same logic
-`@clicktrail/astro` performs through its injected client.
+`@vizuh/clicktrail-astro` performs through its injected client.
 
-**Why not the `@clicktrail/astro` integration here?** The integration's client
+**Why not the `@vizuh/clicktrail-astro` integration here?** The integration's client
 hardcodes an HTTP destination pointing at `/api/clicktrail` and exposes no
 option to choose a console or dataLayer destination. On a purely static host
 that endpoint has no server behind it. Per the fallback plan for this site,
 the global bundle is loaded directly with a dataLayer destination instead.
-For sites with a backend or collector, use `@clicktrail/astro` directly.
+For sites with a backend or collector, use `@vizuh/clicktrail-astro` directly.
 
 ## Deploy
 

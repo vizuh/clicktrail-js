@@ -9,7 +9,7 @@ interface Props {
 const { title, description } = Astro.props;
 const repoUrl = 'https://github.com/vizuh/clicktrail-js';
 const npmCore = 'https://www.npmjs.com/package/@vizuh/clicktrail';
-const npmAstro = 'https://www.npmjs.com/package/@clicktrail/astro';
+const npmAstro = 'https://www.npmjs.com/package/@vizuh/clicktrail-astro';
 const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
 ---
 
@@ -23,7 +23,7 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <!--
-      ClickTrail self-tracking (fallback path): the @clicktrail/astro client
+      ClickTrail self-tracking (fallback path): the @vizuh/clicktrail-astro client
       hardcodes an HTTP destination, which has nowhere to deliver on a static
       host. This site instead boots the prebuilt global bundle with a GTM
       dataLayer destination so its own page views are observable in-page.
@@ -55,7 +55,7 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
         clickTrail.start();
 
         // Page views across full loads and Astro-style view transitions,
-        // mirroring attachPageViewTracking from @clicktrail/astro:
+        // mirroring attachPageViewTracking from @vizuh/clicktrail-astro:
         // URL-keyed dedupe, first-touch preserved / last-touch merged.
         let lastKey = null;
         const trackView = () => {
