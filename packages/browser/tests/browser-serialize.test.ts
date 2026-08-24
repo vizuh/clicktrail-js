@@ -6,12 +6,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { parseAttributionUrl } from '../src/core/parse.js';
-import { emptyAttribution, mergeAttributionTouch } from '../src/core/index.js';
-import { SCHEMA_VERSION, CLASSIFIER_VERSION } from '../src/conventions/stable.js';
+import { parseAttributionUrl } from '@vizuh/clicktrail-core';
+import { emptyAttribution, mergeAttributionTouch } from '@vizuh/clicktrail-core';
+import { SCHEMA_VERSION, CLASSIFIER_VERSION } from '@vizuh/clicktrail-core';
 import { buildEventPayload } from '../src/browser/serialize.js';
 
-const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../fixtures');
+const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../../clicktrail/fixtures');
 const fixture = JSON.parse(
   readFileSync(join(fxDir, 'google-ads-utm-gclid.json'), 'utf8'),
 ) as { input: Parameters<typeof parseAttributionUrl>[0]; expected: Record<string, string> };

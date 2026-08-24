@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { createApointooDestination } from '../src/apointoo/destination.js';
 import { buildOutcomeEvent } from '../src/apointoo/outcome.js';
-import { EVENT_SALE_COMPLETED } from '../src/conventions/stable.js';
+import { EVENT_SALE_COMPLETED } from '@vizuh/clicktrail-core';
 
 const CANARY_SECRET = 'canary-long-lived-apointoo-api-key-DO-NOT-LEAK';
 

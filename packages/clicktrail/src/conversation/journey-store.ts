@@ -11,10 +11,10 @@
  * Determinism seams: randomness and the consent decision enter as injected
  * functions. No Date.now / Math.random / window / document access here.
  */
-import { generateId } from '../browser/identity.js';
-import type { RandomBytesFn } from '../browser/identity.js';
-import { JOURNEY_ID_KEY } from '../browser/storage.js';
-import type { StorageAdapter } from '../browser/storage.js';
+import { generateId } from '@vizuh/clicktrail-browser';
+import type { RandomBytesFn } from '@vizuh/clicktrail-browser';
+import { JOURNEY_ID_KEY } from '@vizuh/clicktrail-browser';
+import type { StorageAdapter } from '@vizuh/clicktrail-browser';
 
 export { JOURNEY_ID_KEY };
 

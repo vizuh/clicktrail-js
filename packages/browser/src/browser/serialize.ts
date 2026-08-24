@@ -6,8 +6,8 @@
  * (via core's {@link stampVersions}). Deterministic: the caller supplies any
  * timestamp through the optional `data` bag (e.g. `event_time`).
  */
-import { stampVersions } from '../core/merge.js';
-import type { AttributionPayload } from '../core/types.js';
+import { stampVersions } from '@vizuh/clicktrail-core';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 export interface MarketingTrailEnvelope {
   schema_version: 1;

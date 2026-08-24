@@ -10,8 +10,8 @@
  * are copied verbatim under their canonical names so nothing is renamed or
  * lost between surfaces.
  */
-import { CLICK_ID_KEYS } from '../core/knowledge.js';
-import type { AttributionPayload } from '../core/types.js';
+import { CLICK_ID_KEYS } from '@vizuh/clicktrail-core';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 /** Chatwoot custom-attribute key carrying the durable journey id. */
 export const CHATWOOT_JOURNEY_ATTRIBUTE = 'ct_journey_id';

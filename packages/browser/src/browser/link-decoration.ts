@@ -25,11 +25,11 @@
  * attribution storage adapters); clock and location/history enter injected.
  * No side effects before start().
  */
-import { CLICK_ID_KEYS, resolveChannelLabel } from '../core/knowledge.js';
-import { CHANNEL_VALUE_REFERRAL } from '../conventions/stable.js';
-import type { Channel } from '../conventions/stable.js';
-import type { ParsedTouch } from '../core/types.js';
-import { readQuery } from '../core/parse.js';
+import { CLICK_ID_KEYS, resolveChannelLabel } from '@vizuh/clicktrail-core';
+import { CHANNEL_VALUE_REFERRAL } from '@vizuh/clicktrail-core';
+import type { Channel } from '@vizuh/clicktrail-core';
+import type { ParsedTouch } from '@vizuh/clicktrail-core';
+import { readQuery } from '@vizuh/clicktrail-core';
 import type { RandomBytesFn } from './identity.js';
 import { SIGNING_KEY_KEY, DAY_MS } from './storage.js';
 import type { StorageAdapter } from './storage.js';

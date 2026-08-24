@@ -1,0 +1,56 @@
+{
+  "name": "@vizuh/clicktrail-core",
+  "version": "0.1.0-rc.3",
+  "description": "Deterministic attribution engine: parse, classify, merge, canonical event schemas, idempotent event ids. Frozen pure core of ClickTrail.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "attribution",
+    "utm",
+    "gclid",
+    "first-party-data",
+    "event-schema",
+    "idempotency",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "fast-check": "^3.22.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

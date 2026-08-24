@@ -17,8 +17,8 @@
  * - ga_session_id / ga_session_number <- parsed from the first usable
  *   `_ga*` cookie                             (:848-887, :884-897)
  */
-import { BROWSER_ID_KEYS, parseGaClientIdValue } from '../core/knowledge.js';
-import type { AttributionPayload } from '../core/types.js';
+import { BROWSER_ID_KEYS, parseGaClientIdValue } from '@vizuh/clicktrail-core';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 /** Parse a raw document.cookie header into a name->value map (lowercased names). */
 export function parseCookieMap(raw: string): Record<string, string> {

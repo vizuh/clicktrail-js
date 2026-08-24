@@ -13,7 +13,7 @@ import {
   VISITOR_ID_FALLBACK_KEY,
 } from '../src/browser/storage.js';
 import type { StorageAdapter } from '../src/browser/storage.js';
-import { emptyAttribution } from '../src/core/merge.js';
+import { emptyAttribution } from '@vizuh/clicktrail-core';
 
 function fakeAdapter(): StorageAdapter & { map: Map<string, string>; writes: string[] } {
   const map = new Map<string, string>();

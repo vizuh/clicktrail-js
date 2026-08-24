@@ -16,8 +16,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { parseAttributionUrl } from '../src/core/parse.js';
-import { emptyAttribution, mergeAttributionTouch } from '../src/core/merge.js';
+import { parseAttributionUrl } from '@vizuh/clicktrail-core';
+import { emptyAttribution, mergeAttributionTouch } from '@vizuh/clicktrail-core';
 
 const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../fixtures');
 

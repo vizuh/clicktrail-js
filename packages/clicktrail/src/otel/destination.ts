@@ -19,8 +19,8 @@
  * the injected tracer. Determinism: span ids derive from event identity via
  * journeySpanContext — CORRELATION ids, not high-entropy secrets.
  */
-import type { StampedClickTrailEvent } from '../browser/serialize.js';
-import type { Destination } from '../browser/transport.js';
+import type { StampedClickTrailEvent } from '@vizuh/clicktrail-browser';
+import type { Destination } from '@vizuh/clicktrail-browser';
 import {
   ATTR_TRACEPARENT,
   defaultEventId,

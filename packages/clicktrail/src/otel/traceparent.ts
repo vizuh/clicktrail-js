@@ -18,7 +18,7 @@
  * who knows an event id can reproduce its ids. Never use them for auth,
  * capability URLs, or anything secret-bearing.
  */
-import { ATTR_AGENT_RUN_ID, ATTR_MESSAGE_ID } from '../conventions/incubating.js';
+import { ATTR_AGENT_RUN_ID, ATTR_MESSAGE_ID } from '@vizuh/clicktrail-core';
 
 /** Fixed W3C traceparent version this module emits and parses. */
 export const TRACEPARENT_VERSION = '00';

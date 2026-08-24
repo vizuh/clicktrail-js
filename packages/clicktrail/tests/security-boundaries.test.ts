@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { parseAttributionUrl, referrerHostOf } from '../src/core/parse.js';
+import { parseAttributionUrl, referrerHostOf } from '@vizuh/clicktrail-core';
 
 describe('input security boundaries', () => {
   it('never throws for arbitrary untrusted URL input', () => {

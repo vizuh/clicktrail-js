@@ -11,13 +11,13 @@ import {
   BROWSER_ID_KEYS,
   CLICK_ID_KEYS,
   touchKeys,
-} from '../core/knowledge.js';
-import type { AttributionPayload } from '../core/types.js';
+} from '@vizuh/clicktrail-core';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_SELECTED_CLICK_ID_KEY,
   ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
   CLICK_ID_HISTORY_KEY,
-} from '../core/knowledge.js';
+} from '@vizuh/clicktrail-core';
 import { ATTRIBUTION_KEY } from './storage.js';
 import type { StorageAdapter } from './storage.js';
 

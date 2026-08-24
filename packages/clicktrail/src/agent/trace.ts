@@ -9,7 +9,7 @@
  * Determinism: no clock, no randomness, no I/O. The input record is never
  * mutated; a fresh object is returned.
  */
-import { ATTR_AI_TRACE_ID } from '../conventions/incubating.js';
+import { ATTR_AI_TRACE_ID } from '@vizuh/clicktrail-core';
 
 /**
  * Return a copy of `record` with ATTR_AI_TRACE_ID set to `otelTraceId`.

@@ -10,7 +10,7 @@ import {
   buildOutcomeEvent,
   isOutcomeEvent,
 } from '../src/apointoo/outcome.js';
-import { EVENT_SALE_COMPLETED } from '../src/conventions/stable.js';
+import { EVENT_SALE_COMPLETED } from '@vizuh/clicktrail-core';
 
 describe('buildOutcomeEvent', () => {
   it('rejects event names outside the outcome set', () => {

@@ -1,6 +1,5 @@
 /**
- * @vizuh/clicktrail/incubating — UNSTABLE entry point.
- * May break between minor versions. Re-exports stable conventions for convenience.
+ * @vizuh/clicktrail/incubating — experimental constants (OTel-style guidance:
+ * do not depend from published libraries; copy definitions instead).
  */
-export * from './conventions/incubating.js';
-export * from './conventions/stable.js';
+export * from '@vizuh/clicktrail-core';

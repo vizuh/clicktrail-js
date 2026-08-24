@@ -21,7 +21,7 @@ import type {
   FormDomDocument,
   ObserverFactory,
 } from '../src/browser/form-injection.js';
-import { emptyAttribution } from '../src/core/merge.js';
+import { emptyAttribution } from '@vizuh/clicktrail-core';
 
 // --- minimal fake DOM --------------------------------------------------------
 

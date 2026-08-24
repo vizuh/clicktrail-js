@@ -24,7 +24,7 @@
  * consent and payload/session values enter as callbacks. Nothing here runs
  * before start() and the observer lifecycle is tied to stop().
  */
-import type { AttributionPayload } from '../core/types.js';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 // --- DOM seam ---------------------------------------------------------------
 

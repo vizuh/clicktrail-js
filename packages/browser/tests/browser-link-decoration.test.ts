@@ -31,7 +31,7 @@ import type {
   VerifyFn,
 } from '../src/browser/link-decoration.js';
 import { createClickTrail } from '../src/browser/create-clicktrail.js';
-import type { ParsedTouch } from '../src/core/types.js';
+import type { ParsedTouch } from '@vizuh/clicktrail-core';
 
 // --- deterministic signer pair ----------------------------------------------
 

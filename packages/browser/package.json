@@ -1,0 +1,22 @@
+{
+  "name": "@vizuh/clicktrail-browser",
+  "version": "0.1.0-rc.3",
+  "description": "Browser SDK for ClickTrail: consent-aware capture, first-party storage, forms, dataLayer and HTTP destinations, SPA page views.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "keywords": ["attribution","browser-sdk","analytics","consent","first-party-data","spa","dataLayer"],
+  "repository": { "type": "git", "url": "git+https://github.com/vizuh/clicktrail-js.git", "directory": "packages/browser" },
+  "engines": { "node": ">=18" },
+  "scripts": { "build": "tsc -p tsconfig.build.json", "test": "vitest run" },
+  "dependencies": { "@vizuh/clicktrail-core": "workspace:^" },
+  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0", "vitest": "^2.1.0", "fast-check": "^3.22.0" },
+  "sideEffects": false,
+  "publishConfig": { "access": "public" }
+}

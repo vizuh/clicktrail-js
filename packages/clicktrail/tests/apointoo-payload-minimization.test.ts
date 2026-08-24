@@ -9,7 +9,7 @@ import {
   WIRE_JOURNEY_ID,
   buildOutcomeEvent,
 } from '../src/apointoo/outcome.js';
-import { EVENT_APPOINTMENT_BOOKED, EVENT_PAGE_VIEW } from '../src/conventions/stable.js';
+import { EVENT_APPOINTMENT_BOOKED, EVENT_PAGE_VIEW } from '@vizuh/clicktrail-core';
 
 /**
  * Upstream hosts may hand the destination raw records (not yet stamped

@@ -37,7 +37,33 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  packages/browser:
+    dependencies:
+      '@vizuh/clicktrail-core':
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      fast-check:
+        specifier: ^3.22.0
+        version: 3.23.2
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.1)(lightningcss@1.33.0)(terser@5.50.0)
+
   packages/clicktrail:
+    dependencies:
+      '@vizuh/clicktrail-browser':
+        specifier: workspace:^
+        version: link:../browser
+      '@vizuh/clicktrail-core':
+        specifier: workspace:^
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -58,11 +84,45 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  packages/consent:
+    dependencies:
+      '@vizuh/clicktrail-core':
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.1)(lightningcss@1.33.0)(terser@5.50.0)
+
+  packages/core:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      fast-check:
+        specifier: ^3.22.0
+        version: 3.23.2
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.1)(lightningcss@1.33.0)(terser@5.50.0)
+
   packages/directus:
     dependencies:
       '@vizuh/clicktrail':
         specifier: workspace:^
         version: link:../clicktrail
+      '@vizuh/clicktrail-core':
+        specifier: workspace:^
+        version: link:../core
       vue:
         specifier: ^3.4.0
         version: 3.5.41(typescript@5.9.3)
@@ -132,6 +192,25 @@ importers:
       '@vizuh/clicktrail':
         specifier: workspace:^
         version: link:../clicktrail
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.1)(lightningcss@1.33.0)(terser@5.50.0)
+
+  packages/server:
+    dependencies:
+      '@vizuh/clicktrail-browser':
+        specifier: workspace:^
+        version: link:../browser
+      '@vizuh/clicktrail-core':
+        specifier: workspace:^
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

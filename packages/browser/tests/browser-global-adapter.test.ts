@@ -6,13 +6,13 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { parseAttributionUrl } from '../src/core/parse.js';
-import { emptyAttribution, mergeAttributionTouch } from '../src/core/index.js';
+import { parseAttributionUrl } from '@vizuh/clicktrail-core';
+import { emptyAttribution, mergeAttributionTouch } from '@vizuh/clicktrail-core';
 import { createLegacyGlobal } from '../src/browser/global-adapter.js';
 import { createClickTrail } from '../src/browser/create-clicktrail.js';
 import { dataLayerDestination } from '../src/browser/transport.js';
 
-const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../fixtures');
+const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../../clicktrail/fixtures');
 const fixture = JSON.parse(
   readFileSync(join(fxDir, 'meta-paid-fbclid-only.json'), 'utf8'),
 ) as { input: Parameters<typeof parseAttributionUrl>[0]; expected: Record<string, string> };

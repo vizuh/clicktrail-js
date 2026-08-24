@@ -5,12 +5,12 @@
  * All effects (clock, network, dataLayer) enter as injected dependencies or
  * are created inside start()-invoked destination lifecycle methods.
  */
-import { DIAGNOSTIC_CODES, nullDiagnosticSink } from '../core/diagnostics.js';
-import type { DiagnosticSink } from '../core/diagnostics.js';
-import { emptyAttribution } from '../core/merge.js';
-import type { ParsedTouch } from '../core/types.js';
-import type { AttributionPayload } from '../core/types.js';
-import { mergeAttributionTouch } from '../core/merge.js';
+import { DIAGNOSTIC_CODES, nullDiagnosticSink } from '@vizuh/clicktrail-core';
+import type { DiagnosticSink } from '@vizuh/clicktrail-core';
+import { emptyAttribution } from '@vizuh/clicktrail-core';
+import type { ParsedTouch } from '@vizuh/clicktrail-core';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import { mergeAttributionTouch } from '@vizuh/clicktrail-core';
 import { createIdentityStore } from './identity.js';
 import type { IdentityStore, RandomBytesFn } from './identity.js';
 import {

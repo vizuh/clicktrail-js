@@ -11,7 +11,7 @@ import {
   normalizeLegacyAliases,
   saveAttributionPayload,
 } from '../src/browser/payload-store.js';
-import { emptyAttribution } from '../src/core/merge.js';
+import { emptyAttribution } from '@vizuh/clicktrail-core';
 
 function fakeAdapter(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));

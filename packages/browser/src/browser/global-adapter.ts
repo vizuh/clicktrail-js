@@ -5,7 +5,7 @@
  * assigns it to `window` (e.g. `window.ClickTrail = createLegacyGlobal(ct)`);
  * this module never touches `window` itself.
  */
-import type { AttributionPayload } from '../core/types.js';
+import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 /** Session snapshot derived from the stored payload. */
 export interface SessionSnapshot {

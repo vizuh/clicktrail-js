@@ -9,16 +9,16 @@
  * (journey/outcome ids, value/currency stamps, canonical ft_/lt_ attribution
  * keys). Unknown extra keys are STRIPPED, never forwarded.
  */
-import { stampVersions } from '../core/merge.js';
-import { CANONICAL_PAYLOAD_KEYS } from '../browser/payload-store.js';
+import { stampVersions } from '@vizuh/clicktrail-core';
+import { CANONICAL_PAYLOAD_KEYS } from '@vizuh/clicktrail-browser';
 import {
   EVENT_APPOINTMENT_ATTENDED,
   EVENT_APPOINTMENT_BOOKED,
   EVENT_LEAD_SUBMITTED,
   EVENT_SALE_COMPLETED,
   EVENT_SALE_REFUNDED,
-} from '../conventions/stable.js';
-import { EVENT_LEAD_QUALIFIED } from '../conventions/incubating.js';
+} from '@vizuh/clicktrail-core';
+import { EVENT_LEAD_QUALIFIED } from '@vizuh/clicktrail-core';
 
 /** Journey correlation key on the wire (incubating convention ATTR_JOURNEY_ID). */
 export const WIRE_JOURNEY_ID = 'journey.id' as const;

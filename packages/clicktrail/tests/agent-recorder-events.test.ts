@@ -12,7 +12,7 @@ import {
   ACTOR_TYPE_VALUE_AGENT,
   EVENT_AGENT_RUN_FINISHED,
   EVENT_AGENT_RUN_STARTED,
-} from '../src/conventions/incubating.js';
+} from '@vizuh/clicktrail-core';
 import {
   ATTR_RUN_DURATION_MS,
   ATTR_RUN_STATUS,
