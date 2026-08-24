@@ -27,7 +27,7 @@ const PLUGIN_ROOT = process.env.CLICKTRAIL_WP_PLUGIN_ROOT
   : resolve(ROOT, '../click-trail-handler');
 const PLUGIN_SRC = join(PLUGIN_ROOT, 'assets/js/clicutcl-attribution.js');
 const FIXTURE_DIR = resolve(ROOT, 'packages/clicktrail/fixtures/wp-parity-drafts');
-const PINNED_PLUGIN_COMMIT = 'f720bc9e586e730f777d52cd5a2b77ffb67d49d6';
+const PINNED_PLUGIN_COMMIT = 'ead6682d6433c4f27309b7ee412e2dfc1fd50de4';
 
 function readPluginCommit() {
   return execFileSync('git', ['-C', PLUGIN_ROOT, 'rev-parse', '--verify', 'HEAD'], {
