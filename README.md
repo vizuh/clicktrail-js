@@ -43,14 +43,15 @@ Design rules (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 ```bash
 pnpm install
-pnpm -r exec tsc -p tsconfig.json --noEmit
+pnpm typecheck
 pnpm -r test        # vitest, replays golden fixtures
 pnpm -r build       # tsc per package
 pnpm probe           # ESM + global bundle + 12-fixture browser probe
 pnpm audit --prod --audit-level high
 ```
 
-Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.
+Strict typecheck: `pnpm typecheck` (builds the core package first so workspace
+package exports resolve before checking the Astro adapter).
 
 ## Use cases
 
