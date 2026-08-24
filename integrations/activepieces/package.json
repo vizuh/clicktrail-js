@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-piece",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "Activepieces piece for ClickTrail: translate automation inputs into schema-stamped, attribution-aware first-party events (leads, bookings, sales, refunds, consent) via the @vizuh/clicktrail SDK.",
   "license": "MIT",
   "type": "module",

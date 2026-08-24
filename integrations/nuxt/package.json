@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-nuxt",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "First-party attribution and conversion tracking for Nuxt. Boots the ClickTrail browser SDK SSR-safely, tracks page views across router navigations without duplicates, gates on consent via a shared cookie, adds an optional first-party Nitro proxy route, and ships server-side helpers for leads, bookings, and purchases.",
   "license": "MIT",
   "type": "module",

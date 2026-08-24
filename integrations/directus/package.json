@@ -1,6 +1,6 @@
 {
   "name": "directus-extension-clicktrail",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "First-party attribution and conversion tracking for Directus: a Flow operation to send ClickTrail events, an API hook that attaches attribution signals on collection creates, a Campaign -> Lead -> Sale dashboard panel, and a settings module.",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-astro",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "First-party attribution and conversion tracking for Astro. Injects the ClickTrail browser SDK, tracks page views across Astro view transitions without duplicates, gates on consent, adds an optional first-party proxy endpoint, and ships server-side helpers for leads, bookings, and purchases.",
   "license": "MIT",
   "type": "module",
