@@ -120,15 +120,16 @@ describe('createConversationTracker events', () => {
     expect(host.events[1]!.data[ATTR_JOURNEY_ID]).not.toBe(firstId);
   });
 
-  it('extra data merges into the bag without displacing core identity fields', () => {
+  it('metadata event excludes arbitrary caller content', () => {
     const { tracker, host } = makeTracker();
     tracker.conversationStarted({
       conversationId: 'cw-3',
-      extra: { inbox_id: 'inbox-2', [ATTR_JOURNEY_ID]: 'hijack' },
     });
     const e = host.events[0]!;
-    expect(e.data['inbox_id']).toBe('inbox-2');
     expect(e.data[ATTR_JOURNEY_ID]).toBe(uuidFromByte(0x42));
+    for (const key of ['prompt', 'completion', 'messages', 'transcript', 'input', 'output']) {
+      expect(e.data[key]).toBeUndefined();
+    }
   });
 });
 

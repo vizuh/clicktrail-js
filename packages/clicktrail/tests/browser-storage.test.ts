@@ -94,6 +94,13 @@ describe('cookieStorage', () => {
     expect(store.get('other')).toBe('a=b');
     expect(store.get('attribution')).toBe('{"k":"v"}');
   });
+
+  it('uses path-wide, same-site defaults when attributes are omitted', () => {
+    const jar = fakeJar();
+    cookieStorage({ jar }).set('attribution', 'x');
+    expect(jar.jar).toContain('Path=/');
+    expect(jar.jar).toContain('SameSite=Lax');
+  });
 });
 
 describe('mirrorStorage', () => {

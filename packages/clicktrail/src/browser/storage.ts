@@ -142,7 +142,11 @@ export function defaultCookieJar(): CookieJar {
  * injection lets hosts match their consent/CMP posture (Secure, SameSite...).
  */
 export function cookieStorage(config: CookieStorageConfig = {}): StorageAdapter {
-  const attrs: CookieAttributes = config.attrs ?? {};
+  const attrs: CookieAttributes = {
+    path: '/',
+    sameSite: 'Lax',
+    ...(config.attrs ?? {}),
+  };
   const jar = config.jar ?? defaultCookieJar();
   return {
     get(key) {

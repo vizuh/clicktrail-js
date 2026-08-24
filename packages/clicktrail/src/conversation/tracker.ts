@@ -93,8 +93,6 @@ export interface JourneyEventInput {
   actorId?: string;
   /** Message/chat content. DROPPED unless captureContent was enabled. */
   content?: string;
-  /** Extra caller data merged into the event bag before version stamps. */
-  extra?: Record<string, unknown>;
 }
 
 export interface ConversationTracker {
@@ -160,9 +158,9 @@ export function createConversationTracker(
       return;
     }
     const snap = clickTrail.getSession();
-    // Caller extra merges FIRST: journey/conversation/actor/timestamp keys
-    // below always win, so hosts cannot clobber a stamped identity field.
-    const data: Record<string, unknown> = { ...(input.extra ?? {}) };
+    // Only fixed contract fields are emitted. Arbitrary caller data cannot
+    // enter the metadata-only event or bypass the content boundary.
+    const data: Record<string, unknown> = {};
     data[ATTR_JOURNEY_ID] = journey.current();
     data[ATTR_CONVERSATION_ID] = input.conversationId;
     data['actor'] = buildActor(input);

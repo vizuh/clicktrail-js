@@ -32,7 +32,7 @@ Consequences this buys:
 - Classifier upgrades can be diffed fixture-by-fixture before release.
 
 Effects (clock, randomness, storage, transport) belong to adapter subpaths
-(`/browser`, future `/conversation`, `/agent`, `/apointoo`) and are built
+(`/browser`, `/conversation`, `/agent`, `/otel`, `/apointoo`) and are built
 against the frozen contract, never inside core.
 
 ## Entry points (modeled on OpenTelemetry semantic-conventions)
@@ -40,6 +40,11 @@ against the frozen contract, never inside core.
 | Import | Stability | Contents |
 |---|---|---|
 | `@vizuh/clicktrail` | stable, semver-protected | Stable ATTR_/EVENT_/VALUE_ constants, payload schema types, pure core engine |
+| `@vizuh/clicktrail/browser` | stable adapter | Browser lifecycle, storage, forms, dataLayer and HTTP destinations |
+| `@vizuh/clicktrail/conversation` | incubating | Journey and conversation tracking |
+| `@vizuh/clicktrail/agent` | incubating | Metadata-only agent-run recording |
+| `@vizuh/clicktrail/otel` | incubating | Trace-context helpers and destination |
+| `@vizuh/clicktrail/apointoo` | incubating | Apointoo outcome destination |
 | `@vizuh/clicktrail/incubating` | unstable, may break between minors | Journey/conversation/agent conventions, experimental attributes |
 
 Constant naming follows the OTel convention:
@@ -56,7 +61,8 @@ Constant naming follows the OTel convention:
 - **Phase 2**: storage/session/form injection co-built with the WordPress
   swap; field-for-field parity gate; fixtures become the permanent release
   gate.
-- **Phase 3**: `/conversation`, `/agent`, `/otel`, `/apointoo` subpaths.
+- **Shipped in 0.1.0**: `/conversation`, `/agent`, `/otel`, `/apointoo` remain
+  incubating while their host contracts gather production evidence.
 
 ## Product lanes queued (from Hugo, 2026-08-23)
 
@@ -83,9 +89,9 @@ Binding rulings and their fixture-level pins live in `docs/WP-PARITY-DRAFT.md`
 - **Channel labels**: `ft_channel` / `lt_channel` carry human-readable labels
   ('Google Ads', 'Facebook Organic', AI-assistant names) from the versioned
   `CHANNEL_LABELS` table; machine enum channels remain authoritative.
-- **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.1.0`. The 1.x
-  line is the UNPUBLISHED development line (package pre-release); these bumps
-  record semantic decisions, not published breaking releases.
+- **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.2.0` for the
+  `0.1.0` package line; these bumps record semantic decisions, not published
+  breaking releases.
 
 ## Fixture policy
 

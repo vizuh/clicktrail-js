@@ -110,7 +110,6 @@ describe('createAgentRunRecorder started/finished pairing', () => {
       endTime: '2026-08-23T10:00:01.000Z',
       ok: false,
       errorCode: 'E_UPSTREAM',
-      extra: { note: 'upstream 503' },
     });
     const done = s.events[1]!;
     expect(done.data[ATTR_RUN_STATUS]).toBe(RUN_STATUS_VALUE_ERROR);
@@ -140,7 +139,7 @@ describe('createAgentRunRecorder started/finished pairing', () => {
     expect(s.events[3]!.data[ATTR_RUN_DURATION_MS]).toBeUndefined();
   });
 
-  it('double finish throws; stamped identity keys win over caller extras', () => {
+  it('double finish throws; metadata cannot inject arbitrary caller fields', () => {
     const s = sink();
     const recorder = createAgentRunRecorder({ emit: s.emit, randomBytes: FIXED_BYTES });
     const handle = recorder.start({
@@ -148,10 +147,11 @@ describe('createAgentRunRecorder started/finished pairing', () => {
       agentId: 'a',
       agentName: 'n',
       startTime: '2026-08-23T10:00:00.000Z',
-      extra: { [ATTR_JOURNEY_ID]: 'hijack', source: 'n8n' },
     });
     expect(s.events[0]!.data[ATTR_JOURNEY_ID]).toBe('real-journey');
-    expect(s.events[0]!.data['source']).toBe('n8n');
+    expect(s.events[0]!.data['prompt']).toBeUndefined();
+    expect(s.events[0]!.data['completion']).toBeUndefined();
+    expect(s.events[0]!.data['source']).toBeUndefined();
     handle.finish({ endTime: '2026-08-23T10:00:01.000Z' });
     expect(() => handle.finish({ endTime: '2026-08-23T10:00:02.000Z' })).toThrow(/already finished/);
   });
@@ -165,7 +165,6 @@ describe('determinism + pure builders', () => {
       agentId: 'agent-7',
       agentName: 'Qualifier',
       startTime: '2026-08-23T10:00:00.000Z',
-      extra: { lane: 'lead-loop' },
     };
     const a = buildAgentRunStarted(input, uuidFromByte(0x42));
     const b = buildAgentRunStarted(input, uuidFromByte(0x42));
@@ -181,7 +180,6 @@ describe('determinism + pure builders', () => {
       agentId: 'a',
       agentName: 'n',
       startTime: '2026-08-23T10:00:00.000Z',
-      extra: { k: 'v' },
     };
     const snapshot = JSON.stringify(input);
     const started = buildAgentRunStarted(input, 'run-x');

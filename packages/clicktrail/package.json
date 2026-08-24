@@ -50,7 +50,15 @@
     "analytics",
     "marketing",
     "conversion-tracking",
-    "consent"
+    "consent",
+    "first-party-data",
+    "click-id",
+    "cross-domain-tracking",
+    "browser-sdk",
+    "typescript",
+    "wordpress",
+    "woocommerce",
+    "google-tag-manager"
   ],
   "repository": {
     "type": "git",

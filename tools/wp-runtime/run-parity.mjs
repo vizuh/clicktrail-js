@@ -22,7 +22,10 @@ import vm from 'node:vm';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');                       // clicktrail-js repo root
-const PLUGIN_SRC = resolve(ROOT, '../click-trail-handler/assets/js/clicutcl-attribution.js');
+const PLUGIN_ROOT = process.env.CLICKTRAIL_WP_PLUGIN_ROOT
+  ? resolve(process.env.CLICKTRAIL_WP_PLUGIN_ROOT)
+  : resolve(ROOT, '../click-trail-handler');
+const PLUGIN_SRC = join(PLUGIN_ROOT, 'assets/js/clicutcl-attribution.js');
 const FIXTURE_DIR = resolve(ROOT, 'packages/clicktrail/fixtures/wp-parity-drafts');
 
 // ---------------------------------------------------------------------------

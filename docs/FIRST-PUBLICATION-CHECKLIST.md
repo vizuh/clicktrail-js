@@ -1,4 +1,4 @@
-# First Publication Checklist — @<scope>/clicktrail
+# First Publication Checklist — @vizuh/clicktrail
 
 Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 
@@ -22,7 +22,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] build reproducible on clean runner (no local filesystem assumptions)
 
 ## 3. Package
-- [ ] `npm version 0.1.0-rc.1` executed (after CI green, before publish)
+- [ ] `npm version 0.1.0` is the package version after CI green
 - [ ] `npm pack --dry-run` tarball reviewed file-by-file: only dist/, README.md, package.json, LICENSE
 - [ ] leak scan re-run: no .env / credentials / private fixtures / internal docs
 - [ ] clean-room consumer project installs tarball; ALL subpath exports import (., /browser, /conversation, /agent, /otel, /apointoo, /incubating)
@@ -34,7 +34,7 @@ Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 - [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
 
 ## 5. First publish
-- [ ] `npm publish --access public --tag next` (first-ever scoped release needs --access public; prerelease must NOT be latest)
+- [ ] `npm publish --access public` (first-ever scoped release needs --access public)
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 

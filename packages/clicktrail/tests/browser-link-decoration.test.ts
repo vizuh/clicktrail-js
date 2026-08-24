@@ -650,7 +650,7 @@ describe('createClickTrail crossDomain/forms wiring', () => {
     expect(await verify('tampered-body', sig)).toBe(false);
   });
 
-  it('forms wiring injects hidden fields through createClickTrail', () => {
+  it('fails closed when cross-domain defaults have no persistent signing storage', () => {
     const formDoc = new (class {
       forms = [];
       body = {};
@@ -662,18 +662,12 @@ describe('createClickTrail crossDomain/forms wiring', () => {
       }
     })();
     void formDoc;
-    // Covered thoroughly by browser-form-injection.test.ts; here we assert
-    // the config surface accepts both opt-ins simultaneously and start/stop
-    // round-trips cleanly in a non-DOM environment.
     const ct = createClickTrail({
       destinations: [],
       forms: {},
       crossDomain: { domains: ['example.com'] },
     });
-    expect(() => {
-      ct.start();
-      ct.stop();
-    }).not.toThrow();
+    expect(() => ct.start()).toThrow(/crossDomain default sign\/verify requires config\.storage/);
   });
 });
 

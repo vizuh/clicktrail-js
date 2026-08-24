@@ -79,8 +79,6 @@ export interface AgentRunStartInput {
   agentName: string;
   /** CALLER-supplied millisecond ISO-8601 start timestamp. */
   startTime: string;
-  /** Extra caller data merged FIRST; stamped identity keys always win. */
-  extra?: Record<string, unknown>;
 }
 
 export interface AgentRunFinishInput {
@@ -95,8 +93,6 @@ export interface AgentRunFinishInput {
    * ({ tool, ok, durationMs, error_code? } exact keys) before inclusion.
    */
   toolCalls?: readonly unknown[];
-  /** Extra caller data merged FIRST; stamped identity keys always win. */
-  extra?: Record<string, unknown>;
 }
 
 export interface AgentRunStartedRecord {
@@ -164,8 +160,8 @@ const optionalId = (value: unknown, field: string): string | undefined => {
 };
 
 /**
- * PURE builder for agent.run.started. Stamped identity keys override any
- * same-named caller extras, mirroring /conversation merge order.
+ * PURE builder for agent.run.started. Only fixed contract fields are emitted;
+ * arbitrary caller data cannot enter this metadata-only event.
  */
 export function buildAgentRunStarted(
   input: AgentRunStartInput,
@@ -177,7 +173,7 @@ export function buildAgentRunStarted(
   const journeyId = optionalId(input.journeyId, 'journeyId');
   const conversationId = optionalId(input.conversationId, 'conversationId');
 
-  const data: Record<string, unknown> = { ...(input.extra ?? {}) };
+  const data: Record<string, unknown> = {};
   data[ATTR_AGENT_RUN_ID] = runId;
   data['actor'] = { type: ACTOR_TYPE_VALUE_AGENT, id: agentId, name: agentName };
   data[ATTR_AGENT_NAME] = agentName;
@@ -216,7 +212,7 @@ export function buildAgentRunFinished(
     for (const raw of validateToolCalls(input.toolCalls)) toolCalls.push(raw);
   }
 
-  const data: Record<string, unknown> = { ...(input.extra ?? {}) };
+  const data: Record<string, unknown> = {};
   data[ATTR_AGENT_RUN_ID] = started.runId;
   if (started.journeyId !== undefined) data[ATTR_JOURNEY_ID] = started.journeyId;
   if (started.conversationId !== undefined) data[ATTR_CONVERSATION_ID] = started.conversationId;

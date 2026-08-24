@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      require_parity:
+        description: Fail unless the pinned WordPress plugin checkout is available
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -48,27 +55,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Plugin repo is a SIBLING directory, not part of this repository: the
-      # parity harness needs assets/js/clicutcl-attribution.js at runtime.
-      # Until the plugin repo is public or vendored, parity runs only when the
-      # sibling exists (self-hosted runner / same-workspace checkout).
+      - name: Checkout pinned WP plugin for required parity
+        if: inputs.require_parity == true
+        uses: actions/checkout@v4
+        with:
+          repository: vizuh/click-trail-handler
+          ref: f720bc9e586e730f777d52cd5a2b77ffb67d49d6
+          path: click-trail-handler
+          fetch-depth: 1
+
+      # Parity accepts either the pinned hosted checkout above or a sibling
+      # checkout on a self-hosted runner.
       - name: Check WP plugin source availability
         id: plugin
         run: |
           if [ -f "../click-trail-handler/assets/js/clicutcl-attribution.js" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "root=$(realpath ../click-trail-handler)" >> "$GITHUB_OUTPUT"
+          elif [ -f "click-trail-handler/assets/js/clicutcl-attribution.js" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "root=$(realpath click-trail-handler)" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
             {
               echo "### :warning: Parity harness NOT executed"
               echo ""
-              echo "The WP parity harness requires a sibling checkout of"
-              echo "click-trail-handler at ../click-trail-handler, which GitHub-hosted"
-              echo "runners do not have. This job CANNOT claim runtime parity from CI alone."
-              echo "Re-run with workflow_dispatch -> require_parity=true on a runner that"
-              echo "has both repositories checked out to enforce it."
+              echo "The WP parity harness requires click-trail-handler at a sibling"
+              echo "checkout or via workflow_dispatch -> require_parity=true."
             } >> "$GITHUB_STEP_SUMMARY"
-            echo "::warning::parity harness skipped: sibling click-trail-handler checkout absent"
+            echo "::warning::parity harness skipped: click-trail-handler checkout absent"
           fi
 
       - uses: pnpm/action-setup@v4
@@ -97,11 +112,13 @@ jobs:
       - name: WP runtime parity harness
         if: steps.plugin.outputs.available == 'true'
         run: pnpm parity
+        env:
+          CLICKTRAIL_WP_PLUGIN_ROOT: ${{ steps.plugin.outputs.root }}
 
       - name: Enforce required parity (workflow_dispatch only)
         if: inputs.require_parity == true && steps.plugin.outputs.available != 'true'
         run: |
-          echo "::error::require_parity=true but ../click-trail-handler is not checked out on this runner."
+          echo "::error::require_parity=true but click-trail-handler is unavailable."
           exit 1
 
       - name: npm pack + clean-room install smoke

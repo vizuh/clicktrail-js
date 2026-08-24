@@ -32,6 +32,8 @@ export interface HttpDestinationConfig {
    * (sendBeacon -> fetch keepalive fallback). Tests inject a fake here.
    */
   send?: SendFn;
+  /** Called with a batch that could not be delivered. */
+  onDropped?: (events: readonly ClickTrailEvent[], error: unknown) => void;
 }
 
 const DEFAULT_BATCH_SIZE = 10;
@@ -46,12 +48,12 @@ function defaultSend(useBeacon: boolean): SendFn {
       const blob = new Blob([body], { type: 'application/json' });
       if (navigator.sendBeacon(endpoint, blob)) return;
     }
-    void fetch(endpoint, {
+    return fetch(endpoint, {
       method: 'POST',
       keepalive: true,
       headers: { 'content-type': 'application/json' },
       body,
-    });
+    }).then(() => undefined);
   };
 }
 
@@ -66,18 +68,29 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
 
   let batch: ClickTrailEvent[] = [];
 
-  const flushBatch = (): void => {
+  const flushBatch = async (): Promise<void> => {
     if (batch.length === 0) return;
-    const body = JSON.stringify({ events: batch });
+    const events = batch;
+    const body = JSON.stringify({ events });
     batch = [];
-    void Promise.resolve(send(config.endpoint, body));
+    try {
+      await send(config.endpoint, body);
+    } catch (error) {
+      // Do not let an optional host diagnostic callback create an unhandled
+      // rejection or change the at-most-once transport contract.
+      try {
+        config.onDropped?.(events, error);
+      } catch {
+        // Host diagnostics are best effort.
+      }
+    }
   };
 
   return {
     name: 'http',
     deliver(event) {
       batch.push(event);
-      if (batch.length >= batchSize) flushBatch();
+      if (batch.length >= batchSize) void flushBatch();
     },
     flush: flushBatch,
   };

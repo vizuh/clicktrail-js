@@ -64,4 +64,23 @@ describe('httpDestination', () => {
     await dest.flush?.();
     expect(send.calls).toHaveLength(0);
   });
+
+  it('reports a dropped batch when the sender rejects', async () => {
+    const dropped: { events: readonly Record<string, unknown>[]; error: unknown }[] = [];
+    const send: SendFn = async () => {
+      throw new Error('network down');
+    };
+    const dest = httpDestination({
+      endpoint: 'https://t.example/collect',
+      send,
+      onDropped: (events, error) => dropped.push({ events, error }),
+    });
+
+    dest.deliver(event(1));
+    await dest.flush?.();
+
+    expect(dropped).toHaveLength(1);
+    expect(dropped[0]!.events).toHaveLength(1);
+    expect(dropped[0]!.error).toEqual(new Error('network down'));
+  });
 });

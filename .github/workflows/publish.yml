@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 permissions:
   contents: read
@@ -42,6 +42,17 @@ jobs:
           package_version="$(node -p "require('./packages/clicktrail/package.json').version")"
           test "$tag_version" = "$package_version"
 
+      - name: Select npm dist-tag
+        id: npm-dist-tag
+        shell: bash
+        run: |
+          package_version="$(node -p "require('./packages/clicktrail/package.json').version")"
+          if [[ "$package_version" == *-* ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to npm with trusted publishing
-        run: npm publish --access public
+        run: npm publish --access public --tag "${{ steps.npm-dist-tag.outputs.tag }}"
         working-directory: packages/clicktrail

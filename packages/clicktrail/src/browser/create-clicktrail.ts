@@ -323,6 +323,12 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   function wireCrossDomain(instance: ClickTrailInstance): void {
     const crossCfg = config.crossDomain;
     if (!crossCfg) return;
+    if ((!crossCfg.sign || !crossCfg.verify) && !storageCfg) {
+      throw new Error(
+        'clicktrail: crossDomain default sign/verify requires config.storage; ' +
+          'inject both sign and verify for externally provisioned keys.',
+      );
+    }
     const nowMs = storageCfg?.nowMs ?? (() => Date.now());
     const randomBytes = storageCfg?.randomBytes ?? defaultRandomBytes;
     const adapterList =
@@ -502,4 +508,3 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   };
   return instance;
 }
-

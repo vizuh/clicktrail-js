@@ -1,6 +1,8 @@
 # ClickTrail JS
 
-[![CI](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml) <!-- badge placeholder: activates once pushed to GitHub -->
+[![CI](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml)
+
+![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
 First-party, deterministic attribution and customer-journey capture engine.
 
@@ -13,7 +15,7 @@ shared engine beneath it.
 
 | Package | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | Phase 1a — stable attribution conventions + pure core engine |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | `0.1.0`: stable core plus browser and storage adapters; incubating journey, agent, OTEL and Apointoo subpaths |
 
 ## Architecture in one line
 
@@ -40,6 +42,17 @@ pnpm -r build       # tsc per package
 
 Strict typecheck: `npx tsc -p packages/clicktrail/tsconfig.json --noEmit`.
 
+## Use cases
+
+- deterministic attribution parsing and first-touch/last-touch merging in Node or TypeScript apps;
+- browser capture that persists observed context through cached pages and dynamic forms;
+- GTM or analytics bridges through the browser `dataLayer` destination;
+- replayable fixture testing for a WordPress or application integration.
+
+Start with the [tutorials](docs/TUTORIALS.md). The package does not provide
+provider account setup or certify downstream delivery. Cross-domain continuity
+needs persisted signing state or explicit host-provided signing and verification.
+
 ## Why deterministic
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):
@@ -50,6 +63,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):
   in the WP plugin, Next.js, dashboard, and CI alike.
 - Golden fixtures are the executable spec; classifier upgrades get diffed
   fixture-by-fixture before any release.
+
+## Release boundary
+
+The core and browser surfaces are public development work. The `/conversation`
+and `/agent` surfaces must remain metadata-only and require their documented
+privacy gates before use with real conversations, prompts, completions, or
+transcripts.
 
 ## License
 
