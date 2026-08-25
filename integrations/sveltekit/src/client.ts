@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit/client — browser boot module.
+ * @vizuh/clicktrail-sveltekit/client — browser boot module.
  *
  * Boots the SDK with an HTTP destination over injected seams (cookie jar,
  * event target, afterNavigate-style navigation seam), wires URL-keyed
@@ -52,6 +52,8 @@ export interface BootedClient {
   /** Resolves when the instance has started (immediately without gating). */
   whenStarted(): Promise<ClickTrailInstance>;
   detachNavigation(): void;
+  /** Stop this client and detach navigation plus consent listeners. */
+  dispose(): void;
   /** Merge canonical flat identity fields (e.g. contact_id) into the payload. */
   identify(fields: Record<string, string>): void;
   /** Track an event by any historical or free-form name (translated to canonical). */
@@ -197,15 +199,19 @@ export function bootClickTrailClient(
     resolveStart();
   };
 
+  let detachConsent = (): void => {};
   if (config.consentRequired) {
-    const granted = readStoredConsent(resolved.cookieJar);
-    if (granted === true) {
-      startNow();
-    } else {
-      resolved.eventTarget.addEventListener(CONSENT_EVENT, () => {
-        if (readStoredConsent(resolved.cookieJar) === true) startNow();
-      });
-    }
+    const handleConsent = (): void => {
+      const state = readStoredConsent(resolved.cookieJar);
+      if (state === true) startNow();
+      else if (state === false) {
+        instance.clearData();
+        if (instance.isStarted()) instance.stop();
+      }
+    };
+    resolved.eventTarget.addEventListener(CONSENT_EVENT, handleConsent);
+    detachConsent = () => resolved.eventTarget.removeEventListener(CONSENT_EVENT, handleConsent);
+    if (readStoredConsent(resolved.cookieJar) === true) startNow();
   } else {
     startNow();
   }
@@ -218,6 +224,11 @@ export function bootClickTrailClient(
     instance,
     whenStarted: () => whenStarted,
     detachNavigation,
+    dispose(): void {
+      detachConsent();
+      detachNavigation();
+      if (instance.isStarted()) instance.stop();
+    },
 
     identify(fields: Record<string, string>): void {
       // hydrateStoredPayload adopts canonical non-empty keys only, which is

@@ -61,6 +61,27 @@ Test the integration with consent granted, denied, and withdrawn. Test a
 cached page and a form added after page load. The resulting provider record is
 separate evidence from a browser event.
 
+## Formbricks link-survey bridge
+
+Use the optional Formbricks adapter when a survey is hosted outside the page
+that owns ClickTrail. It decorates the survey URL with an explicit `ct_*`
+allowlist, then maps only signed `responseFinished` webhooks into a ClickTrail
+lead event.
+
+```ts
+import { decorateFormbricksSurveyUrl } from '@vizuh/clicktrail-formbricks';
+
+const surveyUrl = decorateFormbricksSurveyUrl(
+  'https://survey.example/s/demo',
+  clickTrail.getData(),
+);
+```
+
+Configure matching hidden fields in Formbricks, verify the raw webhook body
+before parsing it, and keep response IDs as the stable external key. Do not
+forward survey answers, contact details, visitor IDs, or session IDs through
+the default mapping.
+
 ## GTM or analytics bridge
 
 Pass an existing array when the host already owns `window.dataLayer`:

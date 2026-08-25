@@ -65,7 +65,7 @@ describe('ClickTrailServer', () => {
     const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
     const sent = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     const event = sent.events[0]!;
-    expect(event['event_name']).toBe('lead');
+    expect(event['event_name']).toBe('lead_created');
     expect(event['schema_version']).toBeTypeOf('string');
     expect(event['classifier_version']).toBeTypeOf('string');
     expect(event['ft_source']).toBe('google');

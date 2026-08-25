@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-typebot",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Typebot block for ClickTrail: maps Typebot variables (email, phone, lead id, UTM campaign, gclid, quoted value, marketing consent) onto ClickTrail attribution events and sends them to a first-party endpoint. Never breaks the chat flow.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,7 +33,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/typebot"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/typebot-block#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/typebot#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -53,7 +54,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@vizuh/clicktrail": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   }
 }

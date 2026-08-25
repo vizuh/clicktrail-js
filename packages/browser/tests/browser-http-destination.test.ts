@@ -65,6 +65,17 @@ describe('httpDestination', () => {
     expect(send.calls).toHaveLength(0);
   });
 
+  it('clear() discards a buffered batch without sending it', async () => {
+    const send = fakeSend();
+    const dest = httpDestination({ endpoint: 'https://t.example/collect', batchSize: 5, send });
+
+    dest.deliver(event(1));
+    dest.clear?.();
+    await dest.flush?.();
+
+    expect(send.calls).toHaveLength(0);
+  });
+
   it('reports a dropped batch when the sender rejects', async () => {
     const dropped: { events: readonly Record<string, unknown>[]; error: unknown }[] = [];
     const send: SendFn = async () => {

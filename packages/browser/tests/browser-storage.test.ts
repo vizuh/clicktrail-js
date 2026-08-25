@@ -130,12 +130,17 @@ describe('mirrorStorage', () => {
     expect(backend.map.has('k')).toBe(false);
   });
 
-  it('entries without retention never expire client-side', () => {
+  it('defaults mirror retention to 90 days', () => {
+    const backend = fakeBackend();
     let now = 0;
-    const store = mirrorStorage({ nowMs: () => now, backend: fakeBackend() });
+    const store = mirrorStorage({ nowMs: () => now, backend });
     store.set('k', 'v');
-    now += 10_000 * 86_400_000;
-    expect(store.get('k')).toBe('v');
+    now += 90 * 86_400_000;
+    expect(store.get('k')).toBeNull();
+  });
+
+  it.each([0, -1, 1.5, 401, Number.NaN])('rejects invalid retentionDays=%s', (retentionDays) => {
+    expect(() => mirrorStorage({ retentionDays, backend: fakeBackend() })).toThrow(/1 through 400/);
   });
 
   it('discards legacy copies lacking expiry metadata instead of reviving them', () => {
@@ -150,9 +155,11 @@ describe('mirrorStorage', () => {
     const backend = fakeBackend();
     backend.setItem('a', JSON.stringify({ v: 1, data: 'no-expiry' }));
     backend.setItem('b', JSON.stringify({ data: 'x', expires_at: null }));
+    backend.setItem('c', JSON.stringify({ v: 1, data: 'x', expires_at: null }));
     const store = mirrorStorage({ nowMs: () => 0, backend });
     expect(store.get('a')).toBeNull();
     expect(store.get('b')).toBeNull();
+    expect(store.get('c')).toBeNull();
     expect(backend.map.size).toBe(0);
   });
 

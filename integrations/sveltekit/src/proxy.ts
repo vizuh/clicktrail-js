@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit/proxy — first-party proxy handler.
+ * @vizuh/clicktrail-sveltekit/proxy — first-party proxy handler.
  *
  * Port of the astro integration's proxy semantics exactly: forwards
  * validated event batches to the upstream collector. Privacy contract:

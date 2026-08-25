@@ -1,0 +1,63 @@
+{
+  "name": "@vizuh/clicktrail-formbricks",
+  "version": "0.1.0-rc.4",
+  "description": "ClickTrail interoperability for Formbricks link-survey attribution and signed response webhooks.",
+  "license": "MIT",
+  "author": "Vizuh OÜ",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./webhook": {
+      "types": "./dist/webhook.d.ts",
+      "default": "./dist/webhook.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "formbricks",
+    "survey",
+    "attribution",
+    "conversion-tracking",
+    "first-party-data",
+    "webhooks",
+    "consent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "integrations/formbricks"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/formbricks#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vizuh/clicktrail-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.6"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

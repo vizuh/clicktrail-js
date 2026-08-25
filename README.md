@@ -10,7 +10,7 @@ Motor determinístico de atribuição first-party. Captura a jornada desde o cli
 
 Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da Vizuh. O FunnelSheet é a frente de consultoria da Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para WordPress; este repositório contém o motor compartilhado.
 
-> **Status da versão:** `0.1.0-rc.3` é a versão candidata a lançamento atual. Os pacotes npm continuam não publicados até a conclusão das validações de proveniência e do trusted publisher. As verificações do repositório e do tarball estão prontas para revisão.
+> **Status da versão:** `0.1.0-rc.4` é a candidata a lançamento preparada neste branch. A publicação no npm ainda depende das atestações de proveniência, do bootstrap 2FA dos novos nomes e da configuração de trusted publishers. O tag do GitHub dispara o workflow que publica no npm com OIDC e o dist-tag `next`.
 
 ## Por que o ClickTrail
 
@@ -28,6 +28,12 @@ Instale o motor:
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
+```
+
+Para testar a candidata depois da publicação, use o dist-tag RC:
+
+```bash
+npm install @vizuh/clicktrail@next
 ```
 
 Faça o parsing determinístico de uma URL de chegada com clique de anúncio em Node, em um worker ou em um teste:
@@ -169,6 +175,16 @@ Comece pelos [tutoriais](docs/TUTORIALS.md). Os pacotes não configuram contas d
 ## Limites da versão
 
 As superfícies core e browser estão em desenvolvimento público. As superfícies `/conversation` e `/agent` devem permanecer limitadas a metadados e exigem os gates de privacidade documentados antes do uso com conversas, prompts, conclusões ou transcrições reais.
+
+## Processo de release
+
+1. As versões dos pacotes e o tag do GitHub devem ser iguais.
+2. O branch de release passa por CI, typecheck, testes, build, probe e smoke de tarball em clean room.
+3. Depois do merge, o tag `v<versão>` dispara `.github/workflows/publish.yml`.
+4. O workflow publica o primeiro wave no npm com provenance OIDC e o dist-tag `next` para versões RC.
+5. Nomes de pacote novos exigem o bootstrap local único em `tools/release/bootstrap-new-packages.sh`, seguido da configuração de trusted publisher no npmjs.com.
+
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md) e [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Não coloque tokens npm no repositório ou nos workflows.
 
 ## Documentação
 

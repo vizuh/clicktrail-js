@@ -20,7 +20,7 @@ Senders (`track`, `lead`, `conversion`, `booking`, `refund`, `consent`) return a
 `ClickTrailResult(ok, status, event_id)` and NEVER raise for network failures.
 Validation errors raise `TypeError` before anything is sent. When
 `external_key` is provided the event id is derived deterministically via
-`clicktrail.ids.derive_stable_event_id` (fnv1a32 pair mirroring the JS core);
+`clicktrail.ids.derive_stable_event_id` (`sha256-128-v1`, using shared golden vectors with the JS core);
 otherwise a fresh `evt_<uuid4>` is minted once per logical occurrence.
 
 Delivery is a single-event POST of `{"events": [event]}` JSON to `endpoint`,

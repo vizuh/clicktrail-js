@@ -18,8 +18,10 @@ function jsonRequest(body: string | unknown, headers: Record<string, string> = {
 const validBatch = { events: [{ event_name: 'page_view' }] };
 
 describe('createEventHandler config validation', () => {
-  it('requires an absolute http(s) upstream', () => {
-    expect(() => createEventHandler(defaultProxyConfig(), fetch)).toThrow(/absolute http\(s\)/);
+  it('requires a public absolute https upstream', () => {
+    expect(() => createEventHandler(defaultProxyConfig(), fetch)).toThrow(/public absolute https/);
+    expect(() => createEventHandler(makeConfig({ upstream: 'https://' }), fetch)).toThrow(/public absolute https/);
+    expect(() => createEventHandler(makeConfig({ upstream: 'https://user:pass@up.example.com' }), fetch)).toThrow(/public absolute https/);
   });
 
   it('rejects invalid limits and sensitive forwarded headers', () => {

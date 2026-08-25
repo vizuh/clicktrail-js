@@ -5,6 +5,7 @@
  * the HOST performs the actual Directus API persistence — this package only
  * validates and normalizes the shape.
  */
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 
 export interface ClickTrailSettings {
   siteId: string;
@@ -55,16 +56,8 @@ export function validateSettings(input: unknown): SettingsValidation {
   if (siteId === '') errors.push('siteId is required.');
 
   const endpoint = typeof input['endpoint'] === 'string' ? input['endpoint'].trim() : '';
-  if (endpoint !== '') {
-    let parsedUrl: URL | null = null;
-    try {
-      parsedUrl = new URL(endpoint);
-    } catch {
-      parsedUrl = null;
-    }
-    if (parsedUrl === null || (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:')) {
-      errors.push('endpoint must be a valid http(s) URL.');
-    }
+  if (endpoint !== '' && !isSafeHttpUrl(endpoint)) {
+    errors.push('endpoint must be a public absolute https URL.');
   }
 
   const consentRequiredRaw = input['consentRequired'];

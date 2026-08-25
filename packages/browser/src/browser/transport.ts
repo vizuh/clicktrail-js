@@ -16,6 +16,8 @@ export interface Destination {
   deliver(event: StampedClickTrailEvent): void;
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;
+  /** Discard buffered events without delivering them. */
+  clear?(): void;
 }
 
 /** Injected side-effect boundary: transmits a pre-encoded JSON body. */
@@ -93,6 +95,9 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
       if (batch.length >= batchSize) void flushBatch();
     },
     flush: flushBatch,
+    clear() {
+      batch = [];
+    },
   };
 }
 

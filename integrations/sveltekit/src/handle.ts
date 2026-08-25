@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit — handle hook factory.
+ * @vizuh/clicktrail-sveltekit — handle hook factory.
  *
  * `clicktrail(options)` returns a SvelteKit handle-shaped hook. Server work
  * per request:
@@ -30,7 +30,7 @@ function isAbsoluteEndpoint(endpoint: string): boolean {
  *
  * Usage in `hooks.server.ts`:
  * ```ts
- * import { clicktrail } from '@clicktrail/sveltekit';
+ * import { clicktrail } from '@vizuh/clicktrail-sveltekit';
  * export const handle = clicktrail({ siteId: 'my-site', proxy: { upstream: 'https://collector.example.com/v1/events' } });
  * ```
  */
@@ -42,7 +42,7 @@ export function clicktrail(options: ClickTrailSvelteKitOptions = {}): HandleLike
   if (proxyOption !== undefined && proxyOption !== false) {
     if (!proxyOption.upstream || !isAbsoluteEndpoint(proxyOption.upstream)) {
       throw new TypeError(
-        "clicktrail: the first-party proxy needs an absolute http(s) `proxy.upstream`. " +
+        "clicktrail: the first-party proxy needs an public absolute https `proxy.upstream`. " +
           "Set it or pass `proxy: false`.",
       );
     }

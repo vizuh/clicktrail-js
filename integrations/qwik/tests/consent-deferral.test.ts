@@ -137,6 +137,12 @@ describe('bootClickTrailClient consent deferral', () => {
     await client.whenStarted();
     expect(started).toBe(true);
     expect(client.instance.isStarted()).toBe(true);
+    client.instance.hydrateStoredPayload({ gclid: 'test-click' });
+
+    jar.write('ct_consent=denied');
+    target.dispatchEvent({ type: CONSENT_EVENT });
+    expect(client.instance.isStarted()).toBe(false);
+    expect(client.instance.getField('gclid')).toBe('');
   });
 
   it('stays dormant forever on explicit denial until re-consented', async () => {

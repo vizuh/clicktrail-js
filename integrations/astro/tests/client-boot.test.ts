@@ -89,6 +89,21 @@ describe('bootClickTrailClient', () => {
     await new Promise((r) => setTimeout(r, 0));
   });
 
+  it('clears stored attribution and stops when consent is withdrawn', async () => {
+    const seams = makeSeams('https://example.com/');
+    setConsent(true, seams);
+    const booted = bootClickTrailClient(
+      defaultClientConfig({ endpoint: '/api/ct', consentRequired: true }),
+      seams,
+    );
+    await booted.whenStarted();
+    booted.instance.hydrateStoredPayload({ gclid: 'test-click' });
+
+    setConsent(false, seams);
+    expect(booted.instance.isStarted()).toBe(false);
+    expect(booted.instance.getField('gclid')).toBe('');
+  });
+
   it('an already-granted stored consent starts synchronously', async () => {
     const seams = makeSeams('https://example.com/');
     setConsent(true, seams);

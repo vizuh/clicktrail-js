@@ -17,14 +17,14 @@ import {
 } from './generate.js';
 
 /** Dependency installed by the postInstall hint. */
-export const SVELTEKIT_PACKAGE = '@clicktrail/sveltekit';
+export const SVELTEKIT_PACKAGE = '@vizuh/clicktrail-sveltekit';
 
 export const clicktrailAddon: SvAddon = defineAddon({
   id: 'clicktrail',
   metadata: {
     name: 'ClickTrail',
     description:
-      'First-party attribution and conversion tracking via @clicktrail/sveltekit: landing UTMs + click IDs in a first-party cookie, consent-gated page views, optional first-party proxy, and server-side conversions.',
+      'First-party attribution and conversion tracking via @vizuh/clicktrail-sveltekit: landing UTMs + click IDs in a first-party cookie, consent-gated page views, optional first-party proxy, and server-side conversions.',
     keywords: ['attribution', 'analytics', 'utm', 'gclid', 'fbclid', 'conversion-tracking'],
   },
   condition: ({ kit }) => kit,

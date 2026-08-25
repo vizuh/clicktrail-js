@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit — first-party attribution and conversion tracking
+ * @vizuh/clicktrail-sveltekit — first-party attribution and conversion tracking
  * for SvelteKit.
  */
 import { clicktrail } from './handle.js';

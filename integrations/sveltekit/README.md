@@ -1,4 +1,4 @@
-# @clicktrail/sveltekit
+# @vizuh/clicktrail-sveltekit
 
 First-party attribution and conversion tracking for [SvelteKit](https://kit.svelte.dev).
 
@@ -7,14 +7,14 @@ A handle hook captures landing UTMs and click IDs into a first-party cookie, the
 ## Install
 
 ```sh
-npm install @clicktrail/sveltekit
+npm install @vizuh/clicktrail-sveltekit
 ```
 
 ## Quick start
 
 ```ts
 // src/hooks.server.ts
-import { clicktrail } from '@clicktrail/sveltekit';
+import { clicktrail } from '@vizuh/clicktrail-sveltekit';
 
 export const handle = clicktrail({
   siteId: 'my-site',
@@ -25,7 +25,7 @@ export const handle = clicktrail({
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script>
-  import ClickTrail from '@clicktrail/sveltekit/ClickTrail.svelte';
+  import ClickTrail from '@vizuh/clicktrail-sveltekit/ClickTrail.svelte';
 </script>
 
 <ClickTrail />
@@ -53,7 +53,7 @@ The `ClickTrail` component boots the browser SDK with an `afterNavigate`-based n
 
 ```ts
 // +page.server.ts
-import { trackConversion } from '@clicktrail/sveltekit/server';
+import { trackConversion } from '@vizuh/clicktrail-sveltekit/server';
 
 export const actions = {
   demo: async ({ request }) => {

@@ -14,9 +14,11 @@ Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin
 (`click-trail-handler`) is the WordPress distribution; this repository is the
 shared engine beneath it.
 
-> **Release status:** `0.1.0-rc.3` is the current release candidate. The npm
-> packages remain unpublished until the provenance and trusted-publisher gates
-> are complete. The repository and tarball checks are ready for review.
+> **Release status:** `0.1.0-rc.4` is the release candidate prepared on this
+> branch. npm publication still depends on the provenance attestations, one-time
+> 2FA bootstrap for new package names, and trusted-publisher configuration. A
+> matching GitHub tag triggers the workflow that publishes to npm with OIDC and
+> the `next` dist-tag.
 
 ## Why ClickTrail
 
@@ -45,6 +47,12 @@ Install the engine:
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
+```
+
+To test the release candidate after publication, use the RC dist-tag:
+
+```bash
+npm install @vizuh/clicktrail@next
 ```
 
 Parse an ad-click landing URL deterministically in Node, a worker, or a test:
@@ -136,7 +144,7 @@ host adapter until their contracts are stabilized.
 | [`@vizuh/clicktrail-qwik`](integrations/qwik/) | Qwik/Qwik City integration: resumability-friendly middleware, zero eager client JS |
 | [`@vizuh/clicktrail-sveltekit`](integrations/sveltekit/) | SvelteKit handle + component: SSR attribution capture, nav dedupe, server conversions |
 | [`@vizuh/clicktrail-sv`](integrations/sv/) | Svelte CLI community add-on (experimental): one-command setup |
-| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters — canonical events, JS-bit-exact idempotency |
+| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters — canonical events, shared SHA-256/128 idempotency vectors |
 | [Examples](./examples) | Runnable integration examples |
 | [Site](./site) | Project site |
 
@@ -199,6 +207,16 @@ The core and browser surfaces are public development work. The `/conversation`
 and `/agent` surfaces must remain metadata-only and require their documented
 privacy gates before use with real conversations, prompts, completions, or
 transcripts.
+
+## Release process
+
+1. Package versions and the Git tag must match.
+2. The release branch passes CI, typecheck, tests, build, probe, and clean-room tarball smoke checks.
+3. After merge, pushing `v<version>` triggers `.github/workflows/publish.yml`.
+4. The workflow publishes the first wave to npm with OIDC provenance and the `next` dist-tag for RC versions.
+5. New package names need the one-time local bootstrap in `tools/release/bootstrap-new-packages.sh`, followed by trusted-publisher configuration on npmjs.com.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md), and [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Never put npm tokens in the repository or workflows.
 
 ## Documentation
 

@@ -17,6 +17,10 @@
 
 /** Milliseconds per day — retention arithmetic only. */
 export const DAY_MS = 86_400_000;
+/** Privacy-safe default for mirrored browser attribution. */
+export const DEFAULT_RETENTION_DAYS = 90;
+/** Browser storage retention is intentionally capped. */
+export const MAX_RETENTION_DAYS = 400;
 
 /** Minimal synchronous key/value seam every store implements. */
 export interface StorageAdapter {
@@ -172,12 +176,12 @@ export function cookieStorage(config: CookieStorageConfig = {}): StorageAdapter 
  * Envelope written around every mirrored value.
  * `v` gates legacy entries: anything without `v === 1` AND an explicit
  * `expires_at` field is a pre-metadata legacy copy and is discarded on read
- * (DATA-MODEL.md:121). `expires_at: null` means "retention not configured";
- * such entries never expire client-side.
+ * (DATA-MODEL.md:121). Entries without a finite numeric expiry are
+ * discarded instead of being revived indefinitely.
  */
 export interface MirrorEnvelope {
   v: 1;
-  expires_at: number | null;
+  expires_at: number;
   data: string;
 }
 
@@ -192,7 +196,7 @@ export interface MirrorStorageConfig {
   /**
    * Retention days; mirror expiry = write time + retentionDays (portable
    * prompt: "tie client-side mirror expiry to the retention setting").
-   * Omit => entries carry `expires_at: null`.
+   * Must be an integer from 1 through 400. Default: 90.
    */
   retentionDays?: number;
   /** Injected wall clock in ms. Required for expiry to be testable. */
@@ -216,7 +220,7 @@ function parseEnvelope(raw: string): MirrorEnvelope | null {
     if (!('expires_at' in env)) return null;
     if (typeof env['data'] !== 'string') return null;
     const expiresAt = env['expires_at'];
-    if (expiresAt !== null && typeof expiresAt !== 'number') return null;
+    if (typeof expiresAt !== 'number' || !Number.isFinite(expiresAt)) return null;
     return { v: 1, expires_at: expiresAt, data: env['data'] };
   } catch {
     return null;
@@ -233,8 +237,11 @@ function parseEnvelope(raw: string): MirrorEnvelope | null {
 export function mirrorStorage(config: MirrorStorageConfig = {}): StorageAdapter {
   const backend = config.backend !== undefined ? config.backend : defaultMirrorBackend();
   const nowMs = config.nowMs ?? (() => Date.now());
-  const ttlMs =
-    config.retentionDays !== undefined ? config.retentionDays * DAY_MS : null;
+  const retentionDays = config.retentionDays ?? DEFAULT_RETENTION_DAYS;
+  if (!Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > MAX_RETENTION_DAYS) {
+    throw new RangeError(`clicktrail: retentionDays must be an integer from 1 through ${MAX_RETENTION_DAYS}.`);
+  }
+  const ttlMs = retentionDays * DAY_MS;
   return {
     get(key) {
       if (!backend) return null;
@@ -246,7 +253,7 @@ export function mirrorStorage(config: MirrorStorageConfig = {}): StorageAdapter 
         backend.removeItem(key);
         return null;
       }
-      if (env.expires_at !== null && nowMs() >= env.expires_at) {
+      if (nowMs() >= env.expires_at) {
         backend.removeItem(key);
         return null;
       }
@@ -256,7 +263,7 @@ export function mirrorStorage(config: MirrorStorageConfig = {}): StorageAdapter 
       if (!backend) return;
       const env: MirrorEnvelope = {
         v: 1,
-        expires_at: ttlMs === null ? null : nowMs() + ttlMs,
+        expires_at: nowMs() + ttlMs,
         data: value,
       };
       try {

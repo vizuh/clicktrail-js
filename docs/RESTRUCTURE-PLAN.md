@@ -10,10 +10,10 @@ docs/EVENT-CONTRACT.md (authoritative).
 1. Single namespace: everything publishes under @vizuh/* except the unscoped
    n8n community node name (platform convention, documented exception).
    Integrations become @vizuh/clicktrail-astro, @vizuh/clicktrail-nuxt,
-   @vizuh/piece-clicktrail, @clicktrail/typebot-block -> @vizuh/clicktrail-typebot,
+   @vizuh/piece-clicktrail, @vizuh/clicktrail-typebot,
    directus-extension-clicktrail (unscoped per Directus registry convention).
    MINORITY (Taleb, 1-4): register @clicktrail org defensively vs typosquatting.
-   Ruling deferred to Hugo.
+   Hugo rejected this option; the permanent namespace is @vizuh/*.
 2. Canonical event contract (nine events) enforced through ONE shared builders
    module; integration packages contain zero hardcoded event names. Renames are
    then one-file changes.

@@ -1,8 +1,9 @@
 {
   "name": "directus-extension-clicktrail",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "First-party attribution and conversion tracking for Directus: a Flow operation to send ClickTrail events, an API hook that attaches attribution signals on collection creates, a Campaign -> Lead -> Sale dashboard panel, and a settings module.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/api/index.js",
   "types": "./dist/api/index.d.ts",
@@ -39,7 +40,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/directus"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/directus#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/directus#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -51,8 +52,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vizuh/clicktrail": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^",
+    "@vizuh/clicktrail": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*",
     "vue": "^3.4.0"
   },
   "devDependencies": {

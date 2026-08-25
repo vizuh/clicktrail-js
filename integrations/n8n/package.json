@@ -1,8 +1,9 @@
 {
   "name": "n8n-nodes-clicktrail",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "ClickTrail community node for n8n: send first-party attribution events (leads, conversions, consent) from n8n workflows to your ClickTrail collector.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -33,7 +34,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/n8n"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/n8n-nodes-clicktrail#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/n8n#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -45,8 +46,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vizuh/clicktrail": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   },
   "peerDependencies": {
     "n8n-workflow": "^1.82.0"

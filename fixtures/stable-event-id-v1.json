@@ -1,0 +1,21 @@
+{
+  "algorithm": "sha256-128-v1",
+  "separator": "U+0000",
+  "vectors": [
+    {
+      "siteId": "s1",
+      "externalKey": "bk_9:completed",
+      "eventId": "evt_s-eebe6647ec464f95f74b31e942a0b73e"
+    },
+    {
+      "siteId": "site-xyz",
+      "externalKey": "order:42:EUR",
+      "eventId": "evt_s-af0d1cb4cc427b97da7ca791fe150d85"
+    },
+    {
+      "siteId": "ünïcode-sité",
+      "externalKey": "ключ✓",
+      "eventId": "evt_s-75d330cfcd7ea174b0361670e12ad586"
+    }
+  ]
+}

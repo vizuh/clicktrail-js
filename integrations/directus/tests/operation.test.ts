@@ -66,6 +66,29 @@ describe('sendEventHandler (fake fetch matrix)', () => {
     expect(((init.headers ?? {}) as Record<string, string>)['x-clicktrail-key']).toBe('env-key');
   });
 
+  it('does not send the env key to a per-flow endpoint', async () => {
+    const fetchImpl = vi.fn(async () => OK_RESPONSE);
+    const handler = createSendEventHandler({
+      fetchImpl,
+      env: { CLICKTRAIL_API_KEY: 'env-key' },
+    });
+    await handler(baseConfig({ endpoint: 'https://flow-collector.test/collect' }));
+    const headers = ((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1]).headers as Record<string, string>;
+    expect(headers['x-clicktrail-key']).toBeUndefined();
+  });
+
+  it.each(['not a url', 'ftp://collector.test/collect', 'https://user:pass@collector.test/collect'])(
+    'rejects unsafe endpoint %s before fetch',
+    async (endpoint) => {
+      const fetchImpl = vi.fn(async () => OK_RESPONSE);
+      const handler = createSendEventHandler({ fetchImpl });
+      const result = await handler(baseConfig({ endpoint }));
+      expect(result).toMatchObject({ ok: false, status: 400 });
+      expect(result.error).toContain('public absolute https URL');
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([401, 404, 500])('reports ok:false with status %i on non-2xx', async (status) => {
     const fetchImpl = vi.fn(async () => jsonResponse(status));
     const handler = createSendEventHandler({ fetchImpl });

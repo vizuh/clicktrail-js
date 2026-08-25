@@ -111,9 +111,11 @@ describe('consent deferral in client boot', () => {
     setConsent(true, { cookieJar: s.jar, eventTarget: s.target });
     await booted.whenStarted();
     expect(booted.instance.isStarted()).toBe(true);
+    booted.instance.hydrateStoredPayload({ gclid: 'test-click' });
 
     setConsent(false, { cookieJar: s.jar, eventTarget: s.target });
     expect(booted.instance.isStarted()).toBe(false);
+    expect(booted.instance.getField('gclid')).toBe('');
   });
 
   it('starts immediately when consent is not required', async () => {

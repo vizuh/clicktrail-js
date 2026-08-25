@@ -1,7 +1,8 @@
 # Owner & Namespace Decision — ClickTrail
 
-Status: NAMESPACE DECIDED; COPYRIGHT/PROVENANCE GATES OPEN.
-Prepared: 2026-08-23. Related: PROVENANCE-AUDIT.md blockers B1-B4.
+Status: OWNER, NAMESPACE, AND RC4 PUBLICATION AUTHORIZED.
+Prepared: 2026-08-23. Authorized: 2026-08-25.
+Related: `RELEASE-AUTHORIZATION.json` and `PROVENANCE-AUDIT.md` blockers B1-B4.
 
 Hugo decision (2026-08-24): npm package `@vizuh/clicktrail`; public GitHub
 repository `vizuh/clicktrail-js`.
@@ -48,7 +49,16 @@ Current state assumes Option 2. Change matrix:
 NOTE: renaming AFTER first publish means `npm deprecate` + `npm dist-tag` migration
 forever. Decide before the first publish; never after.
 
-## Attestation templates (Hugo approves verbatim ONLY where factually true)
+## Recorded RC4 owner decision
+
+On 2026-08-25, Hugo instructed the agent to organize and publish the release and
+selected **Vizuh OÜ** as the copyright holder. The accountable owner approved
+B1-B3 for the five-package RC4 scope after those gates were presented. B4 was
+resolved through authenticated npm organization/package access checks and the
+recorded artifact audit. `GOV-001` is therefore resolved for `0.1.0-rc.4` only.
+The machine-enforced record is `RELEASE-AUTHORIZATION.json`.
+
+## Attestation templates (approved for RC4)
 
 ### B1 - Historical contributors
 > I confirm that commits attributed to Atroci, Hugo, and atroci were authored by me
@@ -74,10 +84,10 @@ implementation from its functional specification instead.
 
 ## Version posture (decided, recorded)
 
-First prerelease will be **0.1.0-rc.1** under the `next` dist-tag — NOT 1.0.0-rc.1.
+The current release candidate is **0.1.0-rc.4** under the `next` dist-tag.
 SemVer reserves 1.0.0 for a validated public API; the WordPress staging swap,
 7-day shadow comparison, canary rollout, and live pilots have not run yet.
-The version bump itself is NOT executed until the first-publication checklist passes.
+The `latest` dist-tag remains outside this RC4 authorization.
 
 ## Prepared-but-NOT-executed remote commands (OWNER placeholder)
 

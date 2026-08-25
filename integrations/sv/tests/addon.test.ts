@@ -49,9 +49,9 @@ describe('addon schema shape', () => {
 describe('generated file content', () => {
   const answers = { siteId: 'my-site' };
 
-  it('hooks.server.ts wires the @clicktrail/sveltekit handle', () => {
+  it('hooks.server.ts wires the @vizuh/clicktrail-sveltekit handle', () => {
     const hooks = generateHooksServer(answers);
-    expect(hooks).toContain("from '@clicktrail/sveltekit'");
+    expect(hooks).toContain("from '@vizuh/clicktrail-sveltekit'");
     expect(hooks).toContain('clicktrail({');
     expect(hooks).toContain('CLICKTRAIL_SITE_ID');
     expect(hooks).toContain("'my-site'");
@@ -59,7 +59,7 @@ describe('generated file content', () => {
 
   it('root layout renders the ClickTrail component', () => {
     const layout = generateRootLayout();
-    expect(layout).toContain('@clicktrail/sveltekit/ClickTrail.svelte');
+    expect(layout).toContain('@vizuh/clicktrail-sveltekit/ClickTrail.svelte');
     expect(layout).toContain('<ClickTrail');
   });
 
@@ -71,7 +71,7 @@ describe('generated file content', () => {
 
   it('conversion endpoint calls trackConversion server-side', () => {
     const endpoint = generateConversionEndpoint(answers);
-    expect(endpoint).toContain("@clicktrail/sveltekit/server");
+    expect(endpoint).toContain("@vizuh/clicktrail-sveltekit/server");
     expect(endpoint).toContain('trackConversion');
     expect(endpoint).toContain("event: 'lead'");
   });

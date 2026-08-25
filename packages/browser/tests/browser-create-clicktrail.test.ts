@@ -74,6 +74,20 @@ describe('createClickTrail', () => {
     expect(reported).toEqual(['consent_denied_capture_attempted']);
   });
 
+  it('consent withdrawal clears buffered HTTP events before the next flush', () => {
+    let consent = true;
+    const send = vi.fn();
+    const http = httpDestination({ endpoint: 'https://t.example', batchSize: 100, send });
+    const ct = createClickTrail({ destinations: [http], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+    consent = false;
+    ct.stop();
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('mergeParsedTouch feeds the payload that later events carry', () => {
     const rec = recordingDestination();
     const ct = createClickTrail({ destinations: [rec], now: () => '2026-08-23T10:00:00Z' });
@@ -121,6 +135,31 @@ describe('createClickTrail', () => {
 
     ct.track('lead.submitted'); // stopped: no-op
     expect(calls).toHaveLength(1);
+  });
+
+  it('stop() completes cleanup when a destination flush throws', () => {
+    const ct = createClickTrail({
+      destinations: [{ name: 'broken', deliver: () => {}, flush: () => { throw new Error('boom'); } }],
+    });
+    ct.start();
+
+    expect(() => ct.stop()).not.toThrow();
+    expect(ct.isStarted()).toBe(false);
+  });
+
+  it('handles an asynchronous destination flush rejection', async () => {
+    const reported: string[] = [];
+    const ct = createClickTrail({
+      destinations: [{ name: 'broken', deliver: () => {}, flush: async () => { throw new Error('boom'); } }],
+      diagnosticsLevel: 'warn',
+      diagnosticSink: { report: (d) => reported.push(d.code) },
+    });
+    ct.start();
+    ct.stop();
+    await Promise.resolve();
+
+    expect(ct.isStarted()).toBe(false);
+    expect(reported).toEqual(['destination_flush_failed']);
   });
 
   it('silent diagnostics (default) report nothing on pre-start track', () => {

@@ -10,6 +10,7 @@
 import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import { toCanonicalEventName } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -148,7 +149,7 @@ export class ClickTrailServer {
   }
 
   private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
-    return buildEventPayload(input.identity.payload ?? {}, eventName, {
+    return buildEventPayload(input.identity.payload ?? {}, toCanonicalEventName(eventName), {
       ...input.data,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),

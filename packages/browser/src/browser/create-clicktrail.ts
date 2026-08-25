@@ -113,7 +113,7 @@ export interface ClickTrailConfig {
 }
 
 export interface ClickTrailStorageConfig {
-  /** Retention days; ties the localStorage mirror expiry to retention. */
+  /** localStorage mirror retention in whole days (1-400). Default: 90. */
   retentionDays?: number;
   /** Attributes injected into every attribution cookie write. */
   cookieAttrs?: CookieAttributes;
@@ -227,6 +227,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const sink = resolveSink(config);
   let eventSequence = 0;
 
+  const clearDestinationQueues = (): void => {
+    for (const dest of destinations) dest.clear?.();
+  };
+
   let started = false;
   let payload: AttributionPayload = emptyAttribution();
   let consentDeniedReported = false;
@@ -320,6 +324,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         clearAttributionStorage(adapters.primary, adapters.mirror);
         identity?.clear();
       }
+      clearDestinationQueues();
     }
     return false;
   };
@@ -448,7 +453,33 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
 
     stop() {
       if (!started) return;
-      for (const dest of destinations) void Promise.resolve(dest.flush?.());
+      if (consentAllows()) {
+        for (const dest of destinations) {
+          try {
+            void Promise.resolve(dest.flush?.()).catch(() => {
+              try {
+                sink.report({
+                  code: 'destination_flush_failed',
+                  level: 'warn',
+                  message: `Destination '${dest.name}' failed to flush during stop().`,
+                });
+              } catch {
+                // Host diagnostics are best effort and must not break cleanup.
+              }
+            });
+          } catch {
+            try {
+              sink.report({
+                code: 'destination_flush_failed',
+                level: 'warn',
+                message: `Destination '${dest.name}' failed to flush during stop().`,
+              });
+            } catch {
+              // Host diagnostics are best effort and must not break cleanup.
+            }
+          }
+        }
+      }
       formInjector?.stop();
       formInjector = null;
       linkDecorator?.stop();
@@ -516,6 +547,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
 
     clearData() {
       payload = emptyAttribution();
+      clearDestinationQueues();
       if (started && adapters) {
         clearAttributionStorage(adapters.primary, adapters.mirror);
         identity?.clear();

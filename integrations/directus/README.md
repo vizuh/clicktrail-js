@@ -46,7 +46,7 @@ typically within hours of npm publish.
 |---|---|---|
 | `CLICKTRAIL_ENDPOINT` | yes (hook) / per-flow (operation) | Collector URL receiving `{ events: [...] }`. |
 | `CLICKTRAIL_SITE_ID` | recommended | Stamped into every event's `marketing_trail.site_id`. |
-| `CLICKTRAIL_API_KEY` | optional | Sent as `X-ClickTrail-Key` when set. Never logged, never stored in dashboard state. |
+| `CLICKTRAIL_API_KEY` | optional | Sent as `X-ClickTrail-Key` for the env endpoint. Never logged, never stored in dashboard state. |
 | `CLICKTRAIL_STORE_LOCALLY` | optional | `true` writes each forwarded event into the `clicktrail_events` collection (panel data source). |
 
 ## Flow setup walkthrough

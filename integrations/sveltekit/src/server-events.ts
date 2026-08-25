@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit/server — server-side conversion sender.
+ * @vizuh/clicktrail-sveltekit/server — server-side conversion sender.
  *
  * For use in +page.server.ts load functions and form actions:
  * `trackConversion(request, { event: 'lead', leadId })` reads the visitor

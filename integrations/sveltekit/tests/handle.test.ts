@@ -153,6 +153,6 @@ describe('clicktrail handle proxy short-circuit', () => {
   });
 
   it('rejects a proxy without an absolute upstream', () => {
-    expect(() => buildHandle({ proxy: { upstream: 'not-a-url' } })).toThrow(/absolute http\(s\)/);
+    expect(() => buildHandle({ proxy: { upstream: 'not-a-url' } })).toThrow(/public absolute https/);
   });
 });
