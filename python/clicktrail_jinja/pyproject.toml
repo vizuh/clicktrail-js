@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clicktrail-jinja"
+version = "0.1.0"
+description = "Jinja2 extension with ClickTrail globals: head snippet, attribution hidden inputs, consent cookie setter."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+authors = [{ name = "ClickTrail contributors" }]
+keywords = ["jinja2", "analytics", "attribution", "clicktrail"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/vizuh/clicktrail"
+
+[project.optional-dependencies]
+dev = ["jinja2>=3.0", "pytest>=7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["clicktrail_jinja"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
