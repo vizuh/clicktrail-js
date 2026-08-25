@@ -28,3 +28,5 @@ npm i @clicktrail/sveltekit
 ## License
 
 MIT
+
+> **Distribution mirror.** Development happens in [vizuh/clicktrail-js](https://github.com/vizuh/clicktrail-js) (`integrations/sv`). PRs and issues go there.

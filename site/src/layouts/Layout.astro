@@ -4,13 +4,47 @@ import '../styles/site.css';
 interface Props {
   title: string;
   description: string;
+  /** Path portion of the canonical URL, e.g. "/how-it-works/". */
+  canonicalPath?: string;
+  ogType?: 'website' | 'article';
+  /** Home page only: Organization + SoftwareApplication JSON-LD. */
+  jsonLd?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, canonicalPath = '/', ogType = 'website', jsonLd = false } = Astro.props;
+
+// TODO: PLACEHOLDER DOMAIN — swap `site` in astro.config.mjs and this base
+// when the production domain is live.
+const siteBase = Astro.site ? Astro.site.toString().replace(/\/$/, '') : 'https://clicktrail.dev';
+const canonicalUrl = `${siteBase}${canonicalPath}`;
+
 const repoUrl = 'https://github.com/vizuh/clicktrail-js';
 const npmCore = 'https://www.npmjs.com/package/@vizuh/clicktrail';
-const npmAstro = 'https://www.npmjs.com/package/@vizuh/clicktrail-astro';
 const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
+
+const jsonLdPayload = jsonLd
+  ? {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          name: 'Vizuh OÜ',
+          url: 'https://vizuh.com',
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'ClickTrail',
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'Web, Node.js, Python',
+          license: 'https://opensource.org/licenses/MIT',
+          author: { '@type': 'Organization', name: 'Vizuh OÜ' },
+          codeRepository: repoUrl,
+          description:
+            'Deterministic first-party attribution engine. Captures the trail from ad click to conversion.',
+        },
+      ],
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -19,9 +53,26 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/png" href="/clicktrail-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="ClickTrail" />
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {jsonLdPayload && <script type="application/ld+json" set:html={JSON.stringify(jsonLdPayload)} />}
+
     <!--
       ClickTrail self-tracking (fallback path): the @vizuh/clicktrail-astro client
       hardcodes an HTTP destination, which has nowhere to deliver on a static
@@ -88,9 +139,13 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
           Click<strong>Trail</strong>
         </a>
         <nav class="nav-links">
+          <a href="/">Product</a>
+          <a href="/how-it-works/">How it works</a>
+          <a href="/integrations/">Integrations</a>
+          <a href="/event-contract/">Event contract</a>
+          <a href="/compare/">Compare</a>
+          <a href="/open-source/">Open source</a>
           <a href={repoUrl}>GitHub</a>
-          <a href={npmCore}>npm</a>
-          <a href={wpPlugin}>WordPress plugin</a>
         </nav>
       </div>
     </header>
@@ -100,12 +155,42 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
     </main>
 
     <footer class="footer">
-      <div class="wrap footer-inner">
-        <span>Vizuh O&Uuml; &middot; MIT license</span>
-        <nav class="footer-links">
-          <a href={repoUrl}>GitHub</a>
-          <a href={wpPlugin}>WordPress plugin</a>
-        </nav>
+      <div class="wrap footer-grid">
+        <div class="footer-col">
+          <p class="footer-head">ClickTrail</p>
+          <nav class="footer-links footer-stack">
+            <a href="/">Home</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="/event-contract/">Event contract</a>
+            <a href="/compare/">Compare</a>
+            <a href="/open-source/">Open source</a>
+          </nav>
+        </div>
+        <div class="footer-col">
+          <p class="footer-head">Integrations</p>
+          <nav class="footer-links footer-stack">
+            <a href="/integrations/">All integrations</a>
+            <a href="/integrations/astro/">Astro</a>
+            <a href="/integrations/nuxt/">Nuxt</a>
+            <a href="/integrations/n8n/">n8n</a>
+            <a href="/integrations/directus/">Directus</a>
+            <a href="/integrations/python-sdk/">Python SDK</a>
+            <a href="/integrations/wordpress/">WordPress</a>
+          </nav>
+        </div>
+        <div class="footer-col">
+          <p class="footer-head">Project</p>
+          <nav class="footer-links footer-stack">
+            <a href={repoUrl}>GitHub repository</a>
+            <a href={`${repoUrl}/issues`}>Issue tracker</a>
+            <a href={npmCore}>@vizuh/clicktrail on npm</a>
+            <a href={wpPlugin}>WordPress plugin</a>
+            <a href={`${repoUrl}/security/advisories/new`}>Security policy</a>
+          </nav>
+        </div>
+      </div>
+      <div class="wrap footer-line">
+        <span>Vizuh O&Uuml; &middot; MIT license &middot; The WordPress plugin is GPL-2.0-or-later.</span>
       </div>
     </footer>
   </body>

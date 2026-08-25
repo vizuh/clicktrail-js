@@ -78,3 +78,5 @@ Validation contract (identical to `@vizuh/clicktrail-server`): money fields must
 ## License
 
 MIT
+
+> **Distribution mirror.** Development happens in [vizuh/clicktrail-js](https://github.com/vizuh/clicktrail-js) (`integrations/sveltekit`). PRs and issues go there.

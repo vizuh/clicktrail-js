@@ -1,0 +1,53 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { byCategory } from '../../data/integrations';
+
+const categories = byCategory();
+---
+
+<Layout
+  title="ClickTrail integrations — frameworks, automation, CMS"
+  description="Every ClickTrail integration: Astro, Nuxt, SvelteKit, Qwik, n8n, Activepieces, Typebot, Directus, Django, Wagtail, Python, GTM templates, WordPress."
+  canonicalPath="/integrations/"
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">/</span><span aria-current="page">Integrations</span>
+      </nav>
+      <p class="kicker">Integrations hub</p>
+      <h1>One engine, every platform you run</h1>
+      <p class="lede">
+        Each integration produces the same canonical events through one shared
+        library layer &mdash; no platform invents its own schema.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      {[...categories.entries()].map(([category, items]) => (
+        items.length > 0 && (
+          <div class="category-block">
+            <h2>{category}</h2>
+            <p>{items.length} integration{items.length === 1 ? '' : 's'}</p>
+            <div class="int-grid">
+              {items.map((item) => (
+                <a class="int-card" href={`/integrations/${item.slug}/`}>
+                  <div class="int-card-head">
+                    <h3>{item.name}</h3>
+                    <span class={`badge badge-${item.status}`}>
+                      {item.status === 'rc' ? 'RC' : item.status === 'stable' ? 'Stable' : 'Experimental'}
+                    </span>
+                  </div>
+                  <p>{item.summary}</p>
+                  {item.npmName && <code>{item.npmName}</code>}
+                </a>
+              ))}
+            </div>
+          </div>
+        )
+      ))}
+    </div>
+  </section>
+</Layout>
