@@ -123,3 +123,5 @@ Dependencies: `@vizuh/clicktrail-core` and `@vizuh/clicktrail-browser` only. Pee
 ## License
 
 MIT
+
+> **Distribution mirror.** Development happens in [vizuh/clicktrail-js](https://github.com/vizuh/clicktrail-js) (`integrations/qwik`). PRs and issues go there.
