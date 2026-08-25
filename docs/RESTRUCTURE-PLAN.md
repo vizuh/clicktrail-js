@@ -34,6 +34,23 @@ docs/EVENT-CONTRACT.md (authoritative).
 6. Ethics policy (EVENT-CONTRACT.md section) binds every submission; violations
    block the PR regardless of technical quality.
 
+## Repository naming convention (Hugo ruling, 2026-08-25)
+
+All ClickTrail GitHub repositories are BRAND-FIRST: `clicktrail-<ecosystem>`.
+Current org inventory is fully conformant (clicktrail-js, -php, -laravel,
+-symfony, -shopware, -filament, -craft, -october, -twig, -psr-middleware,
+-gtm-event-tag, -gtm-attribution-variable).
+
+Rule details:
+- Ecosystem package names keep their platform conventions INSIDE each repo
+  (Composer vendor prefixes, npm scopes, Shopware plugin names); only the
+  GitHub repository name follows the brand-first rule.
+- Future repos: clicktrail-wordpress, -woocommerce, -shopify, -vue, -react,
+  -nextjs, -svelte, -angular, -drupal, -joomla, -odoo, -magento,
+  -prestashop follow the same pattern.
+- Renamed 2026-08-25: shopware-clicktrail -> clicktrail-shopware;
+  filament-clicktrail -> clicktrail-filament (0 stars, redirects active).
+
 ## Phases
 
 ### Phase 0 — checkpoint (immediate)
