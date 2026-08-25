@@ -1,16 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { integrations } from '../data/integrations';
 
-const repoUrl = 'https://github.com/vizuh/clicktrail-js';
-const quickstartUrl = repoUrl + '#quickstart';
-const npmCore = 'https://www.npmjs.com/package/@vizuh/clicktrail';
-const npmAstro = 'https://www.npmjs.com/package/@vizuh/clicktrail-astro';
-const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
+const featured = ['astro', 'nuxt', 'n8n', 'directus', 'python-sdk', 'wordpress']
+  .map((slug) => integrations.find((i) => i.slug === slug))
+  .filter((i): i is NonNullable<typeof i> => Boolean(i));
+
+const canonicalEvents = [
+  'page_view',
+  'form_started',
+  'lead_created',
+  'lead_qualified',
+  'booking_created',
+  'booking_completed',
+  'sale',
+  'refund',
+  'consent_updated',
+];
 ---
 
 <Layout
   title="ClickTrail — first-party attribution you own"
   description="Deterministic, consent-gated, first-party attribution. Know which ad made the sale, and keep the data on your infrastructure."
+  canonicalPath="/"
+  jsonLd={true}
 >
   <!-- hero -->
   <section class="hero">
@@ -24,8 +37,20 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
         consent-gated by design, entirely first-party.
       </p>
       <div class="cta-row">
-        <a class="btn btn-primary" href={quickstartUrl}>Get started on GitHub</a>
-        <a class="btn btn-secondary" href={npmCore}>@vizuh/clicktrail on npm</a>
+        <a class="btn btn-primary" href="/how-it-works/">How it works</a>
+        <a class="btn btn-secondary" href="/integrations/">Browse integrations</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- trust strip -->
+  <section class="section" aria-label="Trust facts">
+    <div class="wrap">
+      <div class="trust">
+        <div class="trust-item"><strong>MIT licensed</strong><span>Open source core. The WordPress plugin remains GPL-2.0-or-later.</span></div>
+        <div class="trust-item"><strong>Provenance published</strong><span>Every integration README states maintainer, release policy, and issue tracker.</span></div>
+        <div class="trust-item"><strong>Deterministic &amp; tested</strong><span>Golden fixtures captured from the live WordPress plugin are replayed in CI.</span></div>
+        <div class="trust-item"><strong>Self-hosted</strong><span>Payloads land in systems you control. No third-party cookies, no vendor-owned IDs.</span></div>
       </div>
     </div>
   </section>
@@ -40,7 +65,7 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
           The same deterministic engine that powers the WordPress plugin runs
           anywhere Node or a browser runs. Same inputs always produce the same
           payload &mdash; time, IDs, storage, consent, and network are injected,
-          never requested.
+          never requested. <a href="/how-it-works/">Read the pipeline deep-dive.</a>
         </p>
       </div>
       <div class="steps">
@@ -75,74 +100,49 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
     </div>
   </section>
 
-  <!-- packages -->
+  <!-- featured integrations -->
   <section class="section">
     <div class="wrap">
       <div class="section-head">
-        <p class="kicker">Packages</p>
-        <h2>Two entry points, one engine</h2>
-        <p>Both are release candidates <strong>0.1.0-rc.2</strong>, MIT licensed, ESM-only, Node &ge; 18.</p>
+        <p class="kicker">Integrations</p>
+        <h2>One engine, every platform you run</h2>
+        <p>
+          Frameworks, automation tools, commerce stacks, server languages, and
+          the WordPress plugin the engine was extracted from.
+          <a href="/integrations/">See all {integrations.length} integrations.</a>
+        </p>
       </div>
-      <div class="packages">
-        <article class="pkg">
-          <span class="pkg-name">@vizuh/clicktrail</span>
-          <span class="pkg-tag">engine + browser SDK</span>
-          <p>
-            Pure parser and merge engine plus the browser adapter: lifecycle,
-            storage, form injection, dataLayer, and HTTP destinations.
-          </p>
-          <code class="cmd">pnpm add @vizuh/clicktrail</code>
-        </article>
-        <article class="pkg">
-          <span class="pkg-name">@vizuh/clicktrail-astro</span>
-          <span class="pkg-tag">Astro integration</span>
-          <p>
-            SDK injection on every page, view-transition page-view dedupe,
-            consent gate, optional first-party proxy route, server-side lead /
-            booking / purchase helpers.
-          </p>
-          <code class="cmd">npx astro add @vizuh/clicktrail-astro</code>
-        </article>
+      <div class="int-grid">
+        {featured.map((item) => (
+          <a class="int-card" href={`/integrations/${item.slug}/`}>
+            <div class="int-card-head">
+              <h3>{item.name}</h3>
+              <span class={`badge badge-${item.status}`}>{item.status === 'rc' ? 'RC' : item.status}</span>
+            </div>
+            <p>{item.summary}</p>
+            <code>{item.installCommand}</code>
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
-  <!-- quick start -->
+  <!-- canonical events preview -->
   <section class="section">
     <div class="wrap">
       <div class="section-head">
-        <p class="kicker">Quick start</p>
-        <h2>Parse a landing URL server-side</h2>
+        <p class="kicker">Event contract</p>
+        <h2>Nine canonical events. No integration invents its own schema.</h2>
         <p>
-          The core is pure: callers own the clock, storage, and network, so
-          attribution can be replayed fixture-by-fixture in CI.
+          Every integration produces the same small set of canonical events
+          through one shared library layer. Each event carries an
+          <code>event_id</code> minted once per logical occurrence; collectors
+          treat duplicates within the retention window as a success no-op.
+          <a href="/event-contract/">Read the full contract.</a>
         </p>
       </div>
-      <div class="code-card">
-        <div class="code-title"><span>parse-attribution.ts</span><span>@vizuh/clicktrail</span></div>
-        <pre class="code"><code><span class="tok-kw">import</span> &#123;
-  <span class="tok-fn">parseAttributionUrl</span>,
-  <span class="tok-fn">emptyAttribution</span>,
-  <span class="tok-fn">mergeAttributionTouch</span>,
-  <span class="tok-fn">stampVersions</span>,
-&#125; <span class="tok-kw">from</span> <span class="tok-str">'@vizuh/clicktrail'</span>;
-
-<span class="tok-com">// All inputs come from the caller; nothing reads the clock or network.</span>
-<span class="tok-kw">const</span> landingUrl =
-  <span class="tok-str">'https://example.com/pricing?utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=spring&amp;gclid=EAIa...'</span>;
-
-<span class="tok-kw">const</span> result = <span class="tok-fn">parseAttributionUrl</span>(&#123;
-  url: landingUrl,
-  referrer: <span class="tok-str">'https://www.google.com/'</span>,
-  currentHost: <span class="tok-str">'example.com'</span>,
-  now: <span class="tok-str">'2026-08-23T10:00:00Z'</span>, <span class="tok-com">// caller owns the clock</span>
-&#125;);
-
-<span class="tok-kw">if</span> (result.kind === <span class="tok-str">'touch'</span>) &#123;
-  <span class="tok-kw">const</span> stored = <span class="tok-fn">emptyAttribution</span>();
-  <span class="tok-kw">const</span> payload = <span class="tok-fn">stampVersions</span>(<span class="tok-fn">mergeAttributionTouch</span>(stored, result.touch));
-  <span class="tok-com">// payload holds ft_* / lt_* fields + schema_version + classifier_version</span>
-&#125;</code></pre>
+      <div class="event-chips">
+        {canonicalEvents.map((name) => <code class="chip">{name}</code>)}
       </div>
     </div>
   </section>
@@ -153,7 +153,10 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
       <div class="section-head">
         <p class="kicker">Why not just GA4?</p>
         <h2>Client-side tags vs. owned trails</h2>
-        <p>ClickTrail compared with GA4's client-side tag and generic server-side tagging.</p>
+        <p>
+          ClickTrail compared with GA4's client-side tag and generic server-side tagging.
+          <a href="/compare/">Full comparison page.</a>
+        </p>
       </div>
       <div class="compare-wrap">
         <table class="compare">
@@ -198,6 +201,22 @@ const wpPlugin = 'https://wordpress.org/plugins/click-trail-handler/';
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">Get started</p>
+        <h2>Install the engine, own the trail</h2>
+        <p>The core is pure TypeScript with zero required configuration to start parsing. Python SDK available for server stacks.</p>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/vizuh/clicktrail-js#quick-start">Quick start on GitHub</a>
+        <a class="btn btn-secondary" href="https://www.npmjs.com/package/@vizuh/clicktrail">@vizuh/clicktrail on npm</a>
+        <a class="btn btn-secondary" href="/open-source/">License &amp; governance</a>
       </div>
     </div>
   </section>

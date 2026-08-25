@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const canonicalEvents = [
+  { name: 'page_view', note: 'Page or screen seen, deduped per document/navigation' },
+  { name: 'form_started', note: 'Visitor began interacting with a form' },
+  { name: 'lead_created', note: 'Lead created; attribution attached where captured' },
+  { name: 'lead_qualified', note: 'Lead marked qualified (requires lead_id)' },
+  { name: 'booking_created', note: 'Appointment or booking requested' },
+  { name: 'booking_completed', note: 'Appointment completed' },
+  { name: 'sale', note: 'Revenue recorded, incl. offline conversions (detail.kind = offline)' },
+  { name: 'refund', note: 'Refund issued against an original sale event id' },
+  { name: 'consent_updated', note: 'Consent state, source, and policy-version change' },
+];
+
+const extensionEvents = [
+  { name: 'lead_updated', note: 'Stage changes — integrations may emit; consumers must not require' },
+  { name: 'lead_merged', note: 'Identity merges — same extension rule applies' },
+];
+
+const fields = [
+  ['event_id', 'Prefixed UUID-style id, minted once per logical occurrence'],
+  ['event_name', 'One of the nine canonical names'],
+  ['occurred_at', 'ISO-8601 timestamp supplied by the caller clock'],
+  ['site_id / workspace_id', 'Site and optional workspace identifiers'],
+  ['visitor_id / session_id', 'First-party visitor and session identifiers'],
+  ['lead_id / contact_id', 'Lead and contact identity fields'],
+  ['booking_id / order_id', 'Conversion record references'],
+  ['value / currency', 'Positive finite number + ISO-4217 currency'],
+  ['landing_url / referrer', 'Landing page URL and classified referrer'],
+  ['utm_source / utm_medium / utm_campaign / utm_content / utm_term', 'Campaign parameters'],
+  ['gclid / gbraid / wbraid / fbclid / msclkid', 'Ad click IDs'],
+  ['consent_state / consent_source / consent_version', 'Consent metadata on every relevant event'],
+];
+
+const translations = [
+  ['lead / form.submitted', 'lead_created (+ form_started where a distinct step exists)'],
+  ['lead.attribution_attached', 'lead_created with attribution_attached: true detail'],
+  ['lead.stage_updated', 'lead_updated (detail.stage) — extension event'],
+  ['lead.merged', 'lead_merged — extension event'],
+  ['booking / appointment.requested', 'booking_created'],
+  ['appointment.completed', 'booking_completed'],
+  ['sale.recorded / purchase', 'sale'],
+  ['refund.issued', 'refund'],
+  ['offline_conversion.sent', 'sale (detail.kind = offline)'],
+  ['consent.granted/withdrawn/policy_updated', 'consent_updated (state/source/version fields)'],
+];
+---
+
+<Layout
+  title="ClickTrail canonical event contract"
+  description="Nine canonical ClickTrail events, extension events, required field vocabulary, legacy-name translation, and the consent policy binding every integration."
+  canonicalPath="/event-contract/"
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">/</span><span aria-current="page">Event contract</span>
+      </nav>
+      <p class="kicker">Specification</p>
+      <h1>The canonical event contract</h1>
+      <p class="lede">
+        Authoritative for all integrations from v0.2 onward. Every
+        integration &mdash; Astro, Nuxt, n8n, Activepieces, Typebot, Directus,
+        GTM templates, Python adapters &mdash; produces the same small set of
+        canonical events through one shared library layer. No integration
+        invents its own schema.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap prose">
+      <h2>Nine canonical events</h2>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th scope="col">Event</th><th scope="col">Meaning</th></tr>
+          </thead>
+          <tbody>
+            {canonicalEvents.map((e) => (
+              <tr><th scope="row"><code>{e.name}</code></th><td>{e.note}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Extension events</h2>
+      <p>
+        Two events sit outside the canonical nine by ratified proposal:
+        lead stage changes and visitor merges. Integrations may emit them;
+        consumers must not require them.
+      </p>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th scope="col">Event</th><th scope="col">Rule</th></tr>
+          </thead>
+          <tbody>
+            {extensionEvents.map((e) => (
+              <tr><th scope="row"><code>{e.name}</code></th><td>{e.note}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Field vocabulary</h2>
+      <p>
+        Events carry a subset of this canonical superset. Never invent sibling
+        spellings. Snake_case everywhere on the wire; platform-native casing
+        lives only inside adapter inputs.
+      </p>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th scope="col">Field(s)</th><th scope="col">Notes</th></tr>
+          </thead>
+          <tbody>
+            {fields.map(([f, note]) => (
+              <tr><th scope="row"><code>{f}</code></th><td>{note}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Money fields are positive finite numbers with ISO-4217 currency;
+        refunds carry a positive value plus <code>refund_of</code> pointing at
+        the original event id or transaction id. Unknown extra properties are
+        allowed under the <code>properties</code> bag. PII travels only via
+        explicit host-side field mapping.
+      </p>
+
+      <h2>Translating legacy scaffold names</h2>
+      <p>
+        Pre-0.2 integration scaffolds used ad-hoc names. The shared builders
+        module in <code>@clicktrail/core</code> translates them to canonical
+        names via <code>toCanonicalEventName()</code>, so renames are one-file
+        changes and integration packages contain zero hardcoded event names.
+      </p>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th scope="col">Pre-0.2 name</th><th scope="col">Canonical translation</th></tr>
+          </thead>
+          <tbody>
+            {translations.map(([from, to]) => (
+              <tr><th scope="row"><code>{from}</code></th><td>{to}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Consent policy</h2>
+      <ul>
+        <li>No tracking by default: install alone transmits nothing; activation requires explicit administrator configuration.</li>
+        <li>Nothing starts or persists before the consent gate allows it. Denied or withdrawn consent clears stored payloads.</li>
+        <li>No self-telemetry: no install counts, URLs, environment data, or error reports sent to Vizuh unless diagnostics are explicitly enabled.</li>
+        <li>No PII by default: email, phone, and name require explicit host-side field mapping.</li>
+        <li>No fingerprinting: first-party IDs, campaign identifiers, explicit form IDs, and server records only.</li>
+        <li>Consent handling is recording + respecting consent &mdash; never a CMP replacement.</li>
+      </ul>
+
+      <p>
+        See how the contract is enforced end to end in
+        <a href="/how-it-works/">the pipeline deep-dive</a>, or pick your
+        platform in the <a href="/integrations/">integrations hub</a>.
+      </p>
+    </div>
+  </section>
+</Layout>

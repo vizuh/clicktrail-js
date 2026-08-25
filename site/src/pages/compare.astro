@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="ClickTrail vs GA4 and server-side tagging"
+  description="An honest architectural comparison: ClickTrail's owned, deterministic, consent-gated trails versus GA4 client-side collection and server-side tagging."
+  canonicalPath="/compare/"
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">/</span><span aria-current="page">Compare</span>
+      </nav>
+      <p class="kicker">Comparison</p>
+      <h1>ClickTrail vs. GA4 and server-side tagging</h1>
+      <p class="lede">
+        ClickTrail is an attribution engine you host, not a hosted analytics
+        service. This page describes architectural differences &mdash; not a
+        benchmark. Evaluate against your own requirements before choosing.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="compare-wrap">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">GA4 (client-side)</th>
+              <th scope="col">Server-side tagging</th>
+              <th scope="col">ClickTrail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Data ownership</th>
+              <td>Collected by Google; processed under Google's terms</td>
+              <td>Your tag server holds data in transit, but most setups still forward to vendors</td>
+              <td>First-party storage on your domain; payloads land in systems you control</td>
+            </tr>
+            <tr>
+              <th scope="row">Determinism &amp; testability</th>
+              <td>Vendor processing pipeline; not replayable</td>
+              <td>Tag configuration is testable, but attribution logic stays vendor-side</td>
+              <td>Pure functions with golden-fixture replay in CI; classifier changes are major semver</td>
+            </tr>
+            <tr>
+              <th scope="row">Consent handling</th>
+              <td>Consent Mode signals; collection behavior governed by Google</td>
+              <td>Handled per tag/vendor; you configure each downstream consent pass-through</td>
+              <td>Consent gate injected by the host; nothing starts or persists without it; denial clears payloads</td>
+            </tr>
+            <tr>
+              <th scope="row">Ad-blocker resilience</th>
+              <td>Blocked by common filter lists</td>
+              <td>Fewer blocks if you proxy first-party, but vendor destinations remain exposed</td>
+              <td>No third-party endpoints; optional first-party proxy route keeps collection same-origin</td>
+            </tr>
+            <tr>
+              <th scope="row">Cost model</th>
+              <td>Free tier; GA360 pricing at scale</td>
+              <td>Tag-server infrastructure plus per-vendor forwarding costs</td>
+              <td>Open source (MIT); self-hosted; no per-event vendor pricing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="prose" style="margin-top: 48px;">
+        <h2>Reading this honestly</h2>
+        <p>
+          These are architectural differences, not quality judgments. GA4 is a
+          capable product for aggregate reporting, and server-side tagging is
+          the right tool when you need vendor forwarding under your own
+          endpoint. ClickTrail exists for a different question: not "how many
+          conversions?" but "which click produced this conversion?" &mdash;
+          with an answer you can replay, audit, and store yourself.
+        </p>
+        <p>
+          The trade is real: you run the storage and own the pipeline. What
+          you get in return is determinism (golden fixtures as the executable
+          spec), consent gating that starts nothing before grant, and payloads
+          with no third-party endpoints to block.
+        </p>
+        <p>
+          Next steps: <a href="/how-it-works/">see the pipeline</a>, read the
+          <a href="/event-contract/">event contract</a>, or check whether your
+          stack already has an adapter in the
+          <a href="/integrations/">integrations hub</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>

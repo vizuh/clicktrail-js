@@ -1,0 +1,94 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const repoUrl = 'https://github.com/vizuh/clicktrail-js';
+---
+
+<Layout
+  title="ClickTrail open source — license, governance, releases"
+  description="ClickTrail is MIT licensed and maintained by Vizuh OÜ. Governance, release policy, naming convention, provenance, issue tracker, and support channels."
+  canonicalPath="/open-source/"
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">/</span><span aria-current="page">Open source</span>
+      </nav>
+      <p class="kicker">Open source</p>
+      <h1>License, governance, and trust</h1>
+      <p class="lede">
+        ClickTrail is developed in the open under the vizuh GitHub
+        organization, with an ethics policy that binds every submission and
+        PR.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap prose">
+      <h2>License</h2>
+      <p>
+        The core engine, packages, and integrations are
+        <strong>MIT licensed</strong> &mdash; see the
+        <a href={`${repoUrl}/blob/main/LICENSE`}>LICENSE</a> file. The
+        WordPress plugin (<code>click-trail-handler</code>) remains
+        <strong>GPL-2.0-or-later</strong>; MIT embeds cleanly into GPL.
+      </p>
+
+      <h2>Ownership</h2>
+      <p>
+        ClickTrail is built by <strong>Vizuh O&Uuml;</strong>. FunnelSheet is
+        Vizuh's consulting branch. The repository is the shared engine beneath
+        the <a href="https://wordpress.org/plugins/click-trail-handler/">WordPress plugin distribution</a>.
+      </p>
+
+      <h2>Support</h2>
+      <ul>
+        <li>Bugs and feature requests: the public <a href={`${repoUrl}/issues`}>issue tracker</a>.</li>
+        <li>Security issues: private <a href={`${repoUrl}/security/advisories/new`}>GitHub Security Advisory</a> only &mdash; configuration as code is treated as security-sensitive.</li>
+        <li>Every integration README states maintainer, support contact, release policy, compatibility range, and issue tracker (integration policy rule 9).</li>
+      </ul>
+
+      <h2>Release policy</h2>
+      <ul>
+        <li>The stable surfaces of <code>@vizuh/clicktrail</code> are the root entry point and <code>/browser</code>; <code>/conversation</code>, <code>/agent</code>, <code>/otel</code>, and <code>/apointoo</code> are incubating and can change between minor versions.</li>
+        <li>Classifier behavior changes are major semver, by definition; every payload carries <code>schema_version</code> and <code>classifier_version</code>.</li>
+        <li>Golden fixtures are the executable spec: where fixtures disagree with docs, fixtures win and docs get fixed.</li>
+      </ul>
+
+      <h2>Governance</h2>
+      <p>
+        The restructuring plan &mdash; package split, event contract,
+        submission ladder, kill criteria &mdash; was ratified by a five-person
+        council review with documented minority positions. The ethics policy
+        in the event contract binds every submission: violations block the PR
+        regardless of technical quality.
+      </p>
+
+      <h2>Naming convention</h2>
+      <p>
+        All ClickTrail GitHub repositories are brand-first:
+        <code>clicktrail-&lt;ecosystem&gt;</code> (for example
+        <code>clicktrail-js</code>, <code>clicktrail-gtm-event-tag</code>,
+        <code>clicktrail-shopware</code>). Ecosystem package names keep their
+        platform conventions inside each repo; only the repository name
+        follows the rule.
+      </p>
+
+      <h2>Provenance</h2>
+      <p>
+        Every integration README documents ownership and provenance per the
+        binding integration policy: no self-telemetry, no tracking by default,
+        no bundled commercial dependency that cannot be disabled, and secrets
+        never embedded in packages &mdash; configuration only. Development
+        happens in <a href={repoUrl}>vizuh/clicktrail-js</a>; PRs and issues go there.
+      </p>
+
+      <p style="margin-top: 32px;">
+        Evaluate the engine itself on the
+        <a href="/how-it-works/">how it works page</a>, or start from the
+        <a href="/">home page</a>.
+      </p>
+    </div>
+  </section>
+</Layout>

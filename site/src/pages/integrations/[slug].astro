@@ -1,0 +1,99 @@
+---
+export async function getStaticPaths() {
+  const { integrations, related } = await import('../../data/integrations');
+  return integrations.map((item) => ({
+    params: { slug: item.slug },
+    props: { item, related: related(item) },
+  }));
+}
+
+import Layout from '../../layouts/Layout.astro';
+import { STATUS_LABEL } from '../../data/integrations';
+
+const { item, related } = Astro.props;
+---
+
+<Layout
+  title={`${item.name} integration — ClickTrail`}
+  description={item.summary.length <= 155 ? item.summary : item.summary.slice(0, 152).trimEnd() + '...'}
+  canonicalPath={`/integrations/${item.slug}/`}
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">/</span>
+        <a href="/integrations/">Integrations</a><span class="sep">/</span>
+        <span aria-current="page">{item.name}</span>
+      </nav>
+      <p class="kicker">{item.category}</p>
+      <h1>ClickTrail for {item.name}</h1>
+      <p class="lede">{item.summary}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="prose">
+        <h2>Overview</h2>
+        <p>
+          Built on the shared ClickTrail core: canonical events from the
+          <a href="/event-contract/">event contract</a>, first-touch preserved
+          and last-touch updated per the <a href="/how-it-works/">pipeline</a>,
+          consent-gated before anything persists.
+        </p>
+
+        <h2>What it does</h2>
+        <ul class="feature-list">
+          {item.features.map((feature) => <li set:html={feature.replace(/`([^`]+)`/g, '<code>$1</code>')} />)}
+        </ul>
+
+        {related.length > 0 && (
+          <>
+            <h2>Related integrations</h2>
+            <p>Also in {item.category}:</p>
+            <div class="related-links">
+              {related.map((rItem) => (
+                <a href={`/integrations/${rItem.slug}/`}>{rItem.name}</a>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <aside class="detail-aside">
+        <h2>Facts</h2>
+        <ul>
+          <li>Status: <span class={`badge badge-${item.status}`}>{STATUS_LABEL[item.status]}</span></li>
+          {item.npmName && <li>Package: <code>{item.npmName}</code></li>}
+          <li>
+            Source:
+            {item.monorepoPath ? (
+              <a href={`${item.repoUrl}`}>{item.monorepoPath} in clicktrail-js</a>
+            ) : (
+              <a href={item.repoUrl}>{item.repoUrl.replace('https://', '')}</a>
+            )}
+          </li>
+          <li><a href="/event-contract/">Canonical event contract</a></li>
+          <li><a href="/how-it-works/">How the pipeline works</a></li>
+          <li><a href="/open-source/">License &amp; governance</a></li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="kicker">Install</p>
+        <h2>Add it to your project</h2>
+      </div>
+      <div class="packages" style="margin-top: 28px; max-width: 720px;">
+        <article class="pkg">
+          <span class="pkg-name">{item.npmName ?? item.name}</span>
+          <span class="pkg-tag">{STATUS_LABEL[item.status]}</span>
+          <code class="cmd" style="margin-top: 14px;">{item.installCommand}</code>
+        </article>
+      </div>
+    </div>
+  </section>
+</Layout>
