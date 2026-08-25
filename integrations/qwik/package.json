@@ -1,0 +1,97 @@
+{
+  "name": "@vizuh/clicktrail-qwik",
+  "version": "0.1.0-rc.3",
+  "description": "First-party attribution and conversion tracking for Qwik + Qwik City. Consent-aware server middleware captures initial attribution into a first-party cookie without an inline analytics script, the browser module activates only on demand (resumability-friendly), and server-side senders cover leads, bookings, and purchases.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    },
+    "./qwik-city": {
+      "types": "./dist/qwik-city-middleware.d.ts",
+      "default": "./dist/qwik-city-middleware.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./consent": {
+      "types": "./dist/consent.d.ts",
+      "default": "./dist/consent.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "UPSTREAM-ISSUE-DRAFT.md"
+  ],
+  "keywords": [
+    "qwik",
+    "qwik-city",
+    "resumability",
+    "attribution",
+    "analytics",
+    "first-party-analytics",
+    "conversion-tracking",
+    "utm",
+    "gclid",
+    "fbclid",
+    "server-side-tracking",
+    "consent",
+    "gdpr",
+    "marketing",
+    "click-id",
+    "partytown"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "integrations/qwik"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/integrations/qwik#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vizuh/clicktrail-browser": "workspace:^",
+    "@vizuh/clicktrail-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@builder.io/qwik": ">=1.0.0",
+    "@builder.io/qwik-city": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@builder.io/qwik": {
+      "optional": true
+    },
+    "@builder.io/qwik-city": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.6"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
