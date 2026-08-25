@@ -1,49 +1,36 @@
+[Português (Brasil)](README.md) | [English](README.en.md)
+
 # ClickTrail JS
 
 [![CI](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml/badge.svg)](https://github.com/vizuh/clicktrail-js/actions/workflows/ci.yml)
 
-[![Socket Badge](https://badge.socket.dev/npm/package/@vizuh/clicktrail/0.1.0)](https://socket.dev/npm/package/@vizuh/clicktrail/overview/0.1.0)
-
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-Deterministic first-party attribution engine. Captures the trail from ad
-click to conversion.
+Motor determinístico de atribuição first-party. Captura a jornada desde o clique no anúncio até a conversão.
 
-Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
-Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin
-(`click-trail-handler`) is the WordPress distribution; this repository is the
-shared engine beneath it.
+Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da Vizuh. O FunnelSheet é a frente de consultoria da Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para WordPress; este repositório contém o motor compartilhado.
 
-## Why ClickTrail
+> **Status da versão:** `0.1.0-rc.3` é a versão candidata a lançamento atual. Os pacotes npm continuam não publicados até a conclusão das validações de proveniência e do trusted publisher. As verificações do repositório e do tarball estão prontas para revisão.
 
-Most analytics tools answer "how many conversions?" ClickTrail answers
-"which click produced this conversion?" — and lets you prove it.
+## Por que o ClickTrail
 
-- **Deterministic and replayable.** The core engine is pure: same inputs ->
-  same output. Time, IDs, storage, consent, and network are injected by
-  callers, never requested. Golden fixtures captured from the live WordPress
-  plugin are the executable spec — replay them in CI to verify parity.
-- **First-party cookies you own.** Attribution context persists in your own
-  first-party storage under your own domain. No third-party cookies, no
-  vendor-owned identifiers.
-- **Consent-gated by design.** Nothing starts or persists until the host's
-  consent gate allows it. Consent state is injected by the caller; denied or
-  withdrawn consent clears stored payloads.
-- **Flat canonical payload.** Every event is a flat record of `ft_*`
-  (first-touch) and `lt_*` (last-touch) fields, stamped with `schema_version`
-  and `classifier_version` — easy to store in your own database, map into a
-  CRM, or forward through GTM's `dataLayer`.
+A maioria das ferramentas de analytics responde "quantas conversões aconteceram?". O ClickTrail responde "qual clique gerou esta conversão?" e permite verificar o caminho até ela.
 
-## Quick start
+- **Determinístico e reproduzível.** O motor principal é puro: as mesmas entradas produzem a mesma saída. Tempo, IDs, armazenamento, consentimento e rede são injetados por quem chama o motor. Fixtures douradas capturadas do plugin WordPress funcionam como especificação executável e são reproduzidas no CI para confirmar a paridade.
+- **Cookies first-party sob seu controle.** O contexto de atribuição fica no armazenamento first-party do seu próprio domínio. Não há cookies de terceiros nem identificadores controlados por um fornecedor.
+- **Consentimento integrado ao fluxo.** Nada começa nem é persistido antes de o gate de consentimento do host permitir. O chamador fornece o estado de consentimento; quando o consentimento é negado ou retirado, os payloads armazenados são limpos.
+- **Payload canônico plano.** Cada evento é um registro plano com campos `ft_*` (primeiro toque) e `lt_*` (último toque), além de `schema_version` e `classifier_version`. Isso facilita salvar os dados no seu banco, mapeá-los para um CRM ou encaminhá-los pelo `dataLayer` do GTM.
 
-Install the engine:
+## Início rápido
+
+Instale o motor:
 
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
 ```
 
-Parse an ad-click landing URL deterministically in Node, a worker, or a test:
+Faça o parsing determinístico de uma URL de chegada com clique de anúncio em Node, em um worker ou em um teste:
 
 ```ts
 import {
@@ -68,15 +55,13 @@ if (result.kind === 'touch') {
 }
 ```
 
-The result carries UTMs, ad click IDs (`gclid`, `fbclid`, `ttclid`, ...),
-referrer classification, and channel labels as flat `ft_*` / `lt_*` fields.
-See [docs/TUTORIALS.md](docs/TUTORIALS.md) for browser capture, form
-injection, cross-domain continuity, and `dataLayer` bridging.
+O resultado traz UTMs, IDs de clique de anúncios (`gclid`, `fbclid`, `ttclid`, ...), classificação do referenciador e rótulos de canal em campos planos `ft_*` e `lt_*`.
 
-### Browser capture
+Consulte [docs/TUTORIALS.md](docs/TUTORIALS.md) para captura no navegador, preenchimento de formulários, continuidade entre domínios e integração com o `dataLayer`.
 
-On the page, the browser adapter persists observed context and pushes
-canonical events to a site-owned `dataLayer`:
+### Captura no navegador
+
+No navegador, o adapter persiste o contexto observado e envia eventos canônicos para um `dataLayer` do próprio site:
 
 ```ts
 import {
@@ -96,77 +81,72 @@ const clickTrail = createClickTrail({
 clickTrail.start();
 ```
 
-Test the integration with consent granted, denied, and withdrawn; with a
-cached page; and with a form added after load.
+Teste a integração com consentimento concedido, negado e retirado. Inclua também uma página em cache e um formulário adicionado depois do carregamento.
 
-### Entry points (`@vizuh/clicktrail`)
+### Pontos de entrada (`@vizuh/clicktrail`)
 
-| Import | Status | Use |
+| Import | Status | Uso |
 |---|---|---|
-| `@vizuh/clicktrail` | Stable | Pure parser, merge engine, constants, types |
-| `@vizuh/clicktrail/browser` | Stable adapter | Browser lifecycle, storage, forms, dataLayer, HTTP |
-| `@vizuh/clicktrail/conversation` | Incubating | Journey and conversation metadata |
-| `@vizuh/clicktrail/agent` | Incubating | Metadata-only agent-run and tool summaries |
-| `@vizuh/clicktrail/otel` | Incubating | Trace-context helpers and destination |
-| `@vizuh/clicktrail/apointoo` | Incubating | Apointoo outcome delivery |
+| `@vizuh/clicktrail` | Stable | Motor puro de parsing e merge, constantes e tipos |
+| `@vizuh/clicktrail/browser` | Stable adapter | Ciclo de vida no navegador, armazenamento, formulários, `dataLayer` e HTTP |
+| `@vizuh/clicktrail/conversation` | Incubating | Metadados de jornada e conversa |
+| `@vizuh/clicktrail/agent` | Incubating | Metadados de execuções de agentes e resumos de ferramentas |
+| `@vizuh/clicktrail/otel` | Incubating | Helpers e destino para contexto de trace |
+| `@vizuh/clicktrail/apointoo` | Incubating | Entrega de resultados do Apointoo |
 
-Incubating entry points can change between minor versions. Keep them behind a
-host adapter until their contracts are stabilized.
+Os pontos de entrada Incubating podem mudar entre versões menores. Mantenha-os atrás de um adapter do host até que seus contratos estejam estáveis.
 
-## Packages
+## Pacotes
 
-| Package | Status |
+| Pacote | Status |
 |---|---|
-| [`@vizuh/clicktrail`](packages/clicktrail/) | Stable subpaths `.` and `/browser`; incubating `/conversation`, `/agent`, `/otel`, `/apointoo` |
-| [`@vizuh/clicktrail-astro`](integrations/astro/) | Astro integration: consent gate, view-transition page views, first-party proxy, server helpers |
-| [`@vizuh/clicktrail-nuxt`](integrations/nuxt/) | Nuxt module: consent gate, router-aware page views, first-party Nitro proxy, server helpers |
-| [`n8n-nodes-clicktrail`](integrations/n8n/) | n8n community node: lead/conversion/consent operations, offline conversions; triggers deferred pending outbound webhooks |
-| [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Activepieces piece: eight actions incl. sale/refund/consent; triggers deferred |
-| [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Typebot block logic + upstream issue draft: variable mapping, never-throws send guarantee |
-| [`directus-extension-clicktrail`](integrations/directus/) | Directus extension: Flow operation, attribution hook, funnel panel, settings module |
-| [`@vizuh/clicktrail-core`](packages/core/) | Deterministic engine, canonical event contract, idempotent event ids |
-| [`@vizuh/clicktrail-browser`](packages/browser/) | Browser SDK (consent-aware capture, storage, forms, destinations) |
-| [`@vizuh/clicktrail-consent`](packages/consent/) | Consent state types, gates, listener hub |
-| [`@vizuh/clicktrail-server`](packages/server/) | Server ingestion client + conversion builders |
-| [`@vizuh/clicktrail-qwik`](integrations/qwik/) | Qwik/Qwik City integration: resumability-friendly middleware, zero eager client JS |
-| [`@clicktrail/sveltekit`](integrations/sveltekit/) | SvelteKit handle + component: SSR attribution capture, nav dedupe, server conversions |
-| [`@clicktrail/sv`](integrations/sv/) | Svelte CLI community add-on (experimental): one-command setup |
-| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters — canonical events, JS-bit-exact idempotency |
-| [Examples](./examples) | Runnable integration examples |
-| [Site](./site) | Project site |
+| [`@vizuh/clicktrail`](packages/clicktrail/) | Subpaths estáveis `.` e `/browser`; `/conversation`, `/agent`, `/otel` e `/apointoo` em incubação |
+| [`@vizuh/clicktrail-astro`](integrations/astro/) | Integração Astro: gate de consentimento, page views com view transitions, proxy first-party e helpers de servidor |
+| [`@vizuh/clicktrail-nuxt`](integrations/nuxt/) | Módulo Nuxt: gate de consentimento, page views com router, proxy Nitro first-party e helpers de servidor |
+| [`n8n-nodes-clicktrail`](integrations/n8n/) | Node comunitário para n8n: operações de lead, conversão e consentimento; conversões offline; triggers de webhooks de saída ainda adiados |
+| [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Piece do Activepieces: oito ações, incluindo sale, refund e consent; triggers ainda adiados |
+| [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Lógica de bloco Typebot e rascunho de issue upstream: mapeamento de variáveis e garantia de envio sem exceções |
+| [`@vizuh/clicktrail-formbricks`](integrations/formbricks/) | Mapeamento de URLs de link-survey do Formbricks, allowlist de respostas e verificação de webhooks assinados |
+| [`directus-extension-clicktrail`](integrations/directus/) | Extensão Directus: operação de Flow, hook de atribuição, painel de funil e módulo de configurações |
+| [`@vizuh/clicktrail-core`](packages/core/) | Motor determinístico, contrato canônico de eventos e IDs idempotentes |
+| [`@vizuh/clicktrail-browser`](packages/browser/) | SDK de navegador com captura, armazenamento, formulários e destinos cientes de consentimento |
+| [`@vizuh/clicktrail-consent`](packages/consent/) | Tipos de estado de consentimento, gates e hub de listeners |
+| [`@vizuh/clicktrail-server`](packages/server/) | Cliente de ingestão no servidor e builders de conversão |
+| [`@vizuh/clicktrail-qwik`](integrations/qwik/) | Integração Qwik/Qwik City: middleware compatível com resumability e zero JavaScript eager no cliente |
+| [`@vizuh/clicktrail-sveltekit`](integrations/sveltekit/) | Handle e componente SvelteKit: captura SSR, deduplicação de navegação e conversões no servidor |
+| [`@vizuh/clicktrail-sv`](integrations/sv/) | Add-on comunitário experimental para Svelte CLI: configuração em um comando |
+| Pacotes Python (`python/`) | SDK `clicktrail` e adapters Django, Wagtail, ASGI, Jinja e Flask: eventos canônicos e idempotência bit a bit compatível com JS |
+| [Exemplos](./examples) | Exemplos executáveis de integração |
+| [Site](./site) | Site do projeto |
 
-## How it compares
+## Comparação
 
-ClickTrail is an attribution engine you host, not a hosted analytics
-service. A rough comparison against the two common alternatives:
+O ClickTrail é um motor de atribuição que você hospeda, não um serviço de analytics hospedado. A tabela resume diferenças de arquitetura em relação a duas alternativas comuns:
 
 | | ClickTrail | GA4 (client-side) | Server-side tagging |
 |---|---|---|---|
-| Data ownership | First-party storage on your domain; payloads land in systems you control | Collected by Google; processed under Google's terms | Your tag server holds data in transit, but most setups still forward to vendors |
-| Determinism & testability | Pure functions with golden-fixture replay in CI; classifier changes are major semver | Vendor processing pipeline; not replayable | Tag configuration is testable, but attribution logic stays vendor-side |
-| Consent handling | Consent gate injected by the host; nothing starts or persists without it; denial clears payloads | Consent Mode signals; collection behavior governed by Google | Handled per tag/vendor; you configure each downstream consent pass-through |
-| Ad-blocker resilience | No third-party endpoints; optional first-party proxy route keeps collection same-origin | Blocked by common filter lists | Fewer blocks if you proxy first-party, but vendor destinations remain exposed |
-| Cost | Open source (MIT); self-hosted; no per-event vendor pricing | Free tier; GA360 pricing at scale | Tag-server infrastructure plus per-vendor forwarding costs |
+| Controle dos dados | Armazenamento first-party no seu domínio; os payloads chegam aos sistemas que você controla | Coletados pelo Google e processados conforme os termos do Google | O seu tag server mantém os dados em trânsito, mas a maioria das configurações ainda os encaminha a fornecedores |
+| Determinismo e testes | Funções puras com replay de fixtures douradas no CI; mudanças no classificador são semver major | Pipeline de processamento do fornecedor; não é reproduzível | A configuração de tags pode ser testada, mas a lógica de atribuição continua no fornecedor |
+| Consentimento | O host injeta o gate de consentimento; nada começa nem persiste sem ele; a recusa limpa os payloads | Sinais do Consent Mode; o comportamento de coleta é definido pelo Google | Configurado por tag e fornecedor; cada encaminhamento exige sua própria configuração de consentimento |
+| Resistência a bloqueadores | Sem endpoints de terceiros; um proxy first-party opcional mantém a coleta no mesmo domínio | Bloqueado por listas de filtros comuns | O proxy first-party reduz bloqueios, mas os destinos dos fornecedores continuam expostos |
+| Custo | Open source (MIT), self-hosted e sem cobrança por evento do fornecedor | Tier gratuito; GA360 tem preço por escala | Infraestrutura do tag server e custos de encaminhamento para cada fornecedor |
 
-This table describes architectural differences, not a benchmark. Evaluate
-against your own requirements before choosing.
+A tabela descreve diferenças arquiteturais, não um benchmark. Compare com os requisitos do seu projeto antes de escolher.
 
-## Architecture in one line
+## Arquitetura em uma linha
 
 ```
 conventions (meaning)  ->  core engine (pure functions)  ->  adapters (browser / server / destinations)
 ```
 
-Design rules (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
+Regras de design, em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):
 
-1. The core engine is **deterministic**: same inputs -> same output. Time,
-   IDs, storage, consent and network are injected by callers, never requested.
-2. Golden fixtures are the executable spec. Where fixtures disagree with docs,
-   fixtures win and docs get fixed.
-3. Every payload carries `schema_version` and `classifier_version`.
-4. Classifier behavior changes are major semver, by definition.
+1. O motor principal é **determinístico**: as mesmas entradas produzem a mesma saída. Tempo, IDs, armazenamento, consentimento e rede são injetados por quem chama o motor.
+2. As fixtures douradas são a especificação executável. Quando uma fixture diverge da documentação, a fixture vence e a documentação é corrigida.
+3. Cada payload carrega `schema_version` e `classifier_version`.
+4. Mudanças no comportamento do classificador são semver major, por definição.
 
-Development quickstart for contributors:
+Atalho para desenvolvimento:
 
 ```bash
 pnpm install
@@ -176,34 +156,28 @@ pnpm -r build       # tsc per package
 pnpm probe          # ESM + global bundle + fixture browser probe
 ```
 
-## Use cases
+## Casos de uso
 
-- deterministic attribution parsing and first-touch/last-touch merging in Node or TypeScript apps;
-- browser capture that persists observed context through cached pages and dynamic forms;
-- Astro sites that need view-transition-safe page views behind a consent gate;
-- GTM or analytics bridges through the browser `dataLayer` destination;
-- replayable fixture testing for a WordPress or application integration.
+- parsing determinístico de atribuição e merge de primeiro/último toque em aplicações Node ou TypeScript;
+- captura no navegador que mantém o contexto observado em páginas armazenadas em cache e formulários dinâmicos;
+- sites Astro que precisam de page views seguros com view transitions atrás de um gate de consentimento;
+- integrações com GTM ou analytics por meio do destino browser `dataLayer`;
+- testes reproduzíveis por fixtures para uma integração WordPress ou uma aplicação.
 
-Start with the [tutorials](docs/TUTORIALS.md). The packages do not provide
-provider account setup or certify downstream delivery. Cross-domain continuity
-needs persisted signing state or explicit host-provided signing and verification.
+Comece pelos [tutoriais](docs/TUTORIALS.md). Os pacotes não configuram contas de fornecedores nem certificam a entrega aos destinos. A continuidade entre domínios exige estado de assinatura persistido ou assinatura e verificação fornecidas explicitamente pelo host.
 
-## Release boundary
+## Limites da versão
 
-The core and browser surfaces are public development work. The `/conversation`
-and `/agent` surfaces must remain metadata-only and require their documented
-privacy gates before use with real conversations, prompts, completions, or
-transcripts.
+As superfícies core e browser estão em desenvolvimento público. As superfícies `/conversation` e `/agent` devem permanecer limitadas a metadados e exigem os gates de privacidade documentados antes do uso com conversas, prompts, conclusões ou transcrições reais.
 
-## Documentation
+## Documentação
 
-- [Architecture](docs/ARCHITECTURE.md) — design rules, frozen formats, WP-parity rulings
-- [Tutorials](docs/TUTORIALS.md) — deterministic replay, browser capture, forms, `dataLayer`
-- [`@vizuh/clicktrail` package README](packages/clicktrail/README.md) — entry points, usage, conventions
-- [`@vizuh/clicktrail-astro` package README](integrations/astro/README.md) — Astro integration setup and options
-- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
+- [Arquitetura](docs/ARCHITECTURE.md): regras de design, formatos congelados e decisões de paridade com WordPress
+- [Tutoriais](docs/TUTORIALS.md): replay determinístico, captura no navegador, formulários e `dataLayer`
+- [`README` do pacote @vizuh/clicktrail](packages/clicktrail/README.md): pontos de entrada, uso e convenções
+- [`README` da integração Astro](integrations/astro/README.md): configuração e opções da integração
+- [Contribuição](CONTRIBUTING.md) · [Política de segurança](SECURITY.md)
 
-## License
+## Licença
 
-MIT — see [LICENSE](LICENSE). The WordPress plugin remains GPL-2.0-or-later;
-MIT embeds cleanly into GPL.
+MIT, consulte [LICENSE](LICENSE). O plugin WordPress continua sob GPL-2.0-or-later; MIT pode ser incorporada ao GPL sem conflito.
