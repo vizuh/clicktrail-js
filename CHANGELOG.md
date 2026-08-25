@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pure event builders, and a ready-to-post upstream issue draft.
 - `directus-extension-clicktrail` (`integrations/directus`): Flow operation, attribution hook,
   campaign-to-sale funnel panel, settings module, and trust-model notes.
+- `@vizuh/clicktrail-qwik` (`integrations/qwik`): Qwik City middleware capture,
+  resumability-friendly browser activation, consent gates, server conversions.
+- `@clicktrail/sveltekit` + `@clicktrail/sv` (`integrations/sveltekit`,
+  `integrations/sv`): SvelteKit handle hook with SSR attribution capture and
+  navigation dedupe; experimental Svelte CLI community add-on.
+- Python ecosystem (`python/`): `clicktrail` SDK with JS-bit-exact idempotent
+  event ids, `django-clicktrail`, `wagtail-clicktrail`, `clicktrail-asgi`,
+  `clicktrail-jinja`, `flask-clicktrail`.
 - Canonical event contract ratified (`docs/EVENT-CONTRACT.md`) and phased
   restructure plan ratified by council review (`docs/RESTRUCTURE-PLAN.md`).
 

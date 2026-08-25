@@ -123,11 +123,15 @@ host adapter until their contracts are stabilized.
 | [`n8n-nodes-clicktrail`](integrations/n8n/) | n8n community node: lead/conversion/consent operations, offline conversions; triggers deferred pending outbound webhooks |
 | [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Activepieces piece: eight actions incl. sale/refund/consent; triggers deferred |
 | [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Typebot block logic + upstream issue draft: variable mapping, never-throws send guarantee |
-| [`directus-extension-clicktrail`](integrations/directus/) |
+| [`directus-extension-clicktrail`](integrations/directus/) | Directus extension: Flow operation, attribution hook, funnel panel, settings module |
 | [`@vizuh/clicktrail-core`](packages/core/) | Deterministic engine, canonical event contract, idempotent event ids |
 | [`@vizuh/clicktrail-browser`](packages/browser/) | Browser SDK (consent-aware capture, storage, forms, destinations) |
 | [`@vizuh/clicktrail-consent`](packages/consent/) | Consent state types, gates, listener hub |
-| [`@vizuh/clicktrail-server`](packages/server/) | Server ingestion client + conversion builders | Directus extension: Flow operation, attribution hook, funnel panel, settings module |
+| [`@vizuh/clicktrail-server`](packages/server/) | Server ingestion client + conversion builders |
+| [`@vizuh/clicktrail-qwik`](integrations/qwik/) | Qwik/Qwik City integration: resumability-friendly middleware, zero eager client JS |
+| [`@clicktrail/sveltekit`](integrations/sveltekit/) | SvelteKit handle + component: SSR attribution capture, nav dedupe, server conversions |
+| [`@clicktrail/sv`](integrations/sv/) | Svelte CLI community add-on (experimental): one-command setup |
+| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters — canonical events, JS-bit-exact idempotency |
 | [Examples](./examples) | Runnable integration examples |
 | [Site](./site) | Project site |
 
