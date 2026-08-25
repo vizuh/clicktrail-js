@@ -1,0 +1,91 @@
+{
+  "name": "@clicktrail/sveltekit",
+  "version": "0.1.0-rc.3",
+  "description": "First-party attribution and conversion tracking for SvelteKit. A handle hook captures landing UTMs and click IDs into a first-party cookie, the browser SDK tracks page views across SvelteKit navigations without duplicates, consent gates all persistence and transmission, an optional first-party proxy forwards events upstream, and server helpers send conversions from +page.server.ts and form actions.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./server": {
+      "types": "./dist/server-events.d.ts",
+      "default": "./dist/server-events.js"
+    },
+    "./proxy": {
+      "types": "./dist/proxy.d.ts",
+      "default": "./dist/proxy.js"
+    },
+    "./ClickTrail.svelte": "./src/ClickTrail.svelte",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src/ClickTrail.svelte",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "svelte",
+    "sveltekit",
+    "svelte-kit",
+    "attribution",
+    "analytics",
+    "first-party-analytics",
+    "conversion-tracking",
+    "utm",
+    "gclid",
+    "fbclid",
+    "first-touch",
+    "last-touch",
+    "consent",
+    "gdpr",
+    "marketing",
+    "click-id"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vizuh/clicktrail-js.git",
+    "directory": "integrations/sveltekit"
+  },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/integrations/sveltekit#readme",
+  "bugs": {
+    "url": "https://github.com/vizuh/clicktrail-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vizuh/clicktrail": "workspace:^",
+    "@vizuh/clicktrail-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sveltejs/kit": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.6"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
