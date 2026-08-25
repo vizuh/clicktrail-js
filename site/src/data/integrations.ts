@@ -51,7 +51,7 @@ export const integrations: Integration[] = [
     name: 'Astro',
     category: 'Frameworks',
     npmName: '@vizuh/clicktrail-astro',
-    repoUrl: `${MONO}/tree/main/integrations/astro`,
+    repoUrl: `${MONO}/tree/master/integrations/astro`,
     monorepoPath: 'integrations/astro',
     installCommand: 'npx astro add @vizuh/clicktrail-astro',
     summary:
@@ -71,7 +71,7 @@ export const integrations: Integration[] = [
     name: 'Nuxt',
     category: 'Frameworks',
     npmName: '@vizuh/clicktrail-nuxt',
-    repoUrl: `${MONO}/tree/main/integrations/nuxt`,
+    repoUrl: `${MONO}/tree/master/integrations/nuxt`,
     monorepoPath: 'integrations/nuxt',
     installCommand: 'npx nuxi module add @vizuh/clicktrail-nuxt',
     summary:
@@ -90,7 +90,7 @@ export const integrations: Integration[] = [
     name: 'SvelteKit',
     category: 'Frameworks',
     npmName: '@clicktrail/sveltekit',
-    repoUrl: `${MONO}/tree/main/integrations/sveltekit`,
+    repoUrl: `${MONO}/tree/master/integrations/sveltekit`,
     monorepoPath: 'integrations/sveltekit',
     installCommand: 'npm install @clicktrail/sveltekit',
     summary:
@@ -105,11 +105,29 @@ export const integrations: Integration[] = [
     status: 'rc',
   },
   {
+    slug: 'sv',
+    name: 'Svelte CLI add-on',
+    category: 'Frameworks',
+    npmName: '@clicktrail/sv',
+    repoUrl: `${MONO}/tree/master/integrations/sv`,
+    monorepoPath: 'integrations/sv',
+    installCommand: 'npx sv add @clicktrail/sv',
+    summary:
+      'Experimental Svelte CLI add-on that scaffolds the SvelteKit hook, root layout, environment placeholder, and a server-side conversion example.',
+    features: [
+      'Scaffolds the @clicktrail/sveltekit server hook and root layout component',
+      'Adds a .env placeholder for the site ID and optional first-party proxy',
+      'Includes an example server-side conversion endpoint',
+      'Applies only to SvelteKit projects and avoids unstable sv runtime imports',
+    ],
+    status: 'experimental',
+  },
+  {
     slug: 'qwik',
     name: 'Qwik',
     category: 'Frameworks',
     npmName: '@vizuh/clicktrail-qwik',
-    repoUrl: `${MONO}/tree/main/integrations/qwik`,
+    repoUrl: `${MONO}/tree/master/integrations/qwik`,
     monorepoPath: 'integrations/qwik',
     installCommand: 'npm install @vizuh/clicktrail-qwik',
     summary:
@@ -131,7 +149,7 @@ export const integrations: Integration[] = [
     name: 'n8n',
     category: 'Automation',
     npmName: 'n8n-nodes-clicktrail',
-    repoUrl: `${MONO}/tree/main/integrations/n8n`,
+    repoUrl: `${MONO}/tree/master/integrations/n8n`,
     monorepoPath: 'integrations/n8n',
     installCommand: 'Settings → Community Nodes → Install → n8n-nodes-clicktrail',
     summary:
@@ -151,7 +169,7 @@ export const integrations: Integration[] = [
     name: 'Activepieces',
     category: 'Automation',
     npmName: '@vizuh/clicktrail-piece',
-    repoUrl: `${MONO}/tree/main/integrations/activepieces`,
+    repoUrl: `${MONO}/tree/master/integrations/activepieces`,
     monorepoPath: 'integrations/activepieces',
     installCommand: 'npm i @vizuh/clicktrail-piece',
     summary:
@@ -171,7 +189,7 @@ export const integrations: Integration[] = [
     name: 'Typebot',
     category: 'Automation',
     npmName: '@vizuh/clicktrail-typebot',
-    repoUrl: `${MONO}/tree/main/integrations/typebot`,
+    repoUrl: `${MONO}/tree/master/integrations/typebot`,
     monorepoPath: 'integrations/typebot',
     installCommand: 'pnpm add @vizuh/clicktrail-typebot',
     summary:
@@ -193,7 +211,7 @@ export const integrations: Integration[] = [
     name: 'Directus',
     category: 'Commerce & CMS',
     npmName: 'directus-extension-clicktrail',
-    repoUrl: `${MONO}/tree/main/integrations/directus`,
+    repoUrl: `${MONO}/tree/master/integrations/directus`,
     monorepoPath: 'integrations/directus',
     installCommand: 'pnpm add directus-extension-clicktrail',
     summary:
@@ -213,7 +231,7 @@ export const integrations: Integration[] = [
     name: 'Django',
     category: 'Commerce & CMS',
     npmName: 'django-clicktrail',
-    repoUrl: `${MONO}/tree/main/python/django_clicktrail`,
+    repoUrl: `${MONO}/tree/master/python/django_clicktrail`,
     monorepoPath: 'python/django_clicktrail',
     installCommand: 'pip install django-clicktrail clicktrail',
     summary:
@@ -232,7 +250,7 @@ export const integrations: Integration[] = [
     name: 'Wagtail',
     category: 'Commerce & CMS',
     npmName: 'wagtail-clicktrail',
-    repoUrl: `${MONO}/tree/main/python/wagtail_clicktrail`,
+    repoUrl: `${MONO}/tree/master/python/wagtail_clicktrail`,
     monorepoPath: 'python/wagtail_clicktrail',
     installCommand: 'pip install wagtail-clicktrail clicktrail django-clicktrail',
     summary:
@@ -253,7 +271,7 @@ export const integrations: Integration[] = [
     name: 'Python SDK',
     category: 'Languages & platforms',
     npmName: 'clicktrail',
-    repoUrl: `${MONO}/tree/main/python/clicktrail`,
+    repoUrl: `${MONO}/tree/master/python/clicktrail`,
     monorepoPath: 'python/clicktrail',
     installCommand: 'pip install clicktrail',
     summary:
@@ -272,7 +290,7 @@ export const integrations: Integration[] = [
     name: 'ASGI middleware',
     category: 'Languages & platforms',
     npmName: 'clicktrail-asgi',
-    repoUrl: `${MONO}/tree/main/python/clicktrail_asgi`,
+    repoUrl: `${MONO}/tree/master/python/clicktrail_asgi`,
     monorepoPath: 'python/clicktrail_asgi',
     installCommand: 'pip install clicktrail-asgi',
     summary:
@@ -290,7 +308,7 @@ export const integrations: Integration[] = [
     name: 'Jinja2',
     category: 'Languages & platforms',
     npmName: 'clicktrail-jinja',
-    repoUrl: `${MONO}/tree/main/python/clicktrail_jinja`,
+    repoUrl: `${MONO}/tree/master/python/clicktrail_jinja`,
     monorepoPath: 'python/clicktrail_jinja',
     installCommand: 'pip install clicktrail-jinja',
     summary:
@@ -308,7 +326,7 @@ export const integrations: Integration[] = [
     name: 'Flask',
     category: 'Languages & platforms',
     npmName: 'flask-clicktrail',
-    repoUrl: `${MONO}/tree/main/python/flask_clicktrail`,
+    repoUrl: `${MONO}/tree/master/python/flask_clicktrail`,
     monorepoPath: 'python/flask_clicktrail',
     installCommand: 'pip install flask-clicktrail',
     summary:

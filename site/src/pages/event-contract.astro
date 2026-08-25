@@ -16,6 +16,7 @@ const canonicalEvents = [
 const extensionEvents = [
   { name: 'lead_updated', note: 'Stage changes — integrations may emit; consumers must not require' },
   { name: 'lead_merged', note: 'Identity merges — same extension rule applies' },
+  { name: 'visitor_anonymized', note: 'Deletion requests — actual erasure depends on collector support' },
 ];
 
 const fields = [
@@ -87,9 +88,10 @@ const translations = [
 
       <h2>Extension events</h2>
       <p>
-        Two events sit outside the canonical nine by ratified proposal:
-        lead stage changes and visitor merges. Integrations may emit them;
-        consumers must not require them.
+        Three events sit outside the canonical nine in the current executable
+        contract:
+        lead stage changes, visitor merges, and visitor anonymization requests.
+        Integrations may emit them; consumers must not require them.
       </p>
       <div class="spec-wrap">
         <table class="spec">
@@ -133,9 +135,10 @@ const translations = [
       <h2>Translating legacy scaffold names</h2>
       <p>
         Pre-0.2 integration scaffolds used ad-hoc names. The shared builders
-        module in <code>@clicktrail/core</code> translates them to canonical
-        names via <code>toCanonicalEventName()</code>, so renames are one-file
-        changes and integration packages contain zero hardcoded event names.
+        module in <code>@vizuh/clicktrail-core</code> translates them to
+        canonical names via <code>toCanonicalEventName()</code>. Integrations
+        may still declare an operation's event at their adapter boundary, but
+        the shared builder owns the wire-level translation and payload shape.
       </p>
       <div class="spec-wrap">
         <table class="spec">
@@ -153,7 +156,7 @@ const translations = [
       <h2>Consent policy</h2>
       <ul>
         <li>No tracking by default: install alone transmits nothing; activation requires explicit administrator configuration.</li>
-        <li>Nothing starts or persists before the consent gate allows it. Denied or withdrawn consent clears stored payloads.</li>
+        <li>When <code>consentRequired</code> is enabled, nothing starts or persists before the consent gate allows it. Denied or withdrawn consent clears stored payloads.</li>
         <li>No self-telemetry: no install counts, URLs, environment data, or error reports sent to Vizuh unless diagnostics are explicitly enabled.</li>
         <li>No PII by default: email, phone, and name require explicit host-side field mapping.</li>
         <li>No fingerprinting: first-party IDs, campaign identifiers, explicit form IDs, and server records only.</li>

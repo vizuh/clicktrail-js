@@ -37,6 +37,7 @@ Migration mapping from pre-0.2 scaffold names:
 | lead.attribution_attached | lead_created with `attribution_attached: true` detail |
 | lead.stage_updated | lead_updated (detail.stage) — pending ruling, see below |
 | lead.merged | lead_created with merged identity ids |
+| visitor.anonymized | visitor_anonymized — deletion request; collector erasure support is separate |
 | booking / appointment.requested | booking_created |
 | appointment.completed | booking_completed |
 | sale.recorded / purchase | sale |
@@ -44,9 +45,10 @@ Migration mapping from pre-0.2 scaffold names:
 | offline_conversion.sent | sale (detail.kind='offline') |
 | consent.granted/withdrawn/policy_updated | consent_updated (state/source/version fields) |
 
-OPEN RULING (Hugo): lead stage changes and visitor merges are not in the canonical
-nine. Proposal: keep them as `lead_updated` / `lead_merged` EXTENSION events that
-integrations may emit but consumers must not require.
+Lead stage changes, visitor merges, and visitor anonymization are not in the
+canonical nine. Keep them as `lead_updated`, `lead_merged`, and
+`visitor_anonymized` EXTENSION events that integrations may emit but consumers
+must not require.
 
 ## Required field vocabulary
 

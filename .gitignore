@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 coverage/
 site/.astro/
+__pycache__/
