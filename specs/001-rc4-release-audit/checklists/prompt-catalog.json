@@ -1,0 +1,506 @@
+[
+  {
+    "id": 1,
+    "title": "AI Pairing Partner for Exploring Approaches"
+  },
+  {
+    "id": 2,
+    "title": "Analyze API Contracts and Integrations"
+  },
+  {
+    "id": 3,
+    "title": "Analyze Database Schema and Relationships"
+  },
+  {
+    "id": 4,
+    "title": "Analyze Security Scan Results"
+  },
+  {
+    "id": 5,
+    "title": "Analyze Stack Trace"
+  },
+  {
+    "id": 6,
+    "title": "Architecture Design Discussion"
+  },
+  {
+    "id": 7,
+    "title": "Assess MR Test Coverage"
+  },
+  {
+    "id": 8,
+    "title": "Assess Third-Party Dependency Risks"
+  },
+  {
+    "id": 9,
+    "title": "Audit Codebase for Compliance"
+  },
+  {
+    "id": 10,
+    "title": "Automate Repetitive Development Tasks"
+  },
+  {
+    "id": 11,
+    "title": "Break Down Epic into Issues"
+  },
+  {
+    "id": 12,
+    "title": "Build Full-Stack Application"
+  },
+  {
+    "id": 13,
+    "title": "Categorize Features"
+  },
+  {
+    "id": 14,
+    "title": "Check MR Against Coding Standards"
+  },
+  {
+    "id": 15,
+    "title": "Code Review Discussion"
+  },
+  {
+    "id": 16,
+    "title": "Code Suggestion Acceptance Rate by Language"
+  },
+  {
+    "id": 17,
+    "title": "Code Suggestion Adoption During Rollout"
+  },
+  {
+    "id": 18,
+    "title": "Code Suggestion Usage by IDE"
+  },
+  {
+    "id": 19,
+    "title": "Compare Alternative Implementations"
+  },
+  {
+    "id": 20,
+    "title": "Consolidate Duplicate Code"
+  },
+  {
+    "id": 21,
+    "title": "Convert Documentation to Code Comments"
+  },
+  {
+    "id": 22,
+    "title": "Count Merged MRs This Month"
+  },
+  {
+    "id": 23,
+    "title": "Create Design System Documentation"
+  },
+  {
+    "id": 24,
+    "title": "Create Disaster Recovery Plan"
+  },
+  {
+    "id": 25,
+    "title": "Create Integration Test Scenarios"
+  },
+  {
+    "id": 26,
+    "title": "Create Issue from Support Ticket"
+  },
+  {
+    "id": 27,
+    "title": "Create Microservice"
+  },
+  {
+    "id": 28,
+    "title": "Create Security Test Cases"
+  },
+  {
+    "id": 29,
+    "title": "Create Technical Design Document"
+  },
+  {
+    "id": 30,
+    "title": "Create Troubleshooting Guide"
+  },
+  {
+    "id": 31,
+    "title": "Debug Failing Pipeline"
+  },
+  {
+    "id": 32,
+    "title": "Debug Memory Leak"
+  },
+  {
+    "id": 33,
+    "title": "Debug Race Conditions"
+  },
+  {
+    "id": 34,
+    "title": "Debugging Session Assistant"
+  },
+  {
+    "id": 35,
+    "title": "Design API Endpoints"
+  },
+  {
+    "id": 36,
+    "title": "Design New Feature Architecture"
+  },
+  {
+    "id": 37,
+    "title": "Design User Interface Components"
+  },
+  {
+    "id": 38,
+    "title": "Diagnose Customer Issue from Logs"
+  },
+  {
+    "id": 39,
+    "title": "Discover GitLab Features"
+  },
+  {
+    "id": 40,
+    "title": "Draft a memo"
+  },
+  {
+    "id": 41,
+    "title": "Ensure Compliance Requirements"
+  },
+  {
+    "id": 42,
+    "title": "Estimate Implementation Effort"
+  },
+  {
+    "id": 43,
+    "title": "Evaluate Technology Options"
+  },
+  {
+    "id": 44,
+    "title": "Explain Complex Code or Patterns"
+  },
+  {
+    "id": 45,
+    "title": "Explain MR Impact on Performance"
+  },
+  {
+    "id": 46,
+    "title": "Explain Technical Concepts to Non-Technical Users"
+  },
+  {
+    "id": 47,
+    "title": "Explain Test Failures"
+  },
+  {
+    "id": 48,
+    "title": "Explain Unfamiliar Code or MR"
+  },
+  {
+    "id": 49,
+    "title": "Exploratory Code Understanding"
+  },
+  {
+    "id": 50,
+    "title": "Find Code Examples of Patterns"
+  },
+  {
+    "id": 51,
+    "title": "Find GitLab API Endpoints"
+  },
+  {
+    "id": 52,
+    "title": "Find Root Cause of Bug"
+  },
+  {
+    "id": 53,
+    "title": "Find Where Functions Are Called"
+  },
+  {
+    "id": 54,
+    "title": "Framework Upgrade Impact Analysis"
+  },
+  {
+    "id": 55,
+    "title": "Generate a Risk Assesment"
+  },
+  {
+    "id": 56,
+    "title": "Generate Compliance Reports"
+  },
+  {
+    "id": 57,
+    "title": "Generate CRUD Operations"
+  },
+  {
+    "id": 58,
+    "title": "Generate Customer-Facing Error Messages"
+  },
+  {
+    "id": 59,
+    "title": "Generate GitLab CI Templates"
+  },
+  {
+    "id": 60,
+    "title": "Generate Hardware Interface Code"
+  },
+  {
+    "id": 61,
+    "title": "Generate Issue Templates"
+  },
+  {
+    "id": 62,
+    "title": "Generate MR Description"
+  },
+  {
+    "id": 63,
+    "title": "Generate Release Notes from MRs"
+  },
+  {
+    "id": 64,
+    "title": "Generate Security Documentation"
+  },
+  {
+    "id": 65,
+    "title": "Generate Test Data"
+  },
+  {
+    "id": 66,
+    "title": "Generate Unit Tests"
+  },
+  {
+    "id": 67,
+    "title": "Identify Breaking Changes in MR"
+  },
+  {
+    "id": 68,
+    "title": "Identify Code Duplication Opportunities"
+  },
+  {
+    "id": 69,
+    "title": "Identify Security Issues in MR"
+  },
+  {
+    "id": 70,
+    "title": "Implement CI/CD Best Practices"
+  },
+  {
+    "id": 71,
+    "title": "Implement Data Retention Policies"
+  },
+  {
+    "id": 72,
+    "title": "Implement Design Pattern"
+  },
+  {
+    "id": 73,
+    "title": "Implement Responsive Layout"
+  },
+  {
+    "id": 74,
+    "title": "Implement Role-Based Access Control"
+  },
+  {
+    "id": 75,
+    "title": "Improve UI Accessibility"
+  },
+  {
+    "id": 76,
+    "title": "Individual Contribution Summary"
+  },
+  {
+    "id": 77,
+    "title": "Integrate with Enterprise SSO"
+  },
+  {
+    "id": 78,
+    "title": "Investigate Performance Bottleneck"
+  },
+  {
+    "id": 79,
+    "title": "Issue Closure Rate Comparison"
+  },
+  {
+    "id": 80,
+    "title": "Long-Running Merge Requests Table"
+  },
+  {
+    "id": 81,
+    "title": "Map Component Dependencies"
+  },
+  {
+    "id": 82,
+    "title": "Measure MR Throughput During Duo Trial"
+  },
+  {
+    "id": 83,
+    "title": "Migrate from Legacy Framework"
+  },
+  {
+    "id": 84,
+    "title": "Modernize Legacy Code"
+  },
+  {
+    "id": 85,
+    "title": "Multi-Tenant Data Isolation"
+  },
+  {
+    "id": 86,
+    "title": "Navigate Large Codebase Quickly"
+  },
+  {
+    "id": 87,
+    "title": "Open Issues by Priority and Health Status"
+  },
+  {
+    "id": 88,
+    "title": "Optimize Algorithm Performance"
+  },
+  {
+    "id": 89,
+    "title": "Optimize Database Queries"
+  },
+  {
+    "id": 90,
+    "title": "Optimize Embedded System Code"
+  },
+  {
+    "id": 91,
+    "title": "Orchestrate Multi-Agent Workflows"
+  },
+  {
+    "id": 92,
+    "title": "Pipeline Failure and Duration Comparison"
+  },
+  {
+    "id": 93,
+    "title": "Pipeline Success Rate by Project"
+  },
+  {
+    "id": 94,
+    "title": "Pipeline Throughput Trends"
+  },
+  {
+    "id": 95,
+    "title": "Plan Database Schema Changes"
+  },
+  {
+    "id": 96,
+    "title": "Planner Agent for Epic Decomposition"
+  },
+  {
+    "id": 97,
+    "title": "Prioritize Review Comments"
+  },
+  {
+    "id": 98,
+    "title": "Profile Application Performance"
+  },
+  {
+    "id": 99,
+    "title": "Project Delivery Health Summary"
+  },
+  {
+    "id": 100,
+    "title": "Reduce Code Complexity"
+  },
+  {
+    "id": 101,
+    "title": "Refactor for Better Readability"
+  },
+  {
+    "id": 102,
+    "title": "Remove Dead Code"
+  },
+  {
+    "id": 103,
+    "title": "Review Code for Security Issues"
+  },
+  {
+    "id": 104,
+    "title": "Review MR for Logical Errors"
+  },
+  {
+    "id": 105,
+    "title": "Review Test Coverage Gaps"
+  },
+  {
+    "id": 106,
+    "title": "Rubber Duck Debugging with AI"
+  },
+  {
+    "id": 107,
+    "title": "Search GitLab Documentation"
+  },
+  {
+    "id": 108,
+    "title": "Security Analyst for Vulnerability Triage"
+  },
+  {
+    "id": 109,
+    "title": "Stakeholder Update"
+  },
+  {
+    "id": 110,
+    "title": "Stale Bug Issues Table"
+  },
+  {
+    "id": 111,
+    "title": "Suggest Code Improvements in MR"
+  },
+  {
+    "id": 112,
+    "title": "Suggest Reviewers for MR"
+  },
+  {
+    "id": 113,
+    "title": "Summarize Recent Changes to MR/Issue"
+  },
+  {
+    "id": 114,
+    "title": "Top Failing Jobs"
+  },
+  {
+    "id": 115,
+    "title": "Trace Authentication and Authorization Flow"
+  },
+  {
+    "id": 116,
+    "title": "Trace Function Usage Across Codebase"
+  },
+  {
+    "id": 117,
+    "title": "Translate Application to Another Language"
+  },
+  {
+    "id": 118,
+    "title": "Troubleshoot Production Issue"
+  },
+  {
+    "id": 119,
+    "title": "Understand Async Operations and Concurrency"
+  },
+  {
+    "id": 120,
+    "title": "Understand Class Hierarchy and Inheritance"
+  },
+  {
+    "id": 121,
+    "title": "Understand Code Before Making Changes"
+  },
+  {
+    "id": 122,
+    "title": "Understand Configuration and Environment Setup"
+  },
+  {
+    "id": 123,
+    "title": "Understand Data Flow Through System"
+  },
+  {
+    "id": 124,
+    "title": "Understand Error Handling Patterns"
+  },
+  {
+    "id": 125,
+    "title": "Understand Third-Party Library Error"
+  },
+  {
+    "id": 126,
+    "title": "Update Documentation After Code Changes"
+  }
+]

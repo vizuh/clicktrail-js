@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClickTrail RC4 prompt audit results",
+  "type": "array",
+  "minItems": 126,
+  "maxItems": 126,
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "title",
+      "status",
+      "severity",
+      "evidence",
+      "action"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 126
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "status": {
+        "enum": [
+          "PASS",
+          "FINDING",
+          "N/A"
+        ]
+      },
+      "severity": {
+        "enum": [
+          "Critical",
+          "Important",
+          "Minor",
+          "None"
+        ]
+      },
+      "evidence": {
+        "type": "string",
+        "minLength": 1
+      },
+      "action": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

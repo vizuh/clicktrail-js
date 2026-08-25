@@ -1,0 +1,1010 @@
+[
+  {
+    "id": 1,
+    "title": "AI Pairing Partner for Exploring Approaches",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "`specs/001-rc4-release-audit/research.md` records explicit alternatives and rationales for the bounded 126-item catalog, five-package first wave, npm bootstrap ordering, and separation of evidence collection from irreversible publication.",
+    "action": "No further approach exploration is needed for this audit; preserve these recorded decisions unless release scope changes."
+  },
+  {
+    "id": 2,
+    "title": "Analyze API Contracts and Integrations",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new public `TenantAdapterEventInput` requires `identity` at `packages/server/src/tenant-adapter.ts:24`, but `TenantAdapter.build()` constructs the event from `input.payload ?? {}` at line 85 and never reads `input.identity`. The existing test fixture supplies `identity.payload.ft_source = \"google\"` at `packages/server/tests/tenant-adapter.test.ts:20` but does not assert it. Runtime reproduction with the built ESM returned `{\"ft_source\":null,\"visitor_id\":null,\"session_id\":null,\"session_number\":null,\"event_name\":\"lead_created\"}` for an input identity containing all four values.",
+    "action": "Build from `input.identity.payload` and copy visitor/session fields using the established `ClickTrailServer` contract, or remove `identity` and document a deliberate replacement. Add an executable regression test for attribution and identity preservation."
+  },
+  {
+    "id": 3,
+    "title": "Analyze Database Schema and Relationships",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`specs/001-rc4-release-audit/plan.md` identifies storage as repository files, Git objects, GitHub, and npm metadata and states there is no application database. A targeted `find` found no `*.prisma`, `*schema.sql`, or `migrations/` files outside dependency trees.",
+    "action": "No database-schema review applies to this TypeScript library release."
+  },
+  {
+    "id": 4,
+    "title": "Analyze Security Scan Results",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "Local `pnpm audit --prod --audit-level high` exited 0, and `.github/workflows/{codeql,osv,security}.yml` define CodeQL, OSV, and zizmor scans. However, `git status --porcelain=v1` shows 63 tracked modifications plus untracked release/runtime files while `HEAD` is still `origin/master` (`484e93a`), so those remote scanners have not analyzed the actual RC4 diff.",
+    "action": "Do not tag from the working tree. Commit the complete reviewed scope to the release branch, open the PR, and require current CodeQL, OSV, and zizmor results to pass for that exact commit."
+  },
+  {
+    "id": 5,
+    "title": "Analyze Stack Trace",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "A targeted repository scan found no stored JavaScript/Python stack trace artifact outside dependency trees. Current `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm probe` all exited 0, so there is no failing runtime trace to analyze.",
+    "action": "No stack-trace diagnosis applies unless a failing job or reproducible trace is supplied."
+  },
+  {
+    "id": 6,
+    "title": "Architecture Design Discussion",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "`docs/ARCHITECTURE.md` defines deterministic core/effect-adapter boundaries and stable versus incubating entry points. `docs/EVENT-CONTRACT.md` defines canonical events, trusted tenant configuration, and stable idempotency keys; the new tenant adapter keeps tenant/site/adapter metadata in server config and canonicalizes event names. `pnpm typecheck`, tests, and build all pass.",
+    "action": "Retain the documented package boundaries; resolve the separate API and ID findings before release."
+  },
+  {
+    "id": 7,
+    "title": "Assess MR Test Coverage",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The full `pnpm test` suite passes, but `packages/server/tests/tenant-adapter.test.ts:20` deliberately supplies `identity.payload.ft_source = \"google\"` without asserting attribution or visitor/session propagation. `packages/server/src/tenant-adapter.ts:85` instead reads the separate optional `input.payload`, and the runtime reproduction proves the required identity is silently dropped.",
+    "action": "Add regression coverage that asserts `ft_source`, `visitor_id`, `session_id`, and `session_number` survive `TenantAdapter.build()` and `send()`. Make that test fail before fixing the implementation."
+  },
+  {
+    "id": 8,
+    "title": "Assess Third-Party Dependency Risks",
+    "status": "FINDING",
+    "severity": "Minor",
+    "evidence": "`pnpm audit --prod --json` reports 1 low, 0 moderate, 0 high, and 0 critical vulnerabilities across 941 dependencies: advisory 1103907, `cookie` 0.6.0 accepting out-of-bounds cookie name/path/domain characters, via `integrations/sveltekit > @sveltejs/kit > cookie`; patched in `cookie >=0.7.0`. GitHub Actions dependencies are commit-SHA pinned.",
+    "action": "Update the compatible SvelteKit dependency chain so it resolves `cookie >=0.7.0`, or document bounded acceptance of this low advisory for RC4; rerun the production audit."
+  },
+  {
+    "id": 9,
+    "title": "Audit Codebase for Compliance",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "`docs/internal/FIRST-PUBLICATION-CHECKLIST.md:16-19` leaves the copyright-holder decision and B1-B3 provenance attestations unchecked, and line 25 explicitly leaves license/provenance approval open and required before npm publication. `docs/internal/RELEASE-READINESS-REVIEW.md` likewise marks `GOV-001` open, and the release constitution makes unresolved ownership/licensing/provenance a release blocker.",
+    "action": "Do not create or push the RC4 tag and do not publish. Hugo must decide the copyright holder, align LICENSE/package metadata, approve the required attestations verbatim, and close GOV-001 with recorded evidence."
+  },
+  {
+    "id": 10,
+    "title": "Automate Repetitive Development Tasks",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "`tools/release/bootstrap-new-packages.sh:7-14` directly publishes core, browser, Astro, and Nuxt using each current manifest version, which is `0.1.0-rc.4`. After bootstrap, `.github/workflows/publish.yml` attempts to publish the same four immutable `0.1.0-rc.4` versions again in its five-package wave. npm will reject already-published versions, so the documented bootstrap-then-tag flow cannot complete. The script also has no build/package-content preflight, while all `dist/` paths are gitignored and absent from `git ls-files`.",
+    "action": "Replace the bootstrap with a reviewed, built bootstrap-only prerelease version distinct from RC4 (then configure trusted publishers), or redesign the workflow with an explicitly reviewed immutable-version strategy. Add build, tarball allowlist, and clean-room checks before any one-time publish."
+  },
+  {
+    "id": 11,
+    "title": "Break Down Epic into Issues",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The origin remote is GitHub (`https://github.com/vizuh/clicktrail-js.git`), and the final observed tree contains a bounded RC4 release specification/plan rather than a GitLab Epic or Epic identifier. No epic was supplied for decomposition.",
+    "action": "Do not manufacture GitLab issues for this release audit; use the existing release specification and review gates."
+  },
+  {
+    "id": 12,
+    "title": "Build Full-Stack Application",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`specs/001-rc4-release-audit/plan.md` classifies the project as a multi-package library and integration monorepo with no application database. The current diff changes SDK packages, adapters, docs, CI, and release tooling rather than requesting a full-stack application build.",
+    "action": "No full-stack application work is in RC4 scope."
+  },
+  {
+    "id": 13,
+    "title": "Categorize Features",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "`README.md` categorizes public entry points as Stable, Stable adapter, or Incubating and separately lists each package/integration with its support boundary. `site/src/data/integrations.ts` and the updated package table include Formbricks and the split core/browser/server/consent surfaces.",
+    "action": "Keep stability and package categories aligned with exports and publication scope as RC4 changes are finalized."
+  },
+  {
+    "id": 14,
+    "title": "Check MR Against Coding Standards",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Against the uncommitted diff, `git diff --check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm probe` all exited 0; the browser probe passed 12/12 fixtures. Changed branching/security paths include focused Vitest tests in browser, Directus, integration proxy, server, and Formbricks areas.",
+    "action": "No formatting/type/build standards fix is required; logical and release-process findings remain separate blockers."
+  },
+  {
+    "id": 15,
+    "title": "Code Review Discussion",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "`packages/core/src/ids.ts:19-38` derives stable event IDs with a 32-bit FNV-1a digest (`evt_s-` plus 8 hex digits). The new tenant adapter uses this ID for collector deduplication. Executable reproduction found distinct external IDs `xXQY9Q9m8YsVb0LI` and `GSpqZXJtjd9IBZ6f` under the same site/tenant/adapter/event that both produce `evt_s-690beb83`; a collector following the documented duplicate-as-success rule can silently discard a real event.",
+    "action": "Use a collision-resistant stable identifier (for example, a versioned 128-bit-or-longer digest/UUIDv5-equivalent) and add the reproduced collision as a regression test. Record compatibility implications because event IDs are a public contract."
+  },
+  {
+    "id": 16,
+    "title": "Code Suggestion Acceptance Rate by Language",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository is hosted on GitHub, and a targeted scan found no GitLab Duo/code-suggestion acceptance telemetry, language breakdown dataset, or analytics export in the repository.",
+    "action": "This metric requires GitLab Duo analytics data; it cannot be inferred from source code or Git history."
+  },
+  {
+    "id": 17,
+    "title": "Code Suggestion Adoption During Rollout",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository is hosted on GitHub, and no rollout periods, control cohorts, or code-suggestion adoption telemetry are present in the release artifacts.",
+    "action": "This rollout metric requires an external GitLab Duo telemetry dataset and defined comparison windows."
+  },
+  {
+    "id": 18,
+    "title": "Code Suggestion Usage by IDE",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository is hosted on GitHub, and no IDE-level code-suggestion usage events or analytics export exist in the final observed tree.",
+    "action": "This IDE usage metric requires external GitLab Duo analytics data; no repository-only check is valid."
+  },
+  {
+    "id": 19,
+    "title": "Compare Alternative Implementations",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The two publication implementations have different safety gates. .github/workflows/publish.yml:34-38 installs, typechecks, tests, and builds before npm publish at line 97. tools/release/bootstrap-new-packages.sh:7-14 runs npm view and then npm publish directly. packages/core/package.json has only build/test scripts (no prepack/prepare), .gitignore:2 ignores dist/, and `git ls-files packages/core/dist` returns no files. Therefore a clean checkout can run the documented bootstrap and publish a package with no built dist even though dist is the only runtime content in the package files allowlist.",
+    "action": "Before any npm bootstrap, make the bootstrap path enforce the frozen install, build, tests, tarball-content check, and clean-room import (or add an equivalent fail-closed prepack gate). Do not run the current script from a clean checkout."
+  },
+  {
+    "id": 20,
+    "title": "Consolidate Duplicate Code",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The diff consolidates URL validation into packages/core/src/core/url.ts and exports it from packages/core/src/core/index.ts. `grep -R isSafeHttpUrl` shows reuse by Astro, Nuxt, SvelteKit, and the new server tenant adapter. Focused tests for core, Astro, Nuxt, and server passed (42, 36, 63, and 13 tests respectively).",
+    "action": "No release action required for duplication in the reviewed changes."
+  },
+  {
+    "id": 21,
+    "title": "Convert Documentation to Code Comments",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The canonical material is intentionally repository documentation (docs/ARCHITECTURE.md and docs/EVENT-CONTRACT.md), while the changed runtime files already contain local comments for non-obvious trust and lifecycle rules. Converting those documents into code comments would duplicate authority and is not a release requirement.",
+    "action": "Keep canonical design and event-contract content in docs; add code comments only where a local invariant is otherwise unclear."
+  },
+  {
+    "id": 22,
+    "title": "Count Merged MRs This Month",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "`gh pr list --repo vizuh/clicktrail-js --state merged --search 'merged:2026-08-01..2026-08-31' --limit 100 --json number,mergedAt,title` returned exactly 8 merged pull requests for August 2026: #1, #2, #3, #4, #5, #6, #16, and #17.",
+    "action": "No release action required; the count is 8 as of 2026-08-25."
+  },
+  {
+    "id": 23,
+    "title": "Create Design System Documentation",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`git diff --name-only -- site` returns only site/src/data/integrations.ts, whose diff changes integration names/status copy rather than components, CSS, tokens, or layout. No design-system surface is introduced or changed by this release diff.",
+    "action": "Do not create design-system documentation solely for this metadata-only site change."
+  },
+  {
+    "id": 24,
+    "title": "Create Disaster Recovery Plan",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "specs/001-rc4-release-audit/plan.md identifies this as a multi-package library/integration monorepo with repository/GitHub/npm metadata and explicitly says there is no application database. The release does not operate a hosted stateful service that needs backup/restore or failover procedures.",
+    "action": "Handle partial immutable npm publication through the release incident/versioning procedure; no application disaster-recovery plan is applicable."
+  },
+  {
+    "id": 25,
+    "title": "Create Integration Test Scenarios",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new tenant-adapter scenario is incomplete. packages/server/src/tenant-adapter.ts:24 requires `identity: ServerIdentity`, and packages/server/tests/tenant-adapter.test.ts:20 supplies `identity.payload.ft_source = google`; however TenantAdapter.build uses `input.payload ?? {}` at line 85 rather than `input.identity.payload`. The six tenant-adapter tests never assert ft_source, visitorId, or sessionId, so `pnpm --filter @vizuh/clicktrail-server test` passes all 13 package tests while the documented identity handoff is dropped.",
+    "action": "Add an end-to-end tenant-adapter test that asserts attribution plus visitor/session identity survive build and send, then fix TenantAdapter.build to consume the documented identity contract."
+  },
+  {
+    "id": 26,
+    "title": "Create Issue from Support Ticket",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No support ticket, customer transcript, or support-system identifier was supplied or referenced by the release diff. The uncommitted work contains product/release documentation and OSS issue drafts, not a support case to convert.",
+    "action": "Do not create a synthetic issue without a real support ticket and acceptance criteria."
+  },
+  {
+    "id": 27,
+    "title": "Create Microservice",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "package.json and pnpm-workspace.yaml define a TypeScript package monorepo. The changed Formbricks and tenant surfaces are libraries/adapters, and no independently deployed service, listener, container, datastore, or service manifest is added.",
+    "action": "Do not add a microservice to this library release."
+  },
+  {
+    "id": 28,
+    "title": "Create Security Test Cases",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Security-focused cases exist for the changed boundaries: Formbricks rejects changed signatures, stale timestamps, and non-finite verifier clocks; Directus rejects invalid/credential-bearing endpoints and prevents an env API key from crossing to a per-flow endpoint; Astro/Nuxt reject malformed and credential-bearing upstream URLs; tenant adapter rejects unsafe endpoints and identity overrides. Focused runs passed: Formbricks 8/8, Directus 59/59, Astro 36/36, Nuxt 63/63, server 13/13.",
+    "action": "Retain these cases in CI; the separate identity coverage defect is recorded under items 25 and 36."
+  },
+  {
+    "id": 29,
+    "title": "Create Technical Design Document",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Technical design is directly documented in docs/ARCHITECTURE.md, docs/EVENT-CONTRACT.md, specs/001-rc4-release-audit/spec.md, and specs/001-rc4-release-audit/plan.md. The documents define deterministic boundaries, the canonical event contract, first-wave scope, release gates, package artifacts, and publication constraints.",
+    "action": "Keep these documents aligned with the final reviewed diff and first-wave package list."
+  },
+  {
+    "id": 30,
+    "title": "Create Troubleshooting Guide",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No recurring user failure, support symptom, production log, or unresolved setup error was provided for this audit. README files and CONTRIBUTING.md already cover install, development, and release commands; inventing troubleshooting entries without observed failures would not reduce a verified release risk.",
+    "action": "Create troubleshooting guidance only from a reproducible failure or real support case."
+  },
+  {
+    "id": 31,
+    "title": "Debug Failing Pipeline",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "GitHub run 32788003812 is conclusively localized: `gh run view ... --json jobs` shows install, typecheck, global build, tests, build, tag verification, and dist-tag selection succeeded; only `Publish wave to npm with trusted publishing` failed. docs/internal/FIRST-PUBLICATION-CHECKLIST.md records the npm E404/new-name bootstrap cause, and .github/workflows/publish.yml now adds a fail-fast `Verify npm package bootstrap state` step before publishing.",
+    "action": "Keep the new preflight. Fix the unsafe local bootstrap path in item 19 before retrying the RC4 tag."
+  },
+  {
+    "id": 32,
+    "title": "Debug Memory Leak",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No heap profile, out-of-memory report, retention symptom, or memory-leak reproduction exists in the task or repository release evidence. The reviewed changes do not introduce a long-running server process; focused browser and integration tests complete normally.",
+    "action": "Do not claim or debug a memory leak without a reproducible symptom and heap evidence."
+  },
+  {
+    "id": 33,
+    "title": "Debug Race Conditions",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No race-condition report, nondeterministic failing test, threaded worker, or shared datastore mutation is present in the supplied release evidence. The changed browser queue clear and webhook mapping paths pass deterministic focused tests, and no concurrency failure was reproduced.",
+    "action": "Do not invent a race fix; add stress/interleaving tests if a nondeterministic failure is observed."
+  },
+  {
+    "id": 34,
+    "title": "Debugging Session Assistant",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The audit was not given a stack trace, failing input, log excerpt, or interactive debugging symptom. Catalog-specific checks were performed directly instead, including tests, typecheck, GitHub run metadata, and source inspection.",
+    "action": "Start a debugging session only when there is a concrete failing behavior to reproduce."
+  },
+  {
+    "id": 35,
+    "title": "Design API Endpoints",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The diff does not add a ClickTrail-hosted HTTP API endpoint. Formbricks exports URL/webhook mapping functions, TenantAdapter is a server library, and Directus/Astro/Nuxt only validate host-configured collector/proxy URLs. Endpoint ownership, routing, authentication, and persistence remain with the host application.",
+    "action": "Do not design a new hosted API endpoint for this package release."
+  },
+  {
+    "id": 36,
+    "title": "Design New Feature Architecture",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new tenant-adapter architecture has two competing attribution inputs and violates its documented path. TenantAdapterEventInput requires `identity` and also allows top-level `payload`; packages/server/README.md demonstrates only `identity`, while TenantAdapter.build at packages/server/src/tenant-adapter.ts:85 ignores identity and uses the top-level payload. By contrast, the established ClickTrailServer path uses `input.identity.payload` and copies visitor/session fields at packages/server/src/server.ts:152-161. This makes the new feature silently discard attribution for the documented example.",
+    "action": "Choose one public identity/attribution input, preferably the established ServerIdentity contract; remove or clearly define the duplicate top-level payload, preserve visitor/session fields as intended, and re-run package plus clean-room tests before release."
+  },
+  {
+    "id": 37,
+    "title": "Design User Interface Components",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`git diff --name-only` shows the only site file changed is `site/src/data/integrations.ts`; no UI component, layout, style, or visual asset is changed in this release diff.",
+    "action": "None; do not invent a UI redesign for a library/package release."
+  },
+  {
+    "id": 38,
+    "title": "Diagnose Customer Issue from Logs",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No customer log bundle, support case, production incident, or log file is part of the task or current diff (`git diff --name-only` contains no customer/runtime logs).",
+    "action": "None; customer-log diagnosis requires an actual case and its bounded evidence."
+  },
+  {
+    "id": 39,
+    "title": "Discover GitLab Features",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`git remote -v` identifies `https://github.com/vizuh/clicktrail-js.git`, and automation is under `.github/workflows/`; this repository is not hosted on GitLab.",
+    "action": "None; use GitHub repository and Actions controls for this release."
+  },
+  {
+    "id": 40,
+    "title": "Draft a memo",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The release scope in `specs/001-rc4-release-audit/spec.md` requires an audit, package evidence, and controlled publication; it requests no memo and the current diff contains no memo deliverable.",
+    "action": "None; do not add an unrelated memo to the release candidate."
+  },
+  {
+    "id": 41,
+    "title": "Ensure Compliance Requirements",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "Publication compliance is explicitly open. `docs/internal/FIRST-PUBLICATION-CHECKLIST.md` has unchecked copyright-holder, license/provenance, and B1-B3 owner-attestation gates. `docs/internal/RELEASE-READINESS-REVIEW.md` marks `GOV-001` Open and permits no npm publication or `latest` tag. `specs/001-rc4-release-audit/plan.md` marks the Governed Supply Chain constitution check BLOCKED. Local `pnpm audit --prod --audit-level high` returned 0 with one Low vulnerability, but that does not close the ownership/provenance gates.",
+    "action": "Do not create or push `v0.1.0-rc.4` or publish npm packages. The authorized owner must decide the copyright holder, approve or otherwise resolve B1-B3/provenance, and record linked evidence before the release gate can close."
+  },
+  {
+    "id": 42,
+    "title": "Estimate Implementation Effort",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This task is a read-only pre-release audit, not an implementation estimate. `specs/001-rc4-release-audit/spec.md` states that publication has no fixed deadline and safety gates take priority.",
+    "action": "None; estimate only after the owner chooses how to resolve the open governance and release findings."
+  },
+  {
+    "id": 43,
+    "title": "Evaluate Technology Options",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No open technology-selection decision is introduced by this diff. `docs/RESTRUCTURE-PLAN.md` records the already-decided permanent `@vizuh/*` namespace and says Hugo rejected the alternative.",
+    "action": "None; do not reopen a settled namespace/technology decision without a new requirement."
+  },
+  {
+    "id": 44,
+    "title": "Explain Complex Code or Patterns",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The complex new patterns have direct explanations and executable examples: tenant trust and stable idempotency are documented in `docs/EVENT-CONTRACT.md` and `packages/server/README.md`; Formbricks raw-body signature verification and data minimization are documented in `integrations/formbricks/README.md`; focused tests exist in `packages/server/tests/tenant-adapter.test.ts` and `integrations/formbricks/tests/webhook.test.ts`.",
+    "action": "None for explanation coverage; resolve the separate behavioral findings before release."
+  },
+  {
+    "id": 45,
+    "title": "Explain MR Impact on Performance",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There is no MR/PR for this working tree: `gh pr list --head release/0.1.0-rc.4 --json ...` returned `[]`; `HEAD` and `origin/master` are both `484e93a48ad76c1b3176611b651f2256d7903587`. The current changes are uncommitted, so no MR performance delta exists to explain.",
+    "action": "Assess PR performance only after the intended release diff is curated and opened for review; do not invent a benchmark requirement for unrelated documentation/version changes."
+  },
+  {
+    "id": 46,
+    "title": "Explain Technical Concepts to Non-Technical Users",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is a developer-facing TypeScript/ESM package release. `README.md`, `README.en.md`, and `CONTRIBUTING.md` target installers and maintainers; no non-technical user communication is an acceptance artifact in `specs/001-rc4-release-audit/spec.md`.",
+    "action": "None; create non-technical material only for a named audience and channel."
+  },
+  {
+    "id": 47,
+    "title": "Explain Test Failures",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There are no test failures to explain. `pnpm test` exited 0 with 667 tests passing across 14 tested workspace projects; `pnpm typecheck` and `pnpm build` also exited 0, and `pnpm probe` passed 12/12 fixtures.",
+    "action": "None; retain the passing gates and add regressions for the separate findings."
+  },
+  {
+    "id": 48,
+    "title": "Explain Unfamiliar Code or MR",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "Review of the new tenant adapter found an attribution-loss contract mismatch. `packages/server/src/tenant-adapter.ts:23-29` requires `identity: ServerIdentity`, and the public example passes `identity` at `packages/server/README.md:57-62`, but `TenantAdapter.build()` uses only `input.payload ?? {}` at line 85 and never reads `input.identity`. Observable built-code reproduction: building with `identity.payload={ft_source:\"google\",ft_medium:\"cpc\"}` produced `{\"ft_source\":null,\"marketing_ft_source\":null}`. The existing tenant-adapter tests pass because they never assert that identity attribution survives.",
+    "action": "Make the adapter consume `input.identity.payload` (or remove the conflicting `payload` field and define one source of truth), define precedence explicitly, and add a regression asserting attribution appears in both the flat event and `marketing_trail`."
+  },
+  {
+    "id": 49,
+    "title": "Exploratory Code Understanding",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Exploratory mapping identified the pnpm workspace boundaries (`pnpm-workspace.yaml`), 15 public manifests at `0.1.0-rc.4`, the pure/core-browser-server dependency chain, integration adapters, CI/publish workflows, and the new Formbricks and tenant-adapter surfaces. `pnpm build` completed all 14 included workspace projects.",
+    "action": "None; use this map to keep the reviewed release scope bounded."
+  },
+  {
+    "id": 50,
+    "title": "Find Code Examples of Patterns",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Repository examples exist for the changed patterns: `packages/server/README.md` demonstrates server and tenant-adapter use; `integrations/formbricks/README.md` demonstrates survey decoration, raw webhook verification, mapping, and send; `docs/TUTORIALS.md` adds the Formbricks bridge; tests provide runnable examples for URL validation, signature verification, canonical event names, queue clearing, and stable event IDs.",
+    "action": "None for example availability; update examples if the tenant input contract changes."
+  },
+  {
+    "id": 51,
+    "title": "Find GitLab API Endpoints",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository remote is GitHub (`https://github.com/vizuh/clicktrail-js.git`) and the release implementation uses GitHub Actions and npm. No GitLab API integration or endpoint lookup is in the release scope.",
+    "action": "None; use GitHub APIs only when release metadata must be queried."
+  },
+  {
+    "id": 52,
+    "title": "Find Root Cause of Bug",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The consent-withdrawal queue fix is incomplete. `packages/browser/src/browser/create-clicktrail.ts:310-329` clears queued destinations only when `consentAllows()` is invoked, while `stop()` at lines 454-462 flushes every destination without rechecking consent. Observable built-code reproduction: start with consent=true, queue one `page_view`, set consent=false, call `stop()` without another `track()`, and the injected sender reports `{\"sentCount\":1}`. The added test passes only because it calls `track()` after withdrawal, which invokes the clear path before `stop()`.",
+    "action": "Have `stop()` evaluate the consent gate before flushing and clear rather than send when denied. Add a regression for consent changing to false followed directly by `stop()` with no intervening SDK call."
+  },
+  {
+    "id": 53,
+    "title": "Find Where Functions Are Called",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Call-site tracing is complete for the changed public helpers. `rg -n isSafeHttpUrl` finds consumers in Astro, Nuxt, SvelteKit, and the tenant adapter; `rg -n toCanonicalEventName` finds server and integration consumers; `rg -n clearDestinationQueues` finds both consent denial and `clearData()` paths; Formbricks and tenant-adapter exports are referenced by their READMEs and focused tests.",
+    "action": "None for call-site discovery; the tenant identity mismatch and stop/flush behavior are recorded separately."
+  },
+  {
+    "id": 54,
+    "title": "Framework Upgrade Impact Analysis",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No framework upgrade is present in the current diff. `git diff -- pnpm-lock.yaml` only adds the Formbricks workspace importer and renames the Svelte workspace dependency; changed package manifests sweep the project version/name and do not upgrade Astro, Nuxt, SvelteKit, or other third-party framework versions.",
+    "action": "None; perform framework impact analysis when an actual framework dependency version changes."
+  },
+  {
+    "id": 55,
+    "title": "Generate a Risk Assesment",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "Publication is explicitly blocked by repository-owned gates: specs/001-rc4-release-audit/plan.md:42-44 marks the governed supply chain BLOCKED; docs/internal/RELEASE-READINESS-REVIEW.md:59 and 274-290 leaves GOV-001 open; docs/internal/FIRST-PUBLICATION-CHECKLIST.md:15-25 leaves ownership/provenance approvals unchecked. `gh pr list --repo vizuh/clicktrail-js --head release/0.1.0-rc.4 --state all ...` and `gh run list --repo vizuh/clicktrail-js --branch release/0.1.0-rc.4 ...` both returned empty arrays. `git diff --name-only` reports 63 tracked changed files and `git ls-files --others --exclude-standard` currently reports 83 untracked files, so no reviewed release commit exists.",
+    "action": "Do not tag or publish RC4. Close B1-B4 with owner-authorized evidence, classify and reduce the intended release diff, commit it, open a reviewed PR, and require green remote release gates before tagging reviewed master."
+  },
+  {
+    "id": 56,
+    "title": "Generate Compliance Reports",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No compliance framework, certification claim, jurisdiction, controller/processor role, or audit-report audience is specified for this TypeScript library release. The repository contains no COMPLIANCE report, and packages/browser/README.md:47 assigns cookie policy and retention to the host; generating a formal report without a named standard and deployment context would invent scope.",
+    "action": "No release action. Create a framework-specific report only when a deployment owner names the applicable regime and evidence boundary."
+  },
+  {
+    "id": 57,
+    "title": "Generate CRUD Operations",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The audited change is a package/library release, not a resource-service or database CRUD feature. packages/server/src/tenant-adapter.ts builds and sends events, while the optional Directus ItemsService surface only calls createOne in an integration hook; there is no requested create/read/update/delete API contract to generate.",
+    "action": "No release action; do not add CRUD endpoints without a product requirement and authorization model."
+  },
+  {
+    "id": 58,
+    "title": "Generate Customer-Facing Error Messages",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Changed public validation paths use actionable, non-secret-bearing messages: integrations/directus/src/api/operation.ts:79-100 distinguishes missing eventName, invalid JSON, missing endpoint, and unsafe endpoint; packages/server/src/tenant-adapter.ts:32-51 names invalid fields; integrations/formbricks/src/index.ts:73-123 names invalid field, prefix, and URL conditions. The clean snapshot test run after the documented build/typecheck prerequisite passed all 667 tests, including the changed error-path tests.",
+    "action": "Keep these messages stable and continue testing that errors never include API keys, secrets, or visitor payloads."
+  },
+  {
+    "id": 59,
+    "title": "Generate GitLab CI Templates",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This repository is hosted at https://github.com/vizuh/clicktrail-js (`git remote -v`) and has GitHub Actions under .github/workflows/. There is no .gitlab-ci.yml and no GitLab deployment target in the RC4 release specification.",
+    "action": "No GitLab template is needed for this release; maintain the GitHub Actions workflows instead."
+  },
+  {
+    "id": 60,
+    "title": "Generate Hardware Interface Code",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "package.json and specs/001-rc4-release-audit/plan.md:16-24 define an ESM TypeScript attribution library targeting Node, npm, and browsers. The repository has no device, firmware, bus, driver, GPIO, serial, or hardware protocol requirement.",
+    "action": "No release action; do not introduce a hardware abstraction."
+  },
+  {
+    "id": 61,
+    "title": "Generate Issue Templates",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": ".github/ISSUE_TEMPLATE/bug.yml exists and requires package/version, runtime/browser, a secret-free minimal reproduction, and expected versus actual behavior (lines 1-31). SECURITY.md:6-13 correctly routes vulnerabilities to private GitHub Security Advisories instead of the public issue template.",
+    "action": "Retain the bug template and private vulnerability routing; add other issue types only when maintainer workflow requires them."
+  },
+  {
+    "id": 62,
+    "title": "Generate MR Description",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There is no merge request or pull request for the current branch: `gh pr list --repo vizuh/clicktrail-js --head release/0.1.0-rc.4 --state all --json ...` returned `[]`, and the working tree remains uncommitted. A generic GitHub PR template exists at .github/PULL_REQUEST_TEMPLATE.md, but there is no concrete reviewed change set from which to generate an MR description.",
+    "action": "Generate the actual PR description from the final reviewed commit and verification evidence after the release scope is committed."
+  },
+  {
+    "id": 63,
+    "title": "Generate Release Notes from MRs",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "CHANGELOG.md:10 starts an RC4 release section even though no RC4 PR, tag, or GitHub release exists. That section omits material current changes: it contains no `@vizuh/clicktrail-formbricks`, TenantAdapter, `onDropped`, or safe-URL validation entry, although those runtime surfaces are present in untracked/modified files and are exercised by the current tests. `gh release list --repo vizuh/clicktrail-js` shows only RC1 and RC2 releases; `git ls-remote --tags origin` has RC1-RC3 but no RC4.",
+    "action": "Keep notes under Unreleased until the scope is committed and reviewed. Generate RC4 notes from the final PR/commit inventory, covering every shipped API, behavior/security change, package rename, and intentional exclusion before creating the tag."
+  },
+  {
+    "id": 64,
+    "title": "Generate Security Documentation",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "SECURITY.md documents a private advisory channel and explicit credential, HTTPS, consent, dependency, and Actions boundaries (lines 1-20). integrations/directus/src/TRUST-MODEL.md documents server egress, env reads, optional writes, unsandboxed tradeoffs, and failure containment. integrations/formbricks/README.md:46-87 documents raw-body signature verification, allowlisted data, and privacy limits. Security automation exists in .github/workflows/{security,codeql,osv,scorecards}.yml.",
+    "action": "Update these documents when the endpoint trust model and retention findings in this audit are resolved."
+  },
+  {
+    "id": 65,
+    "title": "Generate Test Data",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "packages/clicktrail/fixtures/ contains 37 synthetic/golden JSON fixtures (12 canonical and 25 WP-parity drafts), and packages/clicktrail/tests/fixtures-replay.test.ts replays them as executable behavior. The current diff adds synthetic edge data in 11 changed/new test files, including Formbricks signatures, endpoint validation, delivery failure, and tenant adapter inputs; no real visitor dataset is required or present in these test paths.",
+    "action": "Keep fixtures synthetic and secret-free, and add a focused fixture only when a new contract edge cannot be expressed clearly in an existing unit test."
+  },
+  {
+    "id": 66,
+    "title": "Generate Unit Tests",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "A clean copy of the current runtime worktree under /tmp was installed with `pnpm install --frozen-lockfile`, then run in CI order: `pnpm typecheck` passed, `pnpm -r test` passed 667 tests across 14 package summaries, and `pnpm -r build` passed all 14 included workspace projects. The current diff adds or changes 11 test files, including packages/server/tests/tenant-adapter.test.ts, integrations/formbricks/tests/{index,webhook}.test.ts, proxy validation tests, and browser delivery/consent tests.",
+    "action": "Preserve the CI order (build/typecheck prerequisites before workspace tests) and rerun the same clean sequence after the final diff is frozen."
+  },
+  {
+    "id": 67,
+    "title": "Identify Breaking Changes in MR",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "`git diff` removes no export from the published `@vizuh/clicktrail` manifest; the changed core/server exports are additive (`isSafeHttpUrl` and tenant-adapter exports). The Svelte package identity changes from `@clicktrail/*` to `@vizuh/*`, but allowlisted `npm view ... version --json` checks returned E404 for both the old and new Svelte names, and the other new first-wave names are also unpublished; only `@vizuh/clicktrail@0.1.0` exists publicly. Clean typecheck, 667 tests, and builds passed.",
+    "action": "Call the unpublished package renames out in RC4 notes and repeat API/tarball comparisons against the final commit; do not remove stable umbrella exports."
+  },
+  {
+    "id": 68,
+    "title": "Identify Code Duplication Opportunities",
+    "status": "FINDING",
+    "severity": "Minor",
+    "evidence": "The new canonical packages/server/src/server.ts has not replaced four integration copies. `git grep -n 'class ClickTrailServer'` finds definitions in integrations/astro/src/server.ts, integrations/nuxt/src/server.ts, integrations/qwik/src/server.ts, and packages/server/src/server.ts; SvelteKit has another parallel implementation in integrations/sveltekit/src/server-events.ts. Text similarity is 97.4% between Astro and Nuxt server files and 87-92% between the shared server and integration copies. docs/RESTRUCTURE-PLAN.md:17-25 explicitly calls for one shared builders/server module because this logic is duplicated in 4+ integrations.",
+    "action": "After the RC scope is stable, migrate integrations to the shared server contract with compatibility tests, or explicitly defer the consolidation; avoid fixing validation or delivery behavior in only one copy."
+  },
+  {
+    "id": 69,
+    "title": "Identify Security Issues in MR",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new shared `isSafeHttpUrl` validator in packages/core/src/core/url.ts:1-8 accepts any http(s) host and rejects only empty hosts or embedded credentials. integrations/directus/src/api/operation.ts:34-55 accepts an endpoint from Flow config, then performs server-side fetch to it at lines 116-124. The same weak URL safety predicate is used by Astro, Nuxt, and SvelteKit server proxy validation. Thus localhost, loopback, link-local metadata, RFC1918, and plain HTTP targets pass a function described as safe; a user allowed to configure an endpoint can turn these server components into internal-network egress (SSRF) or send attribution over cleartext HTTP.",
+    "action": "Define the endpoint trust boundary before release. Prefer an operator-owned env endpoint or an explicit hostname/HTTPS allowlist; reject loopback, link-local, private/reserved targets after DNS resolution where endpoints are less trusted, and add regression tests for localhost, IP literals, redirects, and credential leakage."
+  },
+  {
+    "id": 70,
+    "title": "Implement CI/CD Best Practices",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The workflows pin actions by SHA, use least permissions, OIDC provenance, frozen installs, version checks, and `next` for prereleases. However .github/workflows/publish.yml:3-6 triggers on any `v*` tag and has no check that the tagged commit is the reviewed master commit. It runs typecheck/test/build (lines 34-38) but contains no `pnpm probe`, production audit, required WP parity, or clean-room pack/import smoke. Those checks live separately in ci.yml, and no RC4 PR or branch run exists, so the tag workflow does not itself enforce specs/001-rc4-release-audit/spec.md:65-70 and FR-008.",
+    "action": "Before publication, require the tag SHA to equal/descend from reviewed master and bind publishing to green required checks. Reuse or invoke the full release gate (probe, audit, parity decision, pack and clean-room imports) before the irreversible npm publish step."
+  },
+  {
+    "id": 71,
+    "title": "Implement Data Retention Policies",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "Attribution and identity are security-sensitive (SECURITY.md:3-4), but packages/browser/src/browser/storage.ts:193-197 makes `retentionDays` optional and states omission writes `expires_at: null`; lines 236-259 then persist a localStorage mirror that never expires. The public browser README example at lines 26-35 enables storage without setting retentionDays. There is also no validation that retentionDays is positive, finite, and bounded, so invalid values can defeat or distort expiry. Consent denial clears state, but users who never withdraw consent retain the mirror indefinitely by default.",
+    "action": "Set and document a finite privacy-preserving default or require an explicit valid retentionDays value before persistent storage. Validate finite positive bounds, migrate/delete prior no-expiry envelopes, and test expiry plus consent withdrawal across attribution, identity, signing, and journey keys."
+  },
+  {
+    "id": 72,
+    "title": "Implement Design Pattern",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No specific design-pattern implementation is requested by the RC4 specification or current diff. The repository already uses explicit destination, adapter, injected-effect, and tenant-adapter structures; introducing another named pattern solely for this catalog item would add architecture without a release requirement.",
+    "action": "No release action; select a pattern only when a concrete behavior or maintainability problem requires it."
+  },
+  {
+    "id": 73,
+    "title": "Implement Responsive Layout",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The current release diff does not implement or alter layout behavior. `git diff --name-only -- '*.css' '*.scss' '*.sass' '*.less' '*.tsx' '*.jsx' '*.vue' '*.astro' '*.svelte'` returned only `integrations/sveltekit/src/ClickTrail.svelte`; its diff changes only the package name inside a source comment. `site/src/data/integrations.ts` changes integration metadata strings, not layout.",
+    "action": "No release action for this catalog item; assess responsiveness only when rendered layout or style code changes."
+  },
+  {
+    "id": 74,
+    "title": "Implement Role-Based Access Control",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "ClickTrail is an attribution SDK/integration monorepo, not an application with users or roles. `git diff --name-only -- '*auth*' '*rbac*' '*role*' '*sso*'` returned no changed files, and the changed server adapter documents authentication as host-owned in `packages/server/README.md`.",
+    "action": "No RBAC release action; authorization belongs to each host application/collector, outside this package release."
+  },
+  {
+    "id": 75,
+    "title": "Improve UI Accessibility",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No user-facing markup, controls, styles, or interaction behavior changed. The only changed UI-extension file found by the layout-file diff query is `integrations/sveltekit/src/ClickTrail.svelte`, whose diff is comment-only; `site/src/data/integrations.ts` only corrects package names/install strings.",
+    "action": "No accessibility action for this release diff; run UI accessibility checks when rendered UI changes."
+  },
+  {
+    "id": 76,
+    "title": "Individual Contribution Summary",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is a release-risk audit of a working tree, and the catalog item supplies no contributor identity, date range, branch range, or comparison baseline. Repository history (`git log -5 --oneline --decorate`) identifies commits but cannot support a scoped individual contribution summary from this item alone.",
+    "action": "No release action; request a named contributor and commit/date range if such a management report is needed."
+  },
+  {
+    "id": 77,
+    "title": "Integrate with Enterprise SSO",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There is no end-user authentication surface or SSO implementation in the changed packages. `rg -n 'SSO|SAML|OIDC' README.md docs packages integrations --glob '!**/dist/**'` finds OIDC only in npm trusted-publishing documentation, not enterprise login/authentication code.",
+    "action": "No SSO action for this SDK release; enterprise identity integration would require a separate host-application scope and protocol requirements."
+  },
+  {
+    "id": 78,
+    "title": "Investigate Performance Bottleneck",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No performance incident, slow path, workload, latency target, or benchmark baseline is supplied. `rg -n 'benchmark|bench:|performance bottleneck|throughput' package.json packages integrations site docs --glob '!**/dist/**'` found only a non-benchmark comparison-page sentence, and the current implementation diff centers on validation, naming, release metadata, consent queue clearing, and adapters.",
+    "action": "No performance release action without an observable bottleneck and measurable workload."
+  },
+  {
+    "id": 79,
+    "title": "Issue Closure Rate Comparison",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The item gives no issue scope, labels, projects, or two date ranges to compare. Closure-rate reporting is project-management analytics and does not test the current uncommitted release diff.",
+    "action": "No release action; supply the repository/project scope and comparison periods if this report is required."
+  },
+  {
+    "id": 80,
+    "title": "Long-Running Merge Requests Table",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "`git remote -v` shows the canonical remote is GitHub (`https://github.com/vizuh/clicktrail-js.git`), not GitLab merge requests, and the item provides no age threshold or MR/project scope. The current worktree is local on `release/0.1.0-rc.4`.",
+    "action": "No release action; use a separately scoped GitHub pull-request aging query if desired."
+  },
+  {
+    "id": 81,
+    "title": "Map Component Dependencies",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Workspace and changed release components resolve coherently. `pnpm list -r --depth -1` exited 0 and enumerated the workspace packages at `0.1.0-rc.4`. `pnpm --filter @vizuh/clicktrail-server... list --depth 0` exited 0 and showed server -> browser -> core plus the direct server -> core link. `pnpm --filter @vizuh/clicktrail-formbricks... list --depth 0` exited 0 and showed Formbricks -> core. Targeted suites passed: server 13/13 tests and Formbricks 8/8 tests.",
+    "action": "No dependency-map release action for the reviewed components."
+  },
+  {
+    "id": 82,
+    "title": "Measure MR Throughput During Duo Trial",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository remote is GitHub rather than GitLab, and no GitLab Duo trial, trial dates, cohort, baseline period, or MR dataset is identified. This metric cannot be derived from the current source/diff and is not a code release gate.",
+    "action": "No release action; define the trial window and analytics source before measuring throughput."
+  },
+  {
+    "id": 83,
+    "title": "Migrate from Legacy Framework",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No framework migration is present. The current diff changes package scopes/names and shared SDK behavior, while existing framework integrations remain Astro, Nuxt, Qwik, SvelteKit, Directus, n8n, and related adapters. Package-name migration is not a legacy-framework replacement.",
+    "action": "No framework-migration release action."
+  },
+  {
+    "id": 84,
+    "title": "Modernize Legacy Code",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The applicable modernization is narrow and covered: `packages/core/src/core/url.ts` introduces one safe absolute HTTP(S) URL validator, exported through `packages/core/src/core/index.ts`, and Astro/Nuxt/SvelteKit replace duplicated prefix-regex checks with it; Directus applies equivalent credential rejection. Relevant suites passed: Astro 36/36, Nuxt 63/63, SvelteKit 49/49, and Directus 59/59 tests. `git diff --check` also exited 0.",
+    "action": "No release action for this catalog item; keep the shared validator and its unsafe-endpoint regressions in CI."
+  },
+  {
+    "id": 85,
+    "title": "Multi-Tenant Data Isolation",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new `packages/server/src/tenant-adapter.ts` protects configured `tenant_id` from input override, and its 6 tests pass, but two release risks remain. First, `TenantAdapterEventInput.identity` is never consumed: `build()` calls `buildEventPayload(input.payload ?? {}, ...)`. A source-bundled runtime probe (`pnpm --filter @vizuh/clicktrail exec esbuild packages/server/src/tenant-adapter.ts --bundle --platform=node --format=esm --outfile=/tmp/clicktrail-tenant-adapter-probe.mjs`, then Node) passed `identity.payload.ft_source='google'`, `visitorId`, and `sessionId` and observed `has_ft_source:false`, `visitor_id:null`, empty envelope source, and empty anonymous ID. This contradicts the README example, which passes `identity` but no separate payload. Second, stable IDs use the 32-bit FNV-1a digest in `packages/core/src/ids.ts:fnv1a32`; an actual bundled-source probe produced the same `evt_s-83fd399d` for tenant-a/provider-bzj5xdm3z8n6 and tenant-b/provider-6t1hedgr8o2r at the same site/adapter/event. A collector following `packages/server/README.md` and deduplicating by event_id can therefore silently drop a distinct tenant's event.",
+    "action": "Block publication of the new tenant adapter until `build()` propagates the documented identity payload and visitor/session fields, and replace the 32-bit stable-ID digest with a collision-resistant deterministic ID (at least 128 bits). Add regressions for README-style identity propagation and distinct cross-tenant events."
+  },
+  {
+    "id": 86,
+    "title": "Navigate Large Codebase Quickly",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is an interactive developer-workflow prompt, not a release requirement, and it names no component or question to navigate to. Repository navigation evidence already exists in `README.md` (package table and one-line architecture) and `pnpm-workspace.yaml`, but there is no release behavior to pass or fail for this item.",
+    "action": "No release action; use the root architecture/package index and workspace listing for future targeted investigations."
+  },
+  {
+    "id": 87,
+    "title": "Open Issues by Priority and Health Status",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The item provides no repository/project issue scope or priority/health taxonomy. The canonical remote is GitHub, while GitLab-style issue health status is not represented in the source tree or current diff, so this management query cannot determine release behavior.",
+    "action": "No release action; define labels/fields and repository scope before producing an issue-status report."
+  },
+  {
+    "id": 88,
+    "title": "Optimize Algorithm Performance",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No algorithm optimization objective, workload, complexity target, or benchmark is part of the current diff. The changed paths implement validation, adapter behavior, consent-queue clearing, naming, and release packaging; no performance acceptance criterion is supplied.",
+    "action": "No performance optimization should be invented without a measured hot path and baseline."
+  },
+  {
+    "id": 89,
+    "title": "Optimize Database Queries",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository packages emit/transport attribution events and do not contain a database query layer. `rg -n 'prisma|typeorm|sequelize|knex|drizzle|mongoose|SELECT\\s|INSERT\\s|UPDATE\\s|DELETE\\s+FROM' package.json packages integrations site --glob '!**/dist/**' --glob '!**/*.md'` exited 1 with no matches.",
+    "action": "No database-query action; query/storage optimization belongs to downstream collector implementations."
+  },
+  {
+    "id": 90,
+    "title": "Optimize Embedded System Code",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is a TypeScript/JavaScript, Python, and Astro web SDK monorepo, not embedded firmware. `git ls-files` contains zero tracked `.c`, `.cc`, `.cpp`, `.h`, `.hpp`, `.ino`, `.s`, or `.asm` source files.",
+    "action": "No embedded-system release action."
+  },
+  {
+    "id": 91,
+    "title": "Orchestrate Multi-Agent Workflows",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No multi-agent coordinator is part of the ClickTrail runtime or release surface. `find . -maxdepth 2 -type d` shows product code under packages/, integrations/, probe/, tools/, site/, and python/. The newly untracked .agents/ tree contains local Speckit prompt skills, not shipped package code or an orchestration service.",
+    "action": "None for RC4; do not add orchestration machinery merely to satisfy this catalog prompt."
+  },
+  {
+    "id": 92,
+    "title": "Pipeline Failure and Duration Comparison",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There are no remote pipeline samples for the release branch to compare: `gh run list --repo vizuh/clicktrail-js --branch release/0.1.0-rc.4 --limit 10 --json databaseId,name,status,conclusion,createdAt,updatedAt,event,headSha` returned `[]`.",
+    "action": "Compare durations only after the release branch or its PR has at least two remote CI runs."
+  },
+  {
+    "id": 93,
+    "title": "Pipeline Success Rate by Project",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is one GitHub repository (`origin https://github.com/vizuh/clicktrail-js.git`), not a portfolio of projects with a per-project pipeline dataset. The release branch also has zero remote runs (`gh run list ... --branch release/0.1.0-rc.4` returned `[]`).",
+    "action": "None; a by-project success rate cannot be computed from this release scope."
+  },
+  {
+    "id": 94,
+    "title": "Pipeline Throughput Trends",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No time-series pipeline data for `release/0.1.0-rc.4` exists in GitHub Actions; `gh run list --repo vizuh/clicktrail-js --branch release/0.1.0-rc.4 ...` returned `[]`. Repository workflow YAML alone cannot establish throughput trends.",
+    "action": "Collect remote run history before performing a trend analysis."
+  },
+  {
+    "id": 95,
+    "title": "Plan Database Schema Changes",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "ClickTrail JS is a TypeScript package/integration monorepo and this diff has no database schema or migration. `find . -type f ( -iname '*migration*' -o -iname '*schema.sql' -o -iname '*.prisma' ) -not -path './node_modules/*' -not -path './.git/*'` returned no files.",
+    "action": "None; no database change should be invented for RC4."
+  },
+  {
+    "id": 96,
+    "title": "Planner Agent for Epic Decomposition",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "Epic decomposition is a planning workflow, not a release-risk check on the JS artifacts. The current work already has a bounded release specification at `specs/001-rc4-release-audit/spec.md` and plan at `specs/001-rc4-release-audit/plan.md`; this audit was not asked to create or execute an epic.",
+    "action": "None for this read-only audit."
+  },
+  {
+    "id": 97,
+    "title": "Prioritize Review Comments",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There is no pull request/MR or review-comment set for this branch: `gh pr list --repo vizuh/clicktrail-js --head release/0.1.0-rc.4 --json number,title,state,isDraft,reviewDecision,statusCheckRollup` returned `[]`.",
+    "action": "Prioritize comments after a PR exists; do not fabricate review comments."
+  },
+  {
+    "id": 98,
+    "title": "Profile Application Performance",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The RC4 diff is library, adapter, release, and documentation work with no stated latency/throughput regression or performance acceptance target. `find . -type f ( -iname '*bench*' -o -iname '*profile*' )` outside dependencies returned no benchmark/profile artifact.",
+    "action": "Add profiling only when a concrete performance budget or regression is identified."
+  },
+  {
+    "id": 99,
+    "title": "Project Delivery Health Summary",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "RC4 is not releasable. `docs/internal/FIRST-PUBLICATION-CHECKLIST.md:16-20,25,28-32,35-58` leaves copyright/provenance, remote CI, parity, packaging, npm identity, trusted publisher, tag, and post-publish gates unchecked. All 15 public manifests currently declare `author: Vizuh OÜ` (for example `packages/clicktrail/package.json:90`) while checklist line 16 says the holder is still undecided. `gh pr list ... --head release/0.1.0-rc.4` and `gh run list ... --branch release/0.1.0-rc.4` both returned `[]`. The worktree is also unstable: untracked `AGENTS.md`, `.agents/`, `.specify/`, and `specs/` appeared after the audit's initial Git snapshot, while HEAD remained `484e93a48ad76c1b3176611b651f2256d7903587`.",
+    "action": "Stop publication. Freeze and review one exact diff, resolve the authorized copyright/provenance decision, open a PR, obtain remote CI/parity/package evidence, and close every blocking checklist gate before creating or pushing an RC4 tag."
+  },
+  {
+    "id": 100,
+    "title": "Reduce Code Complexity",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The reviewed runtime changes remain small and localized: URL validation is one helper (`packages/core/src/core/url.ts`), consent queue deletion is one optional `Destination.clear` hook (`packages/browser/src/browser/transport.ts` and `create-clicktrail.ts`), and Directus endpoint/key resolution uses named helpers (`integrations/directus/src/api/operation.ts`). `git diff --check` returned exit 0 and the repository test command completed 72 files / 667 tests successfully.",
+    "action": "None for complexity; correctness defects are recorded separately."
+  },
+  {
+    "id": 101,
+    "title": "Refactor for Better Readability",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Changed behavior is separated into named boundaries (`isSafeHttpUrl`, `resolveEndpoint`, `resolveApiKey`, `clearDestinationQueues`, `validateTenantAdapterConfig`) with focused tests in the matching package directories. `git diff --check` returned exit 0, and `pnpm -r test` passed 72 test files / 667 tests.",
+    "action": "None; preserve the current small helper boundaries when fixing the release blockers."
+  },
+  {
+    "id": 102,
+    "title": "Remove Dead Code",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The new public `TenantAdapterEventInput.identity` field is dead in `packages/server/src/tenant-adapter.ts`: it is required at lines 23-29, but `build()` at lines 72-100 reads `input.payload ?? {}` and never reads `input.identity`. A focused `grep -RIn input.identity packages/server/src/tenant-adapter.ts packages/server/tests/tenant-adapter.test.ts` returned no matches even though the test fixture supplies `identity` at `packages/server/tests/tenant-adapter.test.ts:20`.",
+    "action": "Use `input.identity.payload` (and deliberately map supported identity fields), or remove the misleading identity field and document one canonical payload source. Add a regression assertion before release."
+  },
+  {
+    "id": 103,
+    "title": "Review Code for Security Issues",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The security-focused diff fails closed on malformed/credential-bearing URLs (`packages/core/src/core/url.ts`; Astro/Nuxt/SvelteKit proxy tests), prevents an environment API key from being sent to a per-flow Directus endpoint (`integrations/directus/src/api/operation.ts` and tests), clears buffered HTTP events on consent withdrawal, and verifies Formbricks HMAC signatures with timestamp tolerance and `timingSafeEqual` (`integrations/formbricks/src/webhook.ts`). `git grep -nE '(eval\\(|new Function|innerHTML|document\\.write)' -- packages integrations` found no sink, and `pnpm audit --prod --audit-level high` exited 0 with zero high/critical findings.",
+    "action": "None for high/critical code security; the separate low-severity dependency advisory is triaged under item 108."
+  },
+  {
+    "id": 104,
+    "title": "Review MR for Logical Errors",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "The actual publication path produces broken consumer manifests. First-wave packages use `workspace:*` dependencies (for example `packages/browser/package.json`), while `.github/workflows/publish.yml:97` and `tools/release/bootstrap-new-packages.sh:14` call `npm publish`. Reproduction: `npm pack` of `packages/browser` preserved `{'@vizuh/clicktrail-core':'workspace:*'}` in the packed package.json; installing that tarball in an empty `/tmp` project failed with `npm error code EUNSUPPORTEDPROTOCOL` and `Unsupported URL Type \"workspace:\": workspace:*`. By contrast, `pnpm pack` rewrote the dependency to `0.1.0-rc.4`, so the CI `pnpm pack` smoke does not exercise the artifact semantics used by `npm publish`.",
+    "action": "Do not tag or publish RC4. Make the publish/bootstrap path produce registry-safe exact/range dependencies (for example through a verified pnpm publish/pack path or prepublication manifest rewriting), then install the exact npm-publication tarballs in a clean project before approval."
+  },
+  {
+    "id": 105,
+    "title": "Review Test Coverage Gaps",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "`pnpm -r test` passed 72 files / 667 tests but misses release-critical cases. `packages/server/tests/tenant-adapter.test.ts:18-25` supplies `identity.payload.ft_source='google'`, yet assertions at lines 41-50 never check attribution propagation, allowing the dead identity path to pass. `.github/workflows/ci.yml` uses `pnpm pack`, which rewrites workspace ranges and therefore misses the `npm publish` artifact failure; its pack-smoke list includes core/browser/umbrella/Astro/server/Formbricks but omits Nuxt even though `.github/workflows/publish.yml` names Nuxt in the five-package first wave. Also `pnpm-workspace.yaml` excludes `integrations/activepieces`, so the aggregate 667-test run does not test that public package.",
+    "action": "Add identity-propagation assertions, a clean install of artifacts created by the same tool/path used for publication, Nuxt first-wave pack/import coverage, and an explicit separately recorded Activepieces test or deferral."
+  },
+  {
+    "id": 106,
+    "title": "Rubber Duck Debugging with AI",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is a debugging conversation method, not a repository release check. No unresolved reproduction request or stack trace was supplied for rubber-duck analysis; concrete defects were instead reproduced directly with source inspection and clean `/tmp` package installation.",
+    "action": "None; use this method only for a specific debugging problem."
+  },
+  {
+    "id": 107,
+    "title": "Search GitLab Documentation",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The repository is hosted on GitHub (`origin https://github.com/vizuh/clicktrail-js.git`) and release automation is under `.github/workflows/`. No GitLab CI configuration or GitLab API behavior is part of RC4.",
+    "action": "Use GitHub/npm documentation for this release; do not add GitLab work."
+  },
+  {
+    "id": 108,
+    "title": "Security Analyst for Vulnerability Triage",
+    "status": "FINDING",
+    "severity": "Minor",
+    "evidence": "`pnpm audit --prod --json` reports 1 low, 0 moderate, 0 high, and 0 critical vulnerabilities across 941 production dependencies: `cookie@0.6.0`, GHSA-pxg6-pf52-xh8x / CVE-2024-47764, via `integrations__sveltekit>@sveltejs/kit>cookie`; patched in cookie >=0.7.0. The high-threshold command `pnpm audit --prod --audit-level high` therefore exits 0 but does not mean the inventory is vulnerability-free.",
+    "action": "Upgrade the SvelteKit dependency chain to a version using cookie >=0.7.0, or document reachability and an explicit temporary acceptance before publishing the SvelteKit package. This is not in the five-package RC4 first wave."
+  },
+  {
+    "id": 109,
+    "title": "Stakeholder Update",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "The release update contains an unresolved legal publication gate that conflicts with release metadata. docs/internal/FIRST-PUBLICATION-CHECKLIST.md section 0 labels governance as 'blocking everything' and leaves the copyright-holder and B1-B3 attestations unchecked; docs/internal/OWNER-NAMESPACE-DECISION.md says 'COPYRIGHT/PROVENANCE GATES OPEN' and still presents two possible legal holders; docs/internal/RELEASE-READINESS-REVIEW.md keeps GOV-001 open. Nevertheless LICENSE:3 already states 'Copyright (c) 2026 Vizuh OÜ' and the current diff adds author='Vizuh OÜ' to package manifests. git tag --list 'v0.1.0*' confirms no RC4 tag exists yet.",
+    "action": "Do not tag or publish RC4. Have the authorized owner decide the copyright holder and approve or otherwise resolve B1-B3/B4, then align LICENSE and all package author metadata and close GOV-001 with evidence."
+  },
+  {
+    "id": 110,
+    "title": "Stale Bug Issues Table",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This GitHub repository has no stale bug issue set to tabulate. `gh issue list --repo vizuh/clicktrail-js --state open --limit 100 --json number,title,labels,updatedAt,url` returned nine recently updated issues (#7-#15), none with a bug label; all were updated on 2026-08-24/25.",
+    "action": "None for this release. Add and use a bug label/triage policy before requesting a stale-bug report."
+  },
+  {
+    "id": 111,
+    "title": "Suggest Code Improvements in MR",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "There is no merge request or pull request for the audited head. `gh pr list --repo vizuh/clicktrail-js --state all --head release/0.1.0-rc.4 ...` returned `[]`; `git status --short` shows the release work is still uncommitted.",
+    "action": "Open a reviewable PR after the release blockers are fixed; request code-improvement suggestions there."
+  },
+  {
+    "id": 112,
+    "title": "Suggest Reviewers for MR",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No MR/PR exists for branch release/0.1.0-rc.4 (`gh pr list ... --head release/0.1.0-rc.4` returned an empty array), so there is no review surface or changed-file ownership metadata to assign reviewers to.",
+    "action": "Create the PR first, then select reviewers based on the release workflow, browser consent lifecycle, security, and package ownership surfaces."
+  },
+  {
+    "id": 113,
+    "title": "Summarize Recent Changes to MR/Issue",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No MR/PR or linked issue identifies the current uncommitted release diff. Git shows HEAD 484e93a on release/0.1.0-rc.4 with a large working-tree delta, while the branch-specific PR query returns none.",
+    "action": "Create or link a release issue/PR and summarize the bounded diff there; do not treat local uncommitted state as remote review evidence."
+  },
+  {
+    "id": 114,
+    "title": "Top Failing Jobs",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The latest default-branch OSV workflow for HEAD 484e93a failed: GitHub Actions run 32850420852, job `scan / osv-scan`, reporter step failure. The latest normal CI run 32850420155 passed, but it covers committed master only, not the current uncommitted RC4 diff. PR #18 has green remediation checks, but its fix is not in this worktree.",
+    "action": "Land or incorporate PR #18's dependency override into the RC4 change set, then run the complete remote CI/OSV/CodeQL/workflow-security matrix on the actual release commit before tagging."
+  },
+  {
+    "id": 115,
+    "title": "Trace Authentication and Authorization Flow",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "The audited auth boundaries are explicit and covered: integrations/formbricks/src/webhook.ts verifies Standard Webhooks HMAC-SHA256 with timestamp tolerance and timingSafeEqual; integrations/directus/src/api/operation.ts rejects non-http(s)/credential-bearing endpoints and does not send the environment API key to a caller-supplied endpoint; n8n marks apiKey as a password field and requires HTTPS. `pnpm -r test` exited 0, including Formbricks 8/8, Directus 59/59, and n8n 26/26 tests.",
+    "action": "No release-blocking auth change from this item; retain raw-body signature tests and endpoint/key-origin tests."
+  },
+  {
+    "id": 116,
+    "title": "Trace Function Usage Across Codebase",
+    "status": "FINDING",
+    "severity": "Critical",
+    "evidence": "The current diff changed packages/core/src/ids.ts::deriveStableEventId from 32-bit FNV-1a (`evt_s-` + 8 hex) to SHA-256 truncated to 128 bits (`evt_s-` + 32 hex), and added packages/core/tests/ids.test.ts for that contract. Cross-codebase tracing shows Python was not migrated: python/clicktrail/clicktrail/ids.py:53-72 still implements fnv1a32 and returns 8 hex; python/clicktrail/tests/test_ids.py enforces `^evt_s-[0-9a-f]{8}$`; python/clicktrail/README.md claims bit-exact mirroring. `rg -n 'fnv|evt_s-|sha256' python packages integrations docs` exposes the divergence. This can assign different idempotency keys to the same logical event across JS and Python.",
+    "action": "Do not release a mixed event-ID contract. Choose and document one versioned algorithm, migrate JS and Python plus every golden vector/consumer together, add cross-language shared fixtures to CI, and assess whether schema/version stamps or a compatibility migration are required."
+  },
+  {
+    "id": 117,
+    "title": "Translate Application to Another Language",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "No application-translation target or locale was requested in this pre-release audit. The repository already maintains paired root documentation README.md (pt-BR) and README.en.md (English), and the current diff updates both; there is no locale implementation change to assess.",
+    "action": "None unless a specific application locale and acceptance criteria are added to release scope."
+  },
+  {
+    "id": 118,
+    "title": "Troubleshoot Production Issue",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "This is a pre-release candidate with no production incident supplied. docs/internal/FIRST-PUBLICATION-CHECKLIST.md explicitly forbids live pilots and production swaps, and GitHub has no RC4 tag or release (`git tag --list` stops at rc.3; `gh release list` stops at rc.2).",
+    "action": "Keep production troubleshooting out of scope until a concrete incident, environment, and observable failure exist."
+  },
+  {
+    "id": 119,
+    "title": "Understand Async Operations and Concurrency",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "integrations/sveltekit/src/ClickTrail.svelte uses the unawaited reactive statement `$: boot(consent)` to start an async boot. `boot()` has no cancellation/version guard; a later `denied` call returns without stopping/clearing/detaching the already booted instance, while auto->granted can create another client and leave the first consent listener alive. The SvelteKit test directory has navigation/proxy/server/handle tests but no client/component lifecycle test; all existing 49 tests pass without exercising this race.",
+    "action": "Make the component own exactly one client lifecycle. Cancel stale async boots, stop + clearData + detach on denied/unmount, and add rapid auto->granted->denied plus remount tests proving one sender/listener/page-view owner."
+  },
+  {
+    "id": 120,
+    "title": "Understand Class Hierarchy and Inheritance",
+    "status": "N/A",
+    "severity": "None",
+    "evidence": "The changed production architecture is composition-based. `rg -n 'class |extends '` shows no changed application class inheritance hierarchy to analyze; relevant classes are standalone ClickTrailServer/TenantAdapter and framework-required classes, with only ActionError extending Error.",
+    "action": "None; do not invent an inheritance refactor for this release."
+  },
+  {
+    "id": 121,
+    "title": "Understand Code Before Making Changes",
+    "status": "PASS",
+    "severity": "None",
+    "evidence": "Read-only discovery covered root and www AGENTS.md guidance, README/README.en.md, docs/ARCHITECTURE.md, docs/EVENT-CONTRACT.md, release/provenance checklists, package/workspace manifests, changed and untracked release paths, GitHub metadata, and runtime tests. The audit repeatedly re-read `git status` as concurrent changes landed; the final `pnpm -r test` run exposed the new stable-ID cross-workspace mismatch recorded under item 116, rather than relying on the earlier green 72-file/667-test snapshot.",
+    "action": "No audit-process action; resolve the substantive findings before release."
+  },
+  {
+    "id": 122,
+    "title": "Understand Configuration and Environment Setup",
+    "status": "FINDING",
+    "severity": "Minor",
+    "evidence": "GitHub reports defaultBranchRef.name=`master`, but package metadata points homepages at `/tree/main/...`. This affects core, browser, consent, server and integration manifests. Observable check: GET https://github.com/vizuh/clicktrail-js/tree/main/packages/browser returned HTTP 404, while the equivalent `/tree/master/packages/browser` returned HTTP 200.",
+    "action": "Change package homepage/documentation URLs from `tree/main` to `tree/master` (or intentionally rename the default branch and update every reference) before publication."
+  },
+  {
+    "id": 123,
+    "title": "Understand Data Flow Through System",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "Consent withdrawal does not reliably erase stored attribution. README.en.md:36-37 and README.md:136 claim denied/withdrawn consent clears stored payloads. Yet integrations/nuxt/src/client.ts:148 handles later denial with only `instance.stop()`, and Astro/Qwik/Svelte client listeners never clear on false. Direct observable SDK check after start+persist+stop returned `before:[1,1,'x']`, `after:[1,1,'x']`, `started:false`: both storage adapters and gclid remained. Erasure currently happens only when clearData() is called or a post-denial track attempt reaches consentAllows().",
+    "action": "On every consent-withdrawal path, synchronously call clearData() before/with stop(), clear/detach integration listeners, and add adapter-level tests proving cookies, mirrors, identity, and queued events are gone without requiring a later track call."
+  },
+  {
+    "id": 124,
+    "title": "Understand Error Handling Patterns",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "packages/browser/src/browser/create-clicktrail.ts:454-460 calls `dest.flush?.()` inside `Promise.resolve` without guarding a synchronous throw and without handling a custom destination's rejected promise. Observable command using the built package with a throwing destination printed `STOP_THREW:flush boom` and `STARTED_AFTER_THROW:true`; cleanup and the state transition never ran. The Destination contract explicitly allows custom synchronous or async flush implementations.",
+    "action": "Make stop cleanup exception-safe: invoke each flush in a guarded promise chain, catch/report rejections, always detach forms/links and set started=false in a finally-equivalent path, and add sync-throw + async-rejection tests."
+  },
+  {
+    "id": 125,
+    "title": "Understand Third-Party Library Error",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "The current worktree still resolves vulnerable `cookie@0.6.0`: `pnpm why cookie -r` reports it under @sveltejs/kit@2.70.3 -> @vizuh/clicktrail-sveltekit. GitHub code-scanning alert #28 is open for CVE-2024-47764 in pnpm-lock.yaml, and default-branch OSV run 32850420852 failed. PR #18 proves the intended `@sveltejs/kit>cookie: 0.7.2` override passes OSV, but that override is absent from this worktree's package.json.",
+    "action": "Incorporate the reviewed PR #18 override and lockfile result into the final RC4 commit, rerun `pnpm why cookie -r` and OSV on that exact commit, and require the alert/job to close/pass before tagging."
+  },
+  {
+    "id": 126,
+    "title": "Update Documentation After Code Changes",
+    "status": "FINDING",
+    "severity": "Important",
+    "evidence": "Documentation does not describe the current stable-ID migration: packages/core/src/ids.ts now emits a 128-bit SHA-256-derived ID, while python/clicktrail/README.md still says its FNV-1a helper mirrors JS bit-exactly and root README/CHANGELOG continue claiming JS-bit-exact Python IDs. CHANGELOG.md also omits the new @vizuh/clicktrail-formbricks package and server TenantAdapter even though README files advertise them and CI packs Formbricks.",
+    "action": "After choosing the event-ID contract, update root/Python/package docs and CHANGELOG with the algorithm/version and migration impact. Add Formbricks/TenantAdapter to RC4 notes, or explicitly leave them under Unreleased and remove them from RC4 artifact claims."
+  }
+]
