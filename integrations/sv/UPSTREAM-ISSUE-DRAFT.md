@@ -13,7 +13,7 @@ Stabilize + document the community add-on contract (`defineAddon`) for third-par
 
 ### Summary
 
-We are building `@clicktrail/sv`, a community add-on that scaffolds
+We are building `@vizuh/clicktrail-sv`, a community add-on that scaffolds
 [ClickTrail](https://github.com/vizuh/clicktrail-js) first-party attribution
 into SvelteKit projects. Today the add-on format is not documented as a
 stable public API, so we mirror it structurally with zero `sv` imports:

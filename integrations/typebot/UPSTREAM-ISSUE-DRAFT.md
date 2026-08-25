@@ -19,7 +19,7 @@ We propose an official **"Send event to ClickTrail"** block that lets bot creato
 
 ## Proposed options schema
 
-Mirrors `packages/typebot-block/src/config.ts` in [`vizuh/clicktrail-js`](https://github.com/vizuh/clicktrail-js/tree/main/packages/typebot-block):
+Mirrors `packages/typebot-block/src/config.ts` in [`vizuh/clicktrail-js`](https://github.com/vizuh/clicktrail-js/tree/main/integrations/typebot):
 
 | Option | Type | Required | Notes |
 |---|---|---|---|
