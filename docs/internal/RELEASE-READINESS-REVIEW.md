@@ -25,9 +25,10 @@ the one-time npm 2FA bootstrap must happen before CI can publish new package
 names.
 
 Current RC4 follow-up: the release branch and package metadata are prepared, but
-there is no RC4 tag or GitHub release yet. `RELEASE-AUTHORIZATION.json` remains
-`pending-owner-approval`; both namespace bootstrap and the tag workflow fail
-closed until the accountable owner completes it. Public npm inspection shows the older
+there is no RC4 tag or GitHub release yet. `RELEASE-AUTHORIZATION.json` is
+approved for this five-package scope; namespace bootstrap and the tag workflow
+still fail closed until their separate identity, trusted-publisher, review, and
+remote-check gates pass. Public npm inspection shows the older
 `@vizuh/clicktrail@0.1.0`; the other first-wave package names are absent. The
 canonical `NPM_TOKEN` authenticates as npm user `atroci`, an owner of the
 `vizuh` organization with read-write account access to the existing package.
@@ -47,8 +48,8 @@ The original release blockers were:
 
 `AI-001`, `XDOM-001`, and `REL-001` are resolved in the follow-up patch. On
 2026-08-25 the owner selected Vizuh OÜ, approved B1-B3, and resolved B4 plus
-`GOV-001` for the five-package RC4 wave. Later waves and `latest` remain outside
-that authorization.
+`GOV-001` for the five-package RC4 wave. Later waves and stable publication
+remain outside that authorization.
 
 ## Gate matrix
 
@@ -64,7 +65,7 @@ decisions.
 | `PRIV-001` | Closed in follow-up | Codex | Cookie defaults and HTTPS `Secure` behavior verified at host edge | Technical readiness only |
 | `API-001` | Closed in documentation | Codex | Node 18/20/22 import matrix and explicit ESM-only contract | JS release candidate |
 | `DOC-001` | Closed | Codex | README, subpath, version-stamp, and workflow claims match shipped behavior | JS release candidate |
-| `GOV-001` | Closed for RC4 | Hugo | `RELEASE-AUTHORIZATION.json` and owner decision close B1-B4 | Five-package `next` wave only; no `latest` |
+| `GOV-001` | Closed for RC4 | Hugo | `RELEASE-AUTHORIZATION.json` and owner decision close B1-B4 | Five-package `next` wave only; stable publication excluded |
 | WP parity | Open: 10 approved ruled deviations, 0 unruled findings | Codex | Keep approved deviations explicit before claiming field parity or swapping runtimes | No full field-parity claim; SVN submission remains separately gated |
 
 Publication targets remain conditional: plugin GitHub release, JS
@@ -104,8 +105,8 @@ publication or WordPress.org indexing.
   credential-shaped content were found.
 - Static scan found no `innerHTML`, `document.write`, `eval`, `new Function`,
   or string event-handler sinks in package source.
-- The package has no runtime dependencies, uses strict TypeScript settings,
-  and exposes declaration files for every exported subpath.
+- Core runtime uses `@noble/hashes`; packages use strict TypeScript settings and
+  expose declaration files for every exported subpath.
 
 ## Findings
 

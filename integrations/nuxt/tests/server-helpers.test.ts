@@ -123,5 +123,6 @@ describe('ClickTrailServer', () => {
 
   it('requires a non-empty endpoint at construction', () => {
     expect(() => new ClickTrailServer({ endpoint: ' ' })).toThrow(/endpoint/);
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
   });
 });

@@ -7,8 +7,10 @@ on:
 
 permissions:
   contents: read
+  checks: read
   id-token: write
   pull-requests: read
+  statuses: read
 
 jobs:
   publish:
@@ -22,7 +24,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify tag commit is reviewed master history
+      - name: Verify tag commit is exact reviewed master merge
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -32,13 +34,62 @@ jobs:
           git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
             echo "::error::tag commit is not in origin/master history"; exit 1;
           }
-          merged_prs="$(gh api \
+          pull_requests="$(gh api --paginate --slurp \
             -H 'Accept: application/vnd.github+json' \
-            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
-            --jq '[.[] | select(.base.ref == "master" and .merged_at != null)] | length')"
-          test "$merged_prs" -gt 0 || {
-            echo "::error::tag commit is not associated with a reviewed PR merged to master"; exit 1;
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls")"
+          merged_pr="$(jq -r --arg sha "$GITHUB_SHA" \
+            '[.[][] | select(.base.ref == "master" and .merged_at != null and .merge_commit_sha == $sha)] | if length == 1 then .[0].number else empty end' \
+            <<<"$pull_requests")"
+          test -n "$merged_pr" || {
+            echo "::error::tag commit is not exactly one merged master PR commit"; exit 1;
           }
+          pr="$(gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/pulls/$merged_pr")"
+          jq -e --arg sha "$GITHUB_SHA" \
+            '.state == "closed" and .merged_at != null and .base.ref == "master" and .merge_commit_sha == $sha' \
+            <<<"$pr" >/dev/null || {
+            echo "::error::merged PR metadata does not match exact tag commit"; exit 1;
+          }
+          merged_at="$(jq -r '.merged_at' <<<"$pr")"
+          reviews="$(gh api --paginate --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/pulls/$merged_pr/reviews")"
+          approvals="$(jq --arg merged_at "$merged_at" \
+            '[.[][] | select(.state == "APPROVED" and .submitted_at <= $merged_at)] | length' \
+            <<<"$reviews")"
+          test "$approvals" -gt 0 || {
+            echo "::error::exact merged PR has no approving review"; exit 1;
+          }
+          if ! protection="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/branches/master/protection/required_status_checks")"; then
+            echo "::error::cannot read master required status checks; refusing publication"; exit 1;
+          fi
+          required="$(jq -c '[.contexts[]?, .checks[]?.context] | map(select(type == "string")) | unique' <<<"$protection")"
+          test "$(jq 'length' <<<"$required")" -gt 0 || {
+            echo "::error::master has no declared required status checks; refusing publication"; exit 1;
+          }
+          check_pages="$(gh api --paginate --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100")"
+          statuses="$(gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
+          if ! jq -e --argjson required "$required" --argjson check_pages "$check_pages" --argjson statuses "$statuses" '
+            def latest_run($context):
+              [$check_pages[]?.check_runs[]? | select(.name == $context)]
+              | sort_by(.completed_at // .started_at // .created_at)
+              | last;
+            def successful($context):
+              (latest_run($context)) as $run
+              | if $run != null then
+                  ($run.status == "completed" and $run.conclusion == "success")
+                else
+                  any($statuses.statuses[]?; .context == $context and .state == "success")
+                end;
+            all($required[]; successful(.))
+          ' <<<"{}" >/dev/null; then
+            echo "::error::required checks for exact tag commit are not all successful"; exit 1;
+          fi
 
       - name: Verify owner release authorization
         shell: bash
@@ -170,7 +221,8 @@ jobs:
           if [[ "$package_version" == *-* ]]; then
             echo "tag=next" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "::error::stable package versions are not authorized by this RC workflow" >&2
+            exit 1
           fi
 
       - name: Publish the exact reviewed tarballs with provenance

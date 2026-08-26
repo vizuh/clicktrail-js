@@ -15,6 +15,8 @@ const fail = (message) => { throw new Error(`release authorization: ${message}`)
 if (record.schemaVersion !== 1) fail('unsupported schemaVersion.');
 if (record.release !== expectedRelease) fail(`release ${record.release} does not match ${expectedRelease}.`);
 if (record.decisionStatus !== 'approved') fail('owner decision is not approved.');
+if (record.copyrightHolder !== 'Vizuh OÜ') fail('copyrightHolder is not Vizuh OÜ.');
+if (record.publisher !== 'npm user atroci on behalf of Vizuh OÜ') fail('publisher is not authorized npm user atroci.');
 for (const field of ['copyrightHolder', 'publisher', 'approvedBy', 'approvedAt']) {
   if (typeof record[field] !== 'string' || record[field].trim() === '') fail(`${field} is missing.`);
 }

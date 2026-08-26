@@ -25,7 +25,10 @@ release_version="$(node -p "require('./packages/clicktrail/package.json').versio
 CLICKTRAIL_RELEASE_VERSION="$release_version" node tools/release/verify-release-authorization.mjs
 
 # Authentication must work before any temporary artifact is created.
-npm whoami >/dev/null
+npm_user="$(npm whoami)"
+test "$npm_user" = 'atroci' || {
+  echo "refusing: authenticated npm user is not the authorized publisher" >&2; exit 1;
+}
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -58,7 +61,7 @@ for source_manifest in \
 
 Namespace bootstrap placeholder for the ClickTrail project.
 
-Install a release version from the \`next\` or \`latest\` dist-tag. Do not use
+Install a release version from the \`next\` dist-tag. Do not use
 \`$bootstrap_version\` as a runtime dependency.
 EOF
   PACKAGE_NAME="$name" BOOTSTRAP_VERSION="$bootstrap_version" node <<'NODE' > "$package_dir/package.json"

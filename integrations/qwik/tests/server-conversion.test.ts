@@ -77,6 +77,7 @@ describe('ClickTrailServer conversion matrix', () => {
   it('constructor requires a non-empty endpoint', () => {
     expect(() => new ClickTrailServer({ endpoint: '' })).toThrow(TypeError);
     expect(() => new ClickTrailServer({ endpoint: '   ' })).toThrow(TypeError);
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
   });
 
   it('network failure degrades to {ok:false,status:0} — never throws', async () => {

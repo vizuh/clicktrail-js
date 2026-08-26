@@ -106,4 +106,9 @@ describe('ClickTrailServer', () => {
     );
     await expect(server.trackLead({ identity: { payload: {} } })).resolves.toEqual({ ok: false, status: 0 });
   });
+
+  it('rejects non-public collector destinations at construction', () => {
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
+    expect(() => new ClickTrailServer({ endpoint: 'https://169.254.169.254/latest/meta-data' })).toThrow(/public absolute https/);
+  });
 });

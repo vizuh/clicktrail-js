@@ -10,7 +10,7 @@
 import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { toCanonicalEventName } from '@vizuh/clicktrail-core';
+import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -114,6 +114,14 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function requireSafeHttpUrl(value: unknown, field: string): string {
+  const endpoint = requireNonEmptyString(value, field);
+  if (!isSafeHttpUrl(endpoint)) {
+    throw new TypeError(`clicktrail server: ${field} must be a public absolute https URL.`);
+  }
+  return endpoint;
+}
+
 function requirePositiveNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
     throw new TypeError(`clicktrail server: ${field} must be a positive finite number.`);
@@ -128,7 +136,7 @@ export class ClickTrailServer {
   private readonly fetchImpl: typeof fetch;
 
   constructor(config: ClickTrailServerConfig) {
-    this.endpoint = requireNonEmptyString(config.endpoint, 'endpoint');
+    this.endpoint = requireSafeHttpUrl(config.endpoint, 'endpoint');
     this.fetchImpl = config.fetch ?? fetch;
     if (config.siteId !== undefined) this.siteId = config.siteId;
     if (config.workspaceId !== undefined) this.workspaceId = config.workspaceId;

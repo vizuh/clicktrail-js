@@ -72,16 +72,20 @@ export class TenantAdapter {
     const externalEventId = requireTenantText(input.externalEventId, 'externalEventId');
     const eventId = deriveStableEventId(
       this.config.siteId,
-      `${this.config.tenantId}:${this.config.adapterName}:${eventName}:${externalEventId}`,
+      JSON.stringify([this.config.tenantId, this.config.adapterName, eventName, externalEventId]),
     );
     const inputProperties = isRecord(input.data?.['properties']) ? input.data['properties'] : {};
     const data = { ...(input.data ?? {}) };
     delete data['event_id'];
     delete data['event_name'];
     delete data['marketing_trail'];
+    delete data['site_id'];
+    delete data['workspace_id'];
 
     return buildEventPayload(input.identity.payload ?? {}, eventName, {
       ...data,
+      site_id: this.config.siteId,
+      ...(this.config.workspaceId !== undefined ? { workspace_id: this.config.workspaceId } : {}),
       event_id: eventId,
       ...(input.now !== undefined
         ? { event_time: requireTenantText(input.now, 'now'), occurred_at: input.now }

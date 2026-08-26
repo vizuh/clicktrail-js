@@ -20,5 +20,6 @@ describe('isSafeHttpUrl', () => {
 
   it('accepts a credentials-free public HTTPS destination', () => {
     expect(isSafeHttpUrl('https://collector.example.com/v1/events')).toBe(true);
+    expect(isSafeHttpUrl('https://192.0.1.1/events')).toBe(true);
   });
 });

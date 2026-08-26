@@ -66,6 +66,18 @@ describe('trackConversion validation matrix (async rejections)', () => {
     ).rejects.toThrow(/value/);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+
+  it('rejects non-public collector destinations before fetching', async () => {
+    const fetchImpl = okFetch();
+    await expect(
+      trackConversion(requestWithCookies(null), {
+        event: 'lead',
+        endpoint: 'https://127.0.0.1/events',
+        fetch: fetchImpl as unknown as typeof fetch,
+      }),
+    ).rejects.toThrow(/public absolute https/);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });
 
 describe('trackConversion send contract', () => {

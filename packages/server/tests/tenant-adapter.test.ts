@@ -75,6 +75,8 @@ describe('TenantAdapter', () => {
         event_id: 'evt_attacker',
         event_name: 'sale',
         marketing_trail: { event_id: 'evt_attacker' },
+        site_id: 'other-site',
+        workspace_id: 'other-workspace',
         visitor_id: 'attacker-visitor',
         session_id: 'attacker-session',
         session_number: '999',
@@ -88,7 +90,18 @@ describe('TenantAdapter', () => {
     expect(event.session_id).toBe('session-1');
     expect(event.session_number).toBe('2');
     expect(event.marketing_trail.event_id).toBe(event.event_id);
+    expect(event.site_id).toBe('site-1');
+    expect(event.workspace_id).toBe('workspace-1');
+    expect(event.marketing_trail.site_id).toBe('site-1');
+    expect(event.marketing_trail.workspace_id).toBe('workspace-1');
     expect(event.properties).toMatchObject({ tenant_id: 'med10x-tenant-1' });
+  });
+
+  it('keeps colon-containing tenant tuple components distinct', () => {
+    const first = createTenantAdapter({ ...baseConfig(), tenantId: 'a', adapterName: 'b:c' });
+    const second = createTenantAdapter({ ...baseConfig(), tenantId: 'a:b', adapterName: 'c' });
+
+    expect(first.build(input()).event_id).not.toBe(second.build(input()).event_id);
   });
 
   it('keeps distinct tenant events distinct across a known 32-bit collision pair', () => {

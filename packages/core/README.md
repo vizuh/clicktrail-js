@@ -1,12 +1,13 @@
 # @vizuh/clicktrail-core
 
-The dependency-free, deterministic core of ClickTrail.
+The small, deterministic core of ClickTrail.
 
 It parses campaign URLs, classifies referrers, merges first-touch and
 last-touch attribution, builds canonical events, and creates stable event IDs
 with the cross-runtime `sha256-128-v1` contract.
 The core does not read the clock, access the DOM, use storage, or make network
 requests. Callers provide every effect.
+It uses `@noble/hashes` for stable event IDs.
 
 ## Install
 

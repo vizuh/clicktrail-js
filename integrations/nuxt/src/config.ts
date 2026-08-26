@@ -16,7 +16,7 @@ export const MODULE_NAME = '@vizuh/clicktrail-nuxt';
 export const CONFIG_KEY = 'clicktrail';
 
 /** Package version stamped onto the module object. */
-export const MODULE_VERSION = '0.1.0-rc.2';
+export const MODULE_VERSION = '0.1.0-rc.4';
 
 /** Default first-party proxy pattern when the proxy is enabled. */
 export const DEFAULT_PROXY_PATTERN = '/api/clicktrail';
