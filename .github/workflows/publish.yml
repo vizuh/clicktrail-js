@@ -50,12 +50,20 @@ jobs:
             <<<"$pr" >/dev/null || {
             echo "::error::merged PR metadata does not match exact tag commit"; exit 1;
           }
-          merged_at="$(jq -r '.merged_at' <<<"$pr")"
+          head_sha="$(jq -r '.head.sha' <<<"$pr")"
+          test -n "$head_sha" || {
+            echo "::error::merged PR has no source head SHA"; exit 1;
+          }
           reviews="$(gh api --paginate --slurp \
             -H 'Accept: application/vnd.github+json' \
             "repos/$GITHUB_REPOSITORY/pulls/$merged_pr/reviews")"
-          approvals="$(jq --arg merged_at "$merged_at" \
-            '[.[][] | select(.state == "APPROVED" and .submitted_at <= $merged_at)] | length' \
+          approvals="$(jq --arg head_sha "$head_sha" '
+            [.[][] | select(.user.login != null and .submitted_at != null)]
+            | sort_by([.user.login, .submitted_at, (.id // 0)])
+            | group_by(.user.login)
+            | map(last)
+            | map(select(.state == "APPROVED" and .commit_id == $head_sha))
+            | length
             <<<"$reviews")"
           test "$approvals" -gt 0 || {
             echo "::error::exact merged PR has no approving review"; exit 1;
@@ -137,6 +145,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm_view_version() {
+            local output
+            if output="$(npm view "$1" version 2>&1)"; then
+              return 0
+            fi
+            if grep -Eq '(^|[[:space:]])E404([[:space:]]|$)' <<<"$output"; then
+              return 1
+            fi
+            echo "::error::npm registry lookup failed for $1" >&2
+            return 2
+          }
           tag_version="${GITHUB_REF_NAME#v}"
           for package_json in \
             packages/core/package.json \
@@ -149,11 +168,20 @@ jobs:
             test "$tag_version" = "$package_version" || {
               echo "::error::version mismatch in $package_json: $package_version != $tag_version"; exit 1;
             }
-            npm view "$package_name" version >/dev/null 2>&1 || {
-              echo "::error::$package_name does not exist. Complete the one-time 2FA bootstrap and trusted-publisher setup first."; exit 1;
-            }
-            if npm view "$package_name@$package_version" version >/dev/null 2>&1; then
+            if npm_view_version "$package_name"; then
+              :
+            else
+              lookup_status=$?
+              if [ "$lookup_status" -eq 1 ]; then
+                echo "::error::$package_name does not exist. Complete the one-time 2FA bootstrap and trusted-publisher setup first."
+              fi
+              exit 1
+            fi
+            if npm_view_version "$package_name@$package_version"; then
               echo "::error::$package_name@$package_version already exists and is immutable"; exit 1;
+            else
+              lookup_status=$?
+              test "$lookup_status" -eq 1 || exit 1
             fi
           done
 

@@ -574,7 +574,7 @@ describe('createClickTrail crossDomain/forms wiring', () => {
     const nullAdapter = { get: () => null, set: () => {}, delete: () => {} };
     const ct = createClickTrail({
       destinations: [
-        { name: 'test', start: () => {}, deliver: (e) => void events.push(e) },
+        { name: 'test', start: () => {}, deliver: (e) => void events.push(e), clear: () => {} },
       ],
       // Injected clock so the token's absolute expiry is deterministic.
       storage: {

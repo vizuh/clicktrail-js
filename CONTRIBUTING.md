@@ -54,8 +54,8 @@ The GitHub release path is:
    `git push origin v0.1.0-rc.4`.
 4. The tag triggers `.github/workflows/publish.yml`.
 5. The workflow reruns the checks and publishes the first wave with npm OIDC
-   provenance. RC versions use the `next` dist-tag; stable versions use
-   `latest`.
+   provenance. This RC4 workflow publishes only prerelease versions under
+   the `next` dist-tag.
 
 New package names cannot be published by trusted publishing until their
 one-time npm bootstrap exists. After Hugo completes npm 2FA locally, run

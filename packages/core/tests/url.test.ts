@@ -10,6 +10,7 @@ describe('isSafeHttpUrl', () => {
     'https://127.1/events',
     'https://10.0.0.1/events',
     'https://169.254.169.254/latest/meta-data',
+    'https://192.0.0.1/events',
     'https://192.168.1.2/events',
     'https://[::1]/events',
     'https://[fd00::1]/events',

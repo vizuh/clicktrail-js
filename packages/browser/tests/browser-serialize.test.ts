@@ -58,6 +58,20 @@ describe('buildEventPayload', () => {
     expect(Object.keys(event)).toContain('schema_version');
   });
 
+  it('lets trusted routing context override nested untrusted routing fields', () => {
+    const payload = {
+      ...emptyAttribution(),
+      marketing_trail: { site_id: 'spoofed-site', workspace_id: 'spoofed-workspace' },
+    } as never;
+    const event = buildEventPayload(payload, 'page_view', {}, {
+      siteId: 'trusted-site',
+      workspaceId: 'trusted-workspace',
+    });
+
+    expect(event.marketing_trail.site_id).toBe('trusted-site');
+    expect(event.marketing_trail.workspace_id).toBe('trusted-workspace');
+  });
+
   it('builds the normalized marketing trail envelope', () => {
     const event = buildEventPayload(
       {

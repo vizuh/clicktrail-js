@@ -222,13 +222,16 @@ const defaultRandomBytes: RandomBytesFn = (byteLength) => {
 
 export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const destinations = [...config.destinations];
+  if (destinations.some((destination) => !destination || typeof destination.clear !== 'function')) {
+    throw new TypeError('clicktrail: every destination must implement clear() for consent-safe withdrawal.');
+  }
   const now = config.now;
   const consentGate = config.consentGate;
   const sink = resolveSink(config);
   let eventSequence = 0;
 
   const clearDestinationQueues = (): void => {
-    for (const dest of destinations) dest.clear?.();
+    for (const dest of destinations) dest.clear();
   };
 
   let started = false;
@@ -418,36 +421,58 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const instance: ClickTrailInstance = {
     start() {
       if (started) return;
+      const consentAllowed = !consentGate || consentGate();
       started = true;
-      for (const dest of destinations) dest.start?.();
-      if (storageCfg) {
-        initStorage();
-        // Hydrate persisted attribution: server-readable cookie first,
-        // expiry-metadata mirror as fallback for cached/dynamic pages.
-        const stored = loadAttributionPayload(adapters!.primary);
-        payload =
-          Object.keys(stored).length > 0
-            ? { ...emptyAttribution(), ...stored }
-            : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
-        persistPayload();
-      }
-      // Consent-gated cookie-derived browser IDs (RULING A part b).
-      mergeCookieBrowserIds();
-      if (config.forms) {
-        const { fields, overwrite, observer } = config.forms;
-        formInjector = createFormInjector({
-          fields,
-          overwrite,
-          observer,
-          consentAllowed: () => !consentGate || consentGate(),
-          getPayload: () => payload,
-          getIdentity: () => instance.getSession(),
-          doc: config.forms.doc ?? defaultFormDocument() ?? undefined,
-        });
-        formInjector.start();
-      }
-      if (config.crossDomain) {
-        wireCrossDomain(instance);
+      try {
+        for (const dest of destinations) dest.start?.();
+        if (storageCfg) {
+          initStorage();
+          if (consentAllowed) {
+            // Hydrate persisted attribution: server-readable cookie first,
+            // expiry-metadata mirror as fallback for cached/dynamic pages.
+            const stored = loadAttributionPayload(adapters!.primary);
+            payload =
+              Object.keys(stored).length > 0
+                ? { ...emptyAttribution(), ...stored }
+                : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
+            persistPayload();
+          } else {
+            payload = emptyAttribution();
+            clearAttributionStorage(adapters!.primary, adapters!.mirror);
+            identity?.clear();
+          }
+        }
+        if (!consentAllowed) {
+          payload = emptyAttribution();
+          clearDestinationQueues();
+        } else {
+          // Consent-gated cookie-derived browser IDs (RULING A part b).
+          mergeCookieBrowserIds();
+          if (adapters) persistPayload();
+        }
+        if (config.forms) {
+          const { fields, overwrite, observer } = config.forms;
+          formInjector = createFormInjector({
+            fields,
+            overwrite,
+            observer,
+            consentAllowed: () => !consentGate || consentGate(),
+            getPayload: () => payload,
+            getIdentity: () => instance.getSession(),
+            doc: config.forms.doc ?? defaultFormDocument() ?? undefined,
+          });
+          formInjector.start();
+        }
+        if (config.crossDomain) {
+          wireCrossDomain(instance);
+        }
+      } catch (error) {
+        formInjector?.stop();
+        formInjector = null;
+        linkDecorator?.stop();
+        linkDecorator = null;
+        started = false;
+        throw error;
       }
     },
 

@@ -98,6 +98,25 @@ describe('createClickTrail storage wiring', () => {
     expect(ct.getField('ft_medium')).toBe('cpc');
   });
 
+  it('does not hydrate or persist attribution when consent is denied at start', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'stored' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'mirror' }));
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => false,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.mergeParsedTouch({ source: 'pre-start' } as never);
+
+    ct.start();
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+  });
+
   it('getSession() returns real browser-owned identity after start()', () => {
     let now = 5_000;
     const BYTES_SESSION_2 = new Uint8Array(16).fill(0x03);

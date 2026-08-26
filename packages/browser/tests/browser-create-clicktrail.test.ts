@@ -14,6 +14,7 @@ function recordingDestination(name = 'rec'): Destination & { events: Record<stri
     events: [] as Record<string, unknown>[],
     start() { dest.started = true; },
     deliver(event: Record<string, unknown>) { dest.events.push(event); },
+    clear() { dest.events.length = 0; },
   };
   return dest;
 }
@@ -88,6 +89,33 @@ describe('createClickTrail', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('rejects destinations that cannot clear queued events', () => {
+    expect(() => createClickTrail({
+      destinations: [{ name: 'unclearable', deliver: () => {} } as never],
+    })).toThrow(/implement clear/);
+  });
+
+  it('rolls back started state when destination startup fails', () => {
+    let fail = true;
+    const dest: Destination = {
+      name: 'retryable',
+      start() {
+        if (fail) {
+          fail = false;
+          throw new Error('startup failed');
+        }
+      },
+      deliver() {},
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [dest] });
+
+    expect(() => ct.start()).toThrow('startup failed');
+    expect(ct.isStarted()).toBe(false);
+    expect(() => ct.start()).not.toThrow();
+    expect(ct.isStarted()).toBe(true);
+  });
+
   it('mergeParsedTouch feeds the payload that later events carry', () => {
     const rec = recordingDestination();
     const ct = createClickTrail({ destinations: [rec], now: () => '2026-08-23T10:00:00Z' });
@@ -139,7 +167,7 @@ describe('createClickTrail', () => {
 
   it('stop() completes cleanup when a destination flush throws', () => {
     const ct = createClickTrail({
-      destinations: [{ name: 'broken', deliver: () => {}, flush: () => { throw new Error('boom'); } }],
+      destinations: [{ name: 'broken', deliver: () => {}, clear: () => {}, flush: () => { throw new Error('boom'); } }],
     });
     ct.start();
 
@@ -150,7 +178,7 @@ describe('createClickTrail', () => {
   it('handles an asynchronous destination flush rejection', async () => {
     const reported: string[] = [];
     const ct = createClickTrail({
-      destinations: [{ name: 'broken', deliver: () => {}, flush: async () => { throw new Error('boom'); } }],
+      destinations: [{ name: 'broken', deliver: () => {}, clear: () => {}, flush: async () => { throw new Error('boom'); } }],
       diagnosticsLevel: 'warn',
       diagnosticSink: { report: (d) => reported.push(d.code) },
     });

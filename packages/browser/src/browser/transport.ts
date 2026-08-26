@@ -17,7 +17,7 @@ export interface Destination {
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;
   /** Discard buffered events without delivering them. */
-  clear?(): void;
+  clear(): void;
 }
 
 /** Injected side-effect boundary: transmits a pre-encoded JSON body. */
@@ -125,6 +125,7 @@ export function dataLayerDestination(
     deliver(event) {
       (arr ??= []).push({ ...event, event: event.event_name });
     },
+    clear() {},
     getArray() {
       return arr ??= [];
     },

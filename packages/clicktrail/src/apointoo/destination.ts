@@ -226,5 +226,8 @@ export function createApointooDestination(
       await sendWithRetries();
       await Promise.all([...pending]);
     },
+    clear() {
+      batch = [];
+    },
   };
 }
