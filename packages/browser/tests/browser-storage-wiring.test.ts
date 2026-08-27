@@ -241,8 +241,12 @@ describe('createClickTrail storage wiring', () => {
     });
     ct.start();
     expect(ct.getSession().visitorId).not.toBe('');
+    ct.hydrateStoredPayload({ gclid: 'click-id' });
+    expect(ct.getField('gclid')).toBe('click-id');
 
     consent = false;
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(ct.getField('gclid')).toBe('');
     expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
   });
 

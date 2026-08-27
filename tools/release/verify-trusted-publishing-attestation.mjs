@@ -14,6 +14,7 @@ const expectedWorkflow = 'publish.yml';
 const expectedEnvironment = 'npm';
 const expectedPublisher = 'atroci';
 const expectedVersion = '0.1.0-rc.4';
+const expectedPermissions = ['createPackage'];
 const maxAttestationAgeMs = 15 * 60 * 1000;
 
 function fail(message) {
@@ -30,6 +31,14 @@ function exactPackages(value) {
   );
 }
 
+function exactPermissions(value) {
+  return (
+    Array.isArray(value) &&
+    value.length === expectedPermissions.length &&
+    [...value].sort().join('\n') === expectedPermissions.join('\n')
+  );
+}
+
 function trustDocumentMatches(document) {
   if (!Array.isArray(document) || document.length !== 1) return false;
   const entry = document[0];
@@ -39,8 +48,7 @@ function trustDocumentMatches(document) {
     (entry?.repository ?? claims.repository) === expectedRepository &&
     (entry?.file ?? claims.workflow_ref?.file) === expectedWorkflow &&
     (entry?.environment ?? claims.environment) === expectedEnvironment &&
-    Array.isArray(entry.permissions) &&
-    entry.permissions.includes('createPackage')
+    exactPermissions(entry.permissions)
   );
 }
 

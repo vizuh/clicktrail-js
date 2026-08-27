@@ -368,6 +368,33 @@ describe('createLinkDecorator', () => {
     decorator.stop();
   });
 
+  it('clear() restores decorated hrefs and leaves pre-existing tokens untouched', async () => {
+    const doc = fakeLinkDoc([
+      'https://shop.example.com/product',
+      'https://shop.example.com/?ct_token=host-owned',
+    ]);
+    const { sign } = signVerifyPair();
+    const token = await encodeContinuationToken({
+      visitorId: 'v', sessionId: 's', attribution: {}, nowMs: NOW_MS, sign,
+    });
+    const decorator = createLinkDecorator({
+      domains: ['example.com'],
+      doc,
+      observer: null,
+      consentAllowed: () => true,
+      getToken: () => Promise.resolve(token),
+      getBaseUrl: () => '',
+    });
+    decorator.start();
+    await Promise.resolve();
+
+    expect(doc.anchors[0]!.getAttribute('href')).toContain('ct_token=');
+    decorator.clear();
+    expect(doc.anchors[0]!.getAttribute('href')).toBe('https://shop.example.com/product');
+    expect(doc.anchors[1]!.getAttribute('href')).toBe('https://shop.example.com/?ct_token=host-owned');
+    decorator.stop();
+  });
+
   it('observer picks up late-added links until stop()', async () => {
     const doc = fakeLinkDoc([]);
     let trigger: (() => void) | null = null;
@@ -630,6 +657,8 @@ describe('createClickTrail crossDomain/forms wiring', () => {
     ct2.start();
     await new Promise((r) => setTimeout(r, 0));
     expect(doc.anchors[0]!.getAttribute('href')).toContain('other.example.com/prices?ct_token=');
+    ct2.clearData();
+    expect(doc.anchors[0]!.getAttribute('href')).toBe('https://other.example.com/prices');
   });
 
   it('default WebCrypto HMAC signer persists its key in the storage adapters', async () => {

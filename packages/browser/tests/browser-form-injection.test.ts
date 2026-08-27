@@ -33,6 +33,9 @@ class FakeInput implements CtInputElement {
   setAttribute(name: string, value: string): void {
     this.attrs.set(name, value);
   }
+  removeAttribute(name: string): void {
+    this.attrs.delete(name);
+  }
 }
 
 class FakeForm implements CtAttrNode {
@@ -46,6 +49,10 @@ class FakeForm implements CtAttrNode {
   }
   appendChild(node: CtInputElement): void {
     this.children.push(node as FakeInput);
+  }
+  removeChild(node: CtInputElement): void {
+    const index = this.children.indexOf(node as FakeInput);
+    if (index >= 0) this.children.splice(index, 1);
   }
   querySelectorAll(selector: string): CtAttrNode[] {
     if (selector !== HIDDEN_INPUT_SELECTOR) return [];
@@ -284,6 +291,27 @@ describe('createFormInjector', () => {
       name: 'ct_ft_source',
       value: 'google',
     });
+  });
+
+  it('clear() restores existing fields and removes fields it created', () => {
+    const doc = new FakeDocument();
+    const form = new FakeForm();
+    const existing = new FakeInput();
+    existing.setAttribute('type', 'hidden');
+    existing.setAttribute('name', 'ct_gclid');
+    existing.setAttribute('value', '');
+    form.appendChild(existing);
+    doc.forms.push(form);
+
+    const injector = createFormInjector(CONFIG({ doc, fields: ['gclid', 'ft_source'] }));
+    injector.start();
+    expect(form.hiddenInputs()).toEqual([
+      { name: 'ct_gclid', value: 'abc123' },
+      { name: 'ct_ft_source', value: 'google' },
+    ]);
+
+    injector.clear();
+    expect(form.hiddenInputs()).toEqual([{ name: 'ct_gclid', value: '' }]);
   });
 
   it('consent denied: no injection happens at all', () => {

@@ -67,6 +67,23 @@ export interface BootedClient {
   conversion(input: ConversionInput): void;
 }
 
+type FallbackWindow = {
+  location?: Location;
+  document?: Document;
+  history?: History;
+  addEventListener?: typeof window.addEventListener;
+  removeEventListener?: typeof window.removeEventListener;
+};
+
+type FallbackNavigationState = {
+  listeners: Map<() => void, number>;
+  notify: () => void;
+  patchedPush: History['pushState'] | null;
+  originalPush: History['pushState'] | null;
+};
+
+const fallbackNavigationStates = new WeakMap<object, FallbackNavigationState>();
+
 export interface ConversionInput {
   /** Canonical or legacy event name ('sale', 'lead', 'booking', ...). */
   event?: string;
@@ -90,53 +107,61 @@ function defaultCookieJar(): CookieJar {
 }
 
 export function defaultNavigationSeam(): NavigationSeam {
-  const w = globalThis as unknown as {
-    location?: Location;
-    document?: Document;
-    history?: History;
-    addEventListener?: typeof window.addEventListener;
-    removeEventListener?: typeof window.removeEventListener;
-  };
+  const w = globalThis as unknown as FallbackWindow;
   const loc = (): Location => {
     if (!w.location) throw new Error('clicktrail client: navigation seam requires a browser environment.');
     return w.location;
   };
-  const listeners = new Set<() => void>();
-  const notify = (): void => {
-    for (const cb of listeners) cb();
-  };
-  let patchedPush: ((data: unknown, unused: string, url?: string | URL | null) => void) | null = null;
-  let originalPush: History['pushState'] | null = null;
 
   return {
     href: () => loc().href,
     referrer: () => (typeof w.document?.referrer === 'string' ? w.document.referrer : ''),
     host: () => loc().host,
     afterNavigate(callback) {
-      listeners.add(callback);
-      if (listeners.size === 1) {
+      let state = fallbackNavigationStates.get(w);
+      if (!state) {
+        state = {
+          listeners: new Map(),
+          notify: () => {
+            for (const cb of state!.listeners.keys()) cb();
+          },
+          patchedPush: null,
+          originalPush: null,
+        };
+        fallbackNavigationStates.set(w, state);
+      }
+      const wasEmpty = state.listeners.size === 0;
+      state.listeners.set(callback, (state.listeners.get(callback) ?? 0) + 1);
+      if (wasEmpty) {
         if (w.history) {
-          originalPush = w.history.pushState;
-          patchedPush = (...args: Parameters<History['pushState']>) => {
-            originalPush?.apply(w.history, args);
-            notify();
+          state.originalPush = w.history.pushState;
+          const patchedPush: History['pushState'] = (...args: Parameters<History['pushState']>) => {
+            state?.originalPush?.apply(w.history, args);
+            state?.notify();
           };
-          w.history.pushState = patchedPush as History['pushState'];
+          state.patchedPush = patchedPush;
+          w.history.pushState = patchedPush;
         }
-        w.addEventListener?.('popstate', notify);
+        w.addEventListener?.('popstate', state.notify);
       }
       let active = true;
       return () => {
         if (!active) return;
         active = false;
-        listeners.delete(callback);
-        if (listeners.size !== 0) return;
-        w.removeEventListener?.('popstate', notify);
-        if (w.history && patchedPush && originalPush && w.history.pushState === patchedPush) {
-          w.history.pushState = originalPush;
+        const count = state!.listeners.get(callback) ?? 0;
+        if (count > 1) {
+          state!.listeners.set(callback, count - 1);
+          return;
         }
-        patchedPush = null;
-        originalPush = null;
+        state!.listeners.delete(callback);
+        if (state!.listeners.size !== 0) return;
+        w.removeEventListener?.('popstate', state!.notify);
+        if (w.history && state!.patchedPush && state!.originalPush && w.history.pushState === state!.patchedPush) {
+          w.history.pushState = state!.originalPush;
+        }
+        state!.patchedPush = null;
+        state!.originalPush = null;
+        fallbackNavigationStates.delete(w);
       };
     },
   };

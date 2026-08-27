@@ -44,12 +44,13 @@ describe('SvelteKit client consent lifecycle', () => {
     vi.stubGlobal('addEventListener', addEventListener);
     vi.stubGlobal('removeEventListener', removeEventListener);
 
-    const seam = defaultNavigationSeam();
+    const firstSeam = defaultNavigationSeam();
+    const secondSeam = defaultNavigationSeam();
     const first = vi.fn();
     const second = vi.fn();
-    const detachFirst = seam.afterNavigate(first);
+    const detachFirst = firstSeam.afterNavigate(first);
     const patchedPushState = globalThis.history.pushState;
-    const detachSecond = seam.afterNavigate(second);
+    const detachSecond = secondSeam.afterNavigate(second);
 
     expect(addEventListener).toHaveBeenCalledTimes(1);
     globalThis.history.pushState({}, '', '/first');

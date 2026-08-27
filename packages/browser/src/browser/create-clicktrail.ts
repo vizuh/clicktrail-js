@@ -246,6 +246,11 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let formInjector: FormInjector | null = null;
   let linkDecorator: LinkDecorator | null = null;
 
+  const clearBrowserAttributionDom = (): void => {
+    formInjector?.clear();
+    linkDecorator?.clear();
+  };
+
   const initStorage = (): void => {
     if (!storageCfg || adapters !== null) return;
     const nowMs = storageCfg.nowMs ?? (() => Date.now());
@@ -330,6 +335,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         identity?.clear();
       }
       clearDestinationQueues();
+      clearBrowserAttributionDom();
     }
     return false;
   };
@@ -589,15 +595,16 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       if (started && adapters) persistPayload();
     },
 
-    getData: () => ({ ...payload }),
+    getData: () => (consentAllows() ? { ...payload } : emptyAttribution()),
 
     getField(key) {
-      return payload[key] ?? '';
+      return consentAllows() ? payload[key] ?? '' : '';
     },
 
     clearData() {
       payload = emptyAttribution();
       clearDestinationQueues();
+      clearBrowserAttributionDom();
       if (started && adapters) {
         clearAttributionStorage(adapters.primary, adapters.mirror);
         identity?.clear();
@@ -607,7 +614,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     getSession(): SessionSnapshot {
       // Identifiers are created only while consent allows (DATA-MODEL.md:246);
       // a denied gate yields an empty snapshot instead of regenerating.
-      if (consentGate && !consentGate()) {
+      if (!consentAllows()) {
         return { visitorId: '', sessionId: '', sessionNumber: '' };
       }
       if (started && identity) {

@@ -82,22 +82,11 @@ jobs:
             "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100")"
           statuses="$(gh api -H 'Accept: application/vnd.github+json' \
             "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
-          if ! jq -e --argjson required "$required" --argjson check_pages "$check_pages" --argjson statuses "$statuses" '
-            def latest_run($context):
-              [$check_pages[]?.check_runs[]? | select(.name == $context)]
-              | sort_by(.completed_at // .started_at // .created_at)
-              | last;
-            def successful($context):
-              (latest_run($context)) as $run
-              | if $run != null then
-                  ($run.status == "completed" and $run.conclusion == "success")
-                else
-                  any($statuses.statuses[]?; .context == $context and .state == "success")
-                end;
-            all($required[]; successful(.))
-          ' <<<"{}" >/dev/null; then
-            echo "::error::required checks for exact tag commit are not all successful"; exit 1;
-          fi
+          CLICKTRAIL_RELEASE_SHA="$GITHUB_SHA" \
+          CLICKTRAIL_REQUIRED_CHECKS="$required" \
+          CLICKTRAIL_CHECK_RUN_PAGES="$check_pages" \
+          CLICKTRAIL_COMBINED_STATUS="$statuses" \
+          node tools/release/verify-remote-checks.mjs
 
       - name: Verify owner release authorization
         shell: bash

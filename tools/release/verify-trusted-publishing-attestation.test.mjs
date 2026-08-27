@@ -65,10 +65,10 @@ function signedAttestation(overrides = {}) {
   return `${encoded}.${signature}`;
 }
 
-function run(attestation, overrides = {}) {
+function run(attestation, overrides = {}, documents = packages.map(() => trustDocument())) {
   const trustDir = mkdtempSync(join(tmpdir(), 'clicktrail-trust-'));
   for (const [index] of packages.entries()) {
-    writeFileSync(join(trustDir, `${index}.json`), JSON.stringify(trustDocument()));
+    writeFileSync(join(trustDir, `${index}.json`), JSON.stringify(documents[index]));
   }
   const result = spawnSync(process.execPath, [verifier], {
     cwd: root,
@@ -132,6 +132,16 @@ test('rejects mismatched npm trust evidence', () => {
     },
   });
   rmSync(trustDir, { recursive: true, force: true });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /trusted publisher does not match/);
+});
+
+test('rejects npm trust permission supersets', () => {
+  const documents = packages.map(() => [{
+    ...trustDocument()[0],
+    permissions: ['createPackage', 'publishPackage'],
+  }]);
+  const result = run(signedAttestation(), {}, documents);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /trusted publisher does not match/);
 });
