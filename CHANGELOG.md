@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Clarify the published `@vizuh/clicktrail@0.1.0` boundary versus the unreleased
+  `0.1.0-rc.4` multi-package wave, including the supported root and `/browser`
+  APIs for the `0.1.x` line.
+
 ## [0.1.0-rc.4] - 2026-08-25
 
 ### Added

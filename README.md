@@ -10,7 +10,11 @@ Motor determinístico de atribuição first-party. Captura a jornada desde o cli
 
 Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da Vizuh. O FunnelSheet é a frente de consultoria da Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para WordPress; este repositório contém o motor compartilhado.
 
-> **Status da versão:** `0.1.0-rc.4` é a candidata a lançamento preparada neste branch. A publicação no npm ainda depende das atestações de proveniência, do bootstrap 2FA dos novos nomes e da configuração de trusted publishers. O tag do GitHub dispara o workflow que publica no npm com OIDC e o dist-tag `next`.
+> **Pacote publicado:** `@vizuh/clicktrail@0.1.0` está disponível no npm. O
+> entry point raiz e `/browser` são APIs públicas suportadas na linha `0.1.x`.
+> **Status RC4:** este branch contém uma wave multi-package ainda não publicada;
+> os outros nomes de pacote não são dados como publicados. Subpaths incubating
+> podem mudar entre versões menores.
 
 ## Por que o ClickTrail
 
@@ -23,14 +27,14 @@ A maioria das ferramentas de analytics responde "quantas conversões aconteceram
 
 ## Início rápido
 
-Instale o motor:
+Instale o motor publicado:
 
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
 ```
 
-Para testar a candidata depois da publicação, use o dist-tag RC:
+Para testar uma RC depois de publicada, use o dist-tag RC:
 
 ```bash
 npm install @vizuh/clicktrail@next

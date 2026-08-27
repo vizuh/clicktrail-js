@@ -14,11 +14,11 @@ Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin
 (`click-trail-handler`) is the WordPress distribution; this repository is the
 shared engine beneath it.
 
-> **Release status:** `0.1.0-rc.4` is the release candidate prepared on this
-> branch. npm publication still depends on the provenance attestations, one-time
-> 2FA bootstrap for new package names, and trusted-publisher configuration. A
-> matching GitHub tag triggers the workflow that publishes to npm with OIDC and
-> the `next` dist-tag.
+> **Published package:** `@vizuh/clicktrail@0.1.0` is available on npm. The
+> root entry point and `/browser` are supported public APIs in the `0.1.x` line.
+> **RC4 status:** this branch contains an unreleased multi-package wave; its
+> other package names are not implied to be published. Incubating subpaths may
+> change between minor versions.
 
 ## Why ClickTrail
 
@@ -42,14 +42,14 @@ Most analytics tools answer "how many conversions?" ClickTrail answers
 
 ## Quick start
 
-Install the engine:
+Install the published engine:
 
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
 ```
 
-To test the release candidate after publication, use the RC dist-tag:
+To test an RC after it is published, use the RC dist-tag:
 
 ```bash
 npm install @vizuh/clicktrail@next
