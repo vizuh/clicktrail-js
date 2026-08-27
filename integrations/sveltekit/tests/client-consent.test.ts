@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bootClickTrailClient } from '../src/client.js';
 import { CONSENT_EVENT } from '../src/consent-client.js';
 
-function harness() {
+function harness(href = 'https://example.com/') {
   let cookie = '';
   const handlers = new Set<() => void>();
   let navigationDetached = 0;
@@ -26,7 +26,7 @@ function harness() {
         },
       },
       navigationSeam: {
-        href: () => 'https://example.com/',
+        href: () => href,
         referrer: () => '',
         host: () => 'example.com',
         afterNavigate: () => () => { navigationDetached += 1; },
@@ -36,6 +36,18 @@ function harness() {
 }
 
 describe('SvelteKit client consent lifecycle', () => {
+  it('does not merge initial attribution before consent', () => {
+    const h = harness('https://example.com/?utm_source=google');
+    const client = bootClickTrailClient({
+      endpoint: 'https://collector.example.com/events',
+      consentRequired: true,
+      trackPageViews: true,
+      debug: false,
+    }, h.seams);
+
+    expect(client.instance.getField('ft_source')).toBe('');
+  });
+
   it('clears on denial and disposal detaches every owned listener', () => {
     const h = harness();
     const client = bootClickTrailClient({

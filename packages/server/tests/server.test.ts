@@ -57,7 +57,7 @@ describe('ClickTrailServer', () => {
     const server = makeServer(fetchMock);
     const result = await server.trackLead({
       identity: parseIdentityFromCookies(`${ATTRIBUTION_COOKIE}; ${SESSION_COOKIE}`),
-      data: { formId: 'contact' },
+      data: { formId: 'contact', marketing_trail: { site_id: 'attacker', workspace_id: 'other' } },
       now: '2026-08-24T10:00:00.000Z',
     });
     expect(result).toEqual({ ok: true, status: 204 });
@@ -75,7 +75,8 @@ describe('ClickTrailServer', () => {
     expect(event['session_number']).toBe('2');
     expect(event['site_id']).toBe('s1');
     expect(event['workspace_id']).toBe('w1');
-    expect(event['marketing_trail']).toBeTruthy();
+    expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
+    expect(init.redirect).toBe('error');
   });
 
   it('trackPurchase validates transaction fields before sending', async () => {

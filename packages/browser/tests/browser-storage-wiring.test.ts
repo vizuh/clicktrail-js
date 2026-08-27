@@ -171,6 +171,28 @@ describe('createClickTrail storage wiring', () => {
     expect(mirrored['gclid']).toBe('xyz');
   });
 
+  it('blocks public attribution mutators after consent is withdrawn', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.start();
+    ct.hydrateStoredPayload({ ft_source: 'trusted' });
+    expect(ct.getField('ft_source')).toBe('trusted');
+
+    consent = false;
+    ct.mergeParsedTouch({ source: 'attacker' } as never);
+    ct.hydrateStoredPayload({ ft_source: 'attacker' });
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+  });
+
   it('consent denial clears ALL attribution storage across both adapters', () => {
     const primary = fakeAdapter();
     const mirror = fakeAdapter();

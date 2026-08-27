@@ -30,9 +30,9 @@ test "$npm_user" = 'atroci' || {
   echo "refusing: authenticated npm user is not the authorized publisher" >&2; exit 1;
 }
 
-npm_view_version() {
+npm_view_field() {
   local output
-  if output="$(npm view "$1" version 2>&1)"; then
+  if output="$(npm view "$1" "$2" 2>&1)"; then
     return 0
   fi
   if grep -Eq '(^|[[:space:]])E404([[:space:]]|$)' <<<"$output"; then
@@ -58,7 +58,7 @@ for source_manifest in \
   test "$package_release_version" != "$bootstrap_version" || {
     echo "refusing: $source_manifest uses reserved bootstrap version" >&2; exit 1;
   }
-  if npm_view_version "$name"; then
+  if npm_view_field "$name" name; then
     printf '%s already exists on npm; skipping\n' "$name"
     continue
   else
@@ -91,7 +91,7 @@ const manifest = {
 process.stdout.write(`${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
-  if npm_view_version "$name@$bootstrap_version"; then
+  if npm_view_field "$name@$bootstrap_version" version; then
     echo "$name@$bootstrap_version already exists; refusing ambiguous bootstrap" >&2
     exit 1
   else

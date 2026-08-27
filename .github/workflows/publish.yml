@@ -121,8 +121,10 @@ jobs:
           node-version: '24.15.0'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify npm trusted-publishing runtime
-        run: npm --version
+      - name: Verify package-level npm trusted publishing attestation
+        env:
+          CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION: ${{ secrets.CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION }}
+        run: node tools/release/verify-trusted-publishing-attestation.mjs
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
@@ -145,9 +147,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm_view_version() {
+          npm_view_field() {
             local output
-            if output="$(npm view "$1" version 2>&1)"; then
+            if output="$(npm view "$1" "$2" 2>&1)"; then
               return 0
             fi
             if grep -Eq '(^|[[:space:]])E404([[:space:]]|$)' <<<"$output"; then
@@ -168,7 +170,7 @@ jobs:
             test "$tag_version" = "$package_version" || {
               echo "::error::version mismatch in $package_json: $package_version != $tag_version"; exit 1;
             }
-            if npm_view_version "$package_name"; then
+            if npm_view_field "$package_name" name; then
               :
             else
               lookup_status=$?
@@ -177,7 +179,7 @@ jobs:
               fi
               exit 1
             fi
-            if npm_view_version "$package_name@$package_version"; then
+            if npm_view_field "$package_name@$package_version" version; then
               echo "::error::$package_name@$package_version already exists and is immutable"; exit 1;
             else
               lookup_status=$?

@@ -35,7 +35,7 @@ function makeTarget() {
   };
 }
 
-function bootSeams(jar = makeJar()) {
+function bootSeams(jar = makeJar(), href = 'https://example.com/') {
   const target = makeTarget();
   return {
     jar,
@@ -44,7 +44,7 @@ function bootSeams(jar = makeJar()) {
       cookieJar: jar,
       eventTarget: target,
       routerSeam: {
-        href: () => 'https://example.com/',
+        href: () => href,
         referrer: () => '',
         host: () => 'example.com',
         afterEach: () => () => {},
@@ -103,6 +103,16 @@ describe('consent deferral in client boot', () => {
     setConsent(true, { cookieJar: s.jar, eventTarget: s.target });
     await booted.whenStarted();
     expect(booted.instance.isStarted()).toBe(true);
+  });
+
+  it('does not merge initial attribution before consent', () => {
+    const s = bootSeams(makeJar(), 'https://example.com/?utm_source=google');
+    const booted = bootClickTrailClient(
+      cfg({ consentRequired: true, trackPageViews: true }),
+      s.seams,
+    );
+
+    expect(booted.instance.getField('ft_source')).toBe('');
   });
 
   it('stops a started instance when consent is denied later', async () => {

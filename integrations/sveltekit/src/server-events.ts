@@ -166,6 +166,10 @@ export async function trackConversion(
     ...(identity.sessionNumber !== undefined
       ? { session_number: String(identity.sessionNumber) }
       : {}),
+  }, {
+    ...(options.siteId !== undefined ? { siteId: options.siteId } : {}),
+    ...(options.workspaceId !== undefined ? { workspaceId: options.workspaceId } : {}),
+    ...(identity.visitorId ? { identity: { visitorId: identity.visitorId } } : {}),
   });
 
   const fetchImpl = options.fetch ?? fetch;
@@ -174,6 +178,7 @@ export async function trackConversion(
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ events: [built] }),
+      redirect: 'error',
     });
     return { ok: response.ok, status: response.status };
   } catch {

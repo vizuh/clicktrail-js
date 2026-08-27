@@ -177,6 +177,7 @@ export function bootClickTrailClient(
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
+    consentGate: () => !config.consentRequired || readStoredConsent(resolved.cookieJar) === true,
     storage: {},
   });
 

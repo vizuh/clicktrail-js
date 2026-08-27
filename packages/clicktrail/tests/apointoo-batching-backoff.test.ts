@@ -112,4 +112,21 @@ describe('retry backoff schedule (injected jitter + sleep)', () => {
     // DROPPED-BATCH LAW: the events are recoverable, not silently lost.
     expect((d.events[0] as Record<string, unknown>)['journey.id']).toBe('j1');
   });
+
+  it('clearing during backoff prevents pending retries', async () => {
+    const fetchFn = fakeFetch(Number.POSITIVE_INFINITY);
+    let dest!: ReturnType<typeof createApointooDestination>;
+    dest = createApointooDestination({
+      endpoint: 'https://apointoo.example/outcomes',
+      batchSize: 1,
+      maxRetries: 2,
+      sleep: async () => dest.clear(),
+      fetch: fetchFn,
+    });
+
+    dest.deliver(outcome(1));
+    await dest.flush?.();
+
+    expect(fetchFn.calls).toHaveLength(1);
+  });
 });

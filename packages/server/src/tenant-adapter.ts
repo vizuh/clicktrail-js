@@ -81,6 +81,9 @@ export class TenantAdapter {
     delete data['marketing_trail'];
     delete data['site_id'];
     delete data['workspace_id'];
+    delete data['visitor_id'];
+    delete data['session_id'];
+    delete data['session_number'];
 
     return buildEventPayload(input.identity.payload ?? {}, eventName, {
       ...data,

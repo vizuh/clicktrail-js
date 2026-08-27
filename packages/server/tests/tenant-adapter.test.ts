@@ -97,6 +97,24 @@ describe('TenantAdapter', () => {
     expect(event.properties).toMatchObject({ tenant_id: 'med10x-tenant-1' });
   });
 
+  it('does not promote untrusted identity fields when trusted identity is absent', () => {
+    const adapter = createTenantAdapter(baseConfig());
+    const event = adapter.build({
+      ...input(),
+      identity: { payload: {} },
+      data: {
+        visitor_id: 'attacker-visitor',
+        session_id: 'attacker-session',
+        session_number: '999',
+      },
+    });
+
+    expect(event.visitor_id).toBeUndefined();
+    expect(event.session_id).toBeUndefined();
+    expect(event.session_number).toBeUndefined();
+    expect(event.marketing_trail.anonymous_id).toBe('');
+  });
+
   it('keeps colon-containing tenant tuple components distinct', () => {
     const first = createTenantAdapter({ ...baseConfig(), tenantId: 'a', adapterName: 'b:c' });
     const second = createTenantAdapter({ ...baseConfig(), tenantId: 'a:b', adapterName: 'c' });

@@ -279,7 +279,7 @@ export const integrations: Integration[] = [
     features: [
       'Senders: track, lead, conversion, booking, refund, consent — all return ClickTrailResult(ok, status, event_id)',
       'Never raises for network failures; validation errors raise TypeError before sending',
-      'Deterministic event ids via derive_stable_event_id (fnv1a32 pair mirroring the JS core) when external_key is given',
+      'Deterministic event ids via derive_stable_event_id (sha256-128-v1, matching the JS core) when external_key is given',
       'Injectable http_post transport for tests; default uses urllib.request',
       'Helpers: ids, events, retry, landing.parse_landing / classify_referrer',
     ],

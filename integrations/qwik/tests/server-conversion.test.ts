@@ -21,6 +21,7 @@ describe('ClickTrailServer conversion matrix', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://collector.test/collect');
+    expect(init.redirect).toBe('error');
     const body = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     expect(body.events).toHaveLength(1);
     const event = body.events[0]!;

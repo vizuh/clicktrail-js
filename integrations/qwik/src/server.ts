@@ -164,6 +164,7 @@ export class ClickTrailServer {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ events: [...events] }),
+        redirect: 'error',
       });
       return { ok: response.ok, status: response.status };
     } catch {
@@ -187,6 +188,10 @@ export class ClickTrailServer {
       ...(input.identity.sessionNumber !== undefined
         ? { session_number: String(input.identity.sessionNumber) }
         : {}),
+    }, {
+      ...(this.siteId !== undefined ? { siteId: this.siteId } : {}),
+      ...(this.workspaceId !== undefined ? { workspaceId: this.workspaceId } : {}),
+      ...(input.identity.visitorId ? { identity: { visitorId: input.identity.visitorId } } : {}),
     });
   }
 

@@ -145,6 +145,21 @@ describe('bootClickTrailClient consent deferral', () => {
     expect(client.instance.getField('gclid')).toBe('');
   });
 
+  it('does not merge initial attribution before consent', () => {
+    const { jar } = jarFrom();
+    const booted = bootClickTrailClient(config, {
+      cookieJar: jar,
+      navigationSeam: {
+        href: () => 'https://example.com/?utm_source=google',
+        referrer: () => '',
+        host: () => 'example.com',
+        onNavigate: () => () => undefined,
+      },
+    });
+
+    expect(booted.instance.getField('ft_source')).toBe('');
+  });
+
   it('stays dormant forever on explicit denial until re-consented', async () => {
     const { jar } = jarFrom('ct_consent=denied');
     const target = {

@@ -47,7 +47,7 @@ package-level trusted-publisher configuration.
 - [x] Secret-store token `npm whoami` returns expected user `atroci`
 - [x] `npm org ls vizuh` confirms `atroci` is an owner
 - [ ] Each first-wave package exists on npm: core, browser, umbrella, Astro, Nuxt
-- [ ] Each first-wave package has trusted publisher configured for `vizuh/clicktrail-js`, `publish.yml`, environment `npm`, and `npm publish`
+- [ ] Each first-wave package has trusted publisher configured for `vizuh/clicktrail-js`, `publish.yml`, environment `npm`, and `npm publish`; workflow requires the external `CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION` secret
 
 ## 5. First publish
 - [ ] After owner authorization passes, publish only the distinct `0.0.0-bootstrap.0` placeholders for missing names with Hugo-authenticated 2FA, then configure trusted publishing

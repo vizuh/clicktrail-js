@@ -96,6 +96,7 @@ describe('trackConversion send contract', () => {
     expect(result).toEqual({ ok: true, status: 200 });
     const [url, init] = fetchImpl.mock.calls[0]! as unknown as [string, RequestInit];
     expect(url).toBe(ENDPOINT);
+    expect(init.redirect).toBe('error');
     expect((init.headers as Record<string, string>)['content-type']).toBe('application/json');
     const body = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     expect(body.events).toHaveLength(1);

@@ -78,6 +78,16 @@ describe('bootClickTrailClient', () => {
     expect(booted.instance.isStarted()).toBe(true);
   });
 
+  it('does not merge initial attribution before consent', () => {
+    const seams = makeSeams('https://example.com/?utm_source=google');
+    const booted = bootClickTrailClient(
+      defaultClientConfig({ endpoint: '/api/ct', consentRequired: true }),
+      seams,
+    );
+
+    expect(booted.instance.getField('ft_source')).toBe('');
+  });
+
   it('a denied flag never starts tracking', async () => {
     const seams = makeSeams('https://example.com/');
     bootClickTrailClient(

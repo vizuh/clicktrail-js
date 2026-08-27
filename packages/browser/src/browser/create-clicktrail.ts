@@ -542,6 +542,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     },
 
     mergeParsedTouch(touch) {
+      if (!consentAllows()) return;
       // Capture path: refresh cookie-derived browser IDs first so a fresh
       // _fbp/_ga* value lands top-level on the same write (RULING A part b).
       mergeCookieBrowserIds();
@@ -552,6 +553,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     },
 
     hydrateStoredPayload(incoming) {
+      if (!consentAllows()) return;
       // Migration path (WP swap / legacy imports): adopt canonical non-empty
       // keys only. Unknown keys are dropped here rather than at the store so
       // hydration works identically with or without storage adapters.
