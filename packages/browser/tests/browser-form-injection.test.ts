@@ -251,6 +251,20 @@ describe('createFormInjector', () => {
     expect(doc.forms[0]!.hiddenInputs()).toEqual([]);
   });
 
+  it('does not import a click ID from a cached form action', () => {
+    const doc = new FakeDocument();
+    const form = new FakeForm();
+    form.setAttribute('action', '/?gclid=visitor-a');
+    doc.forms.push(form);
+
+    createFormInjector(
+      CONFIG({ doc, getPayload: () => emptyAttribution(), getIdentity: () => ({}) }),
+    ).start();
+
+    expect(form.getAttribute('action')).toBe('/?gclid=visitor-a');
+    expect(form.hiddenInputs()).toEqual([]);
+  });
+
   it('existing non-empty hidden fields are preserved unless overwrite', () => {
     const doc = new FakeDocument();
     const form = new FakeForm();
