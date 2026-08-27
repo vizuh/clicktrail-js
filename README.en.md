@@ -212,9 +212,9 @@ transcripts.
 
 1. Package versions and the Git tag must match.
 2. The release branch passes CI, typecheck, tests, build, probe, and clean-room tarball smoke checks.
-3. After merge, pushing `v<version>` triggers `.github/workflows/publish.yml`.
-4. The workflow publishes the first wave to npm with OIDC provenance and the `next` dist-tag for RC versions.
-5. New package names need the one-time local bootstrap in `tools/release/bootstrap-new-packages.sh`, followed by trusted-publisher configuration on npmjs.com.
+3. Before creating any tag, complete the one-time namespace bootstrap in `tools/release/bootstrap-new-packages.sh` and configure trusted publishers on npmjs.com.
+4. With those prerequisites, the reviewed PR complete, and the `master` SHA verified, create `v<version>`; this triggers `.github/workflows/publish.yml`.
+5. The workflow repeats the gates and publishes the first wave to npm with OIDC provenance and the `next` dist-tag for RC versions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md), and [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Never put npm tokens in the repository or workflows.
 

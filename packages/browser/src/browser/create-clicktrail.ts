@@ -230,14 +230,19 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const sink = resolveSink(config);
   let eventSequence = 0;
 
-  const clearDestinationQueues = (): void => {
+  let destinationCleanupFailed = false;
+  const clearDestinationQueues = (): boolean => {
+    let cleared = true;
     for (const dest of destinations) {
       try {
         dest.clear();
       } catch (error) {
         void error;
+        cleared = false;
       }
     }
+    destinationCleanupFailed = !cleared;
+    return cleared;
   };
 
   let started = false;
@@ -330,6 +335,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const consentAllows = (): boolean => {
     if (!consentGate || consentGate()) {
       consentDeniedReported = false;
+      if (destinationCleanupFailed && !clearDestinationQueues()) return false;
       return true;
     }
     if (!consentDeniedReported) {

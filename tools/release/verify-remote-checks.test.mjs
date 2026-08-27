@@ -22,14 +22,14 @@ function run({ statuses, checkPages = [], required = ['ci/test'] }) {
   });
 }
 
-test('accepts the latest successful status for each required context', () => {
+test('accepts the latest successful status from the combined-status response', () => {
   const result = run({
     statuses: {
       sha,
       state: 'success',
       statuses: [
-        { id: 1, context: 'ci/test', sha, state: 'failure', created_at: '2026-08-27T10:00:00Z' },
-        { id: 2, context: 'ci/test', sha, state: 'success', created_at: '2026-08-27T10:01:00Z' },
+        { id: 1, context: 'ci/test', state: 'failure', created_at: '2026-08-27T10:00:00Z' },
+        { id: 2, context: 'ci/test', state: 'success', created_at: '2026-08-27T10:01:00Z' },
       ],
     },
   });
@@ -57,8 +57,8 @@ test('rejects an older successful status followed by a failure', () => {
       sha,
       state: 'failure',
       statuses: [
-        { id: 1, context: 'ci/test', sha, state: 'success', created_at: '2026-08-27T10:00:00Z' },
-        { id: 2, context: 'ci/test', sha, state: 'failure', created_at: '2026-08-27T10:01:00Z' },
+        { id: 1, context: 'ci/test', state: 'success', created_at: '2026-08-27T10:00:00Z' },
+        { id: 2, context: 'ci/test', state: 'failure', created_at: '2026-08-27T10:01:00Z' },
       ],
     },
   });
@@ -72,7 +72,7 @@ test('rejects a success status older than a later completed failed check-run', (
       sha,
       state: 'failure',
       statuses: [
-        { id: 1, context: 'ci/test', sha, state: 'success', created_at: '2026-08-27T10:01:00Z' },
+        { id: 1, context: 'ci/test', state: 'success', created_at: '2026-08-27T10:01:00Z' },
       ],
     },
     checkPages: [{ check_runs: [{
@@ -97,7 +97,7 @@ test('rejects missing and pending required contexts', () => {
 
   const pending = run({
     statuses: { sha, state: 'pending', statuses: [
-      { id: 1, context: 'ci/test', sha, state: 'pending', created_at: '2026-08-27T10:00:00Z' },
+      { id: 1, context: 'ci/test', state: 'pending', created_at: '2026-08-27T10:00:00Z' },
     ] },
   });
   assert.notEqual(pending.status, 0);

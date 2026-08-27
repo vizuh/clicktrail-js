@@ -180,9 +180,9 @@ As superfícies core e browser estão em desenvolvimento público. As superfíci
 
 1. As versões dos pacotes e o tag do GitHub devem ser iguais.
 2. O branch de release passa por CI, typecheck, testes, build, probe e smoke de tarball em clean room.
-3. Depois do merge, o tag `v<versão>` dispara `.github/workflows/publish.yml`.
-4. O workflow publica o primeiro wave no npm com provenance OIDC e o dist-tag `next` para versões RC.
-5. Nomes de pacote novos exigem o bootstrap local único em `tools/release/bootstrap-new-packages.sh`, seguido da configuração de trusted publisher no npmjs.com.
+3. Antes de criar qualquer tag, conclua o bootstrap único dos novos nomes em `tools/release/bootstrap-new-packages.sh` e configure os trusted publishers no npmjs.com.
+4. Com esses pré-requisitos, a revisão do PR concluída e o SHA do `master` verificado, crie o tag `v<versão>`; isso dispara `.github/workflows/publish.yml`.
+5. O workflow repete os gates e publica o primeiro wave no npm com provenance OIDC e o dist-tag `next` para versões RC.
 
 Consulte [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md) e [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Não coloque tokens npm no repositório ou nos workflows.
 

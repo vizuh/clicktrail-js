@@ -89,6 +89,29 @@ describe('createClickTrail', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('fails closed when a destination cannot clear buffered events', () => {
+    let consent = true;
+    let retained = 0;
+    let flushed = 0;
+    const destination: Destination = {
+      name: 'unclearable',
+      deliver() { retained += 1; },
+      clear() { throw new Error('clear failed'); },
+      flush() { flushed += retained; },
+    };
+    const ct = createClickTrail({ destinations: [destination], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+    consent = false;
+    ct.track('page_view');
+    consent = true;
+    ct.stop();
+
+    expect(retained).toBe(1);
+    expect(flushed).toBe(0);
+  });
+
   it('rechecks consent before delivering to each destination', () => {
     let consent = true;
     const delivered: string[] = [];

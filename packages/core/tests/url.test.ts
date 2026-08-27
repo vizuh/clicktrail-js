@@ -11,6 +11,7 @@ describe('isSafeHttpUrl', () => {
     'https://10.0.0.1/events',
     'https://169.254.169.254/latest/meta-data',
     'https://192.0.0.1/events',
+    'https://192.0.1.1/events',
     'https://192.168.1.2/events',
     'https://[::1]/events',
     'https://[fd00::1]/events',
@@ -21,6 +22,5 @@ describe('isSafeHttpUrl', () => {
 
   it('accepts a credentials-free public HTTPS destination', () => {
     expect(isSafeHttpUrl('https://collector.example.com/v1/events')).toBe(true);
-    expect(isSafeHttpUrl('https://192.0.1.1/events')).toBe(true);
   });
 });

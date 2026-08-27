@@ -23,8 +23,9 @@ function latestResult(context, sha, checkPages, combinedStatus) {
   const checks = pages.flatMap((page) => page?.check_runs ?? [])
     .filter((run) => run?.name === context && typeof run?.head_sha === 'string' && run.head_sha.toLowerCase() === normalizedSha)
     .map((run) => ({ ...run, kind: 'check' }));
+  const combinedSha = typeof combinedStatus?.sha === 'string' ? combinedStatus.sha.toLowerCase() : '';
   const statuses = (combinedStatus?.statuses ?? [])
-    .filter((status) => status?.context === context && typeof status?.sha === 'string' && status.sha.toLowerCase() === normalizedSha)
+    .filter((status) => combinedSha === normalizedSha && status?.context === context)
     .map((status) => ({ ...status, kind: 'status' }));
   const results = [...checks, ...statuses];
   const times = results.map(resultTime);
