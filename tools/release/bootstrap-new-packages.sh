@@ -58,7 +58,7 @@ for source_manifest in \
   test "$package_release_version" != "$bootstrap_version" || {
     echo "refusing: $source_manifest uses reserved bootstrap version" >&2; exit 1;
   }
-  if npm_view_field "$name" name; then
+  if npm_view_field "$name" versions; then
     printf '%s already exists on npm; skipping\n' "$name"
     continue
   else

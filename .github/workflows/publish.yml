@@ -177,7 +177,7 @@ jobs:
             test "$tag_version" = "$package_version" || {
               echo "::error::version mismatch in $package_json: $package_version != $tag_version"; exit 1;
             }
-            if npm_view_field "$package_name" name; then
+            if npm_view_field "$package_name" versions; then
               :
             else
               lookup_status=$?

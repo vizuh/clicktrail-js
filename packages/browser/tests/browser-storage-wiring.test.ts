@@ -117,6 +117,27 @@ describe('createClickTrail storage wiring', () => {
     expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
   });
 
+  it('clearData() removes stored attribution before a denied instance starts', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'stale' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'stale' }));
+    let consent = false;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+
+    ct.clearData();
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+
+    consent = true;
+    ct.start();
+    expect(ct.getField('gclid')).toBe('');
+  });
+
   it('getSession() returns real browser-owned identity after start()', () => {
     let now = 5_000;
     const BYTES_SESSION_2 = new Uint8Array(16).fill(0x03);

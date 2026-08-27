@@ -66,6 +66,8 @@ const SERVER_RESERVED_KEYS = [
   'visitor_id',
   'session_id',
   'session_number',
+  'trail_id',
+  'anonymous_id',
 ] as const;
 
 export function sanitizeServerEventInput<T extends Record<string, unknown>>(input: T): T {

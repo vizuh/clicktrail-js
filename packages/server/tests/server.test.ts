@@ -88,6 +88,8 @@ describe('ClickTrailServer', () => {
         visitor_id: 'attacker-visitor',
         session_id: 'attacker-session',
         session_number: '999',
+        trail_id: 'attacker-trail',
+        anonymous_id: 'attacker-anonymous',
         marketing_trail: { site_id: 'attacker-site', workspace_id: 'attacker-workspace' },
       },
     });
@@ -97,7 +99,12 @@ describe('ClickTrailServer', () => {
     expect(event['visitor_id']).toBeUndefined();
     expect(event['session_id']).toBeUndefined();
     expect(event['session_number']).toBeUndefined();
-    expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
+    expect(event['marketing_trail']).toMatchObject({
+      site_id: 's1',
+      workspace_id: 'w1',
+      trail_id: '',
+      anonymous_id: '',
+    });
   });
 
   it('carries a trusted typed event ID while ignoring a raw reserved event ID', async () => {
@@ -113,6 +120,17 @@ describe('ClickTrailServer', () => {
     const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
     expect(event['event_id']).toBe('evt_trusted');
     expect(event['marketing_trail']).toMatchObject({ event_id: 'evt_trusted' });
+  });
+
+  it('normalizes a typed event ID consistently across event surfaces', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({ identity: { payload: {} }, eventId: 'response-1' });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_id']).toBe('evt_response-1');
+    expect(event['marketing_trail']).toMatchObject({ event_id: 'evt_response-1' });
   });
 
   it('trackPurchase validates transaction fields before sending', async () => {

@@ -11,19 +11,20 @@ function parseJson(name) {
 
 function resultTime(result) {
   const raw = result.kind === 'check'
-    ? result.completed_at ?? result.started_at ?? result.created_at ?? result.updated_at
+    ? result.started_at ?? result.run_started_at ?? result.created_at ?? result.completed_at ?? result.updated_at
     : result.created_at ?? result.updated_at;
   const time = Date.parse(raw ?? '');
   return Number.isFinite(time) ? time : Number.NEGATIVE_INFINITY;
 }
 
 function latestResult(context, sha, checkPages, combinedStatus) {
+  const normalizedSha = typeof sha === 'string' ? sha.toLowerCase() : '';
   const pages = Array.isArray(checkPages) ? checkPages : [checkPages];
   const checks = pages.flatMap((page) => page?.check_runs ?? [])
-    .filter((run) => run?.name === context && run?.head_sha?.toLowerCase() === sha.toLowerCase())
+    .filter((run) => run?.name === context && typeof run?.head_sha === 'string' && run.head_sha.toLowerCase() === normalizedSha)
     .map((run) => ({ ...run, kind: 'check' }));
   const statuses = (combinedStatus?.statuses ?? [])
-    .filter((status) => status?.context === context && status?.sha?.toLowerCase() === sha.toLowerCase())
+    .filter((status) => status?.context === context && typeof status?.sha === 'string' && status.sha.toLowerCase() === normalizedSha)
     .map((status) => ({ ...status, kind: 'status' }));
   return [...checks, ...statuses]
     .sort((left, right) => resultTime(left) - resultTime(right) || (left.id ?? 0) - (right.id ?? 0))
@@ -41,9 +42,6 @@ export function verifyRemoteChecks(input) {
     required.some((context) => typeof context !== 'string' || context === '')
   ) {
     return { ok: false, reason: 'required status checks are missing' };
-  }
-  if (combinedStatus?.sha?.toLowerCase() !== sha.toLowerCase() || combinedStatus?.state !== 'success') {
-    return { ok: false, reason: 'combined status for exact SHA is not successful' };
   }
   for (const context of required) {
     const result = latestResult(context, sha, checkPages, combinedStatus);

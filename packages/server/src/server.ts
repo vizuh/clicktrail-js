@@ -119,6 +119,11 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function normalizeEventId(value: unknown): string {
+  const eventId = requireNonEmptyString(value, 'eventId');
+  return eventId.startsWith('evt_') ? eventId : `evt_${eventId}`;
+}
+
 function requireSafeHttpUrl(value: unknown, field: string): string {
   const endpoint = requireNonEmptyString(value, field);
   if (!isSafeHttpUrl(endpoint)) {
@@ -165,10 +170,11 @@ export class ClickTrailServer {
   private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
     const payload = sanitizeServerEventInput(input.identity.payload ?? {});
     const data = sanitizeServerEventInput(input.data ?? {});
+    const eventId = input.eventId === undefined ? undefined : normalizeEventId(input.eventId);
     return buildEventPayload(payload, toCanonicalEventName(eventName), {
       ...data,
       ...(input.eventId !== undefined
-        ? { event_id: requireNonEmptyString(input.eventId, 'eventId') }
+        ? { event_id: eventId }
         : {}),
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),

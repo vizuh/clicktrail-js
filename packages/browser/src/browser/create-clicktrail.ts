@@ -605,7 +605,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       payload = emptyAttribution();
       clearDestinationQueues();
       clearBrowserAttributionDom();
-      if (started && adapters) {
+      if (storageCfg) {
+        initStorage();
+      }
+      if (adapters) {
         clearAttributionStorage(adapters.primary, adapters.mirror);
         identity?.clear();
       }

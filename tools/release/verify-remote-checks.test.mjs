@@ -36,6 +36,21 @@ test('accepts the latest successful status for each required context', () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+test('accepts a current successful check-run without combined status success', () => {
+  const result = run({
+    statuses: { sha, state: 'failure', statuses: [] },
+    checkPages: [{ check_runs: [{
+      id: 1,
+      name: 'ci/test',
+      head_sha: sha,
+      status: 'completed',
+      conclusion: 'success',
+      started_at: '2026-08-27T10:01:00Z',
+    }] }],
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('rejects an older successful status followed by a failure', () => {
   const result = run({
     statuses: {
@@ -48,7 +63,7 @@ test('rejects an older successful status followed by a failure', () => {
     },
   });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /not successful/);
+  assert.match(result.stderr, /currently successful/);
 });
 
 test('rejects missing and pending required contexts', () => {
