@@ -39,7 +39,7 @@ the envelope carries the latest touch.
 
 1. **Consent checkbox** → checked calls `clickTrail.start()`, unchecked calls
    `clickTrail.stop()`. Before start, the SDK has zero side effects.
-2. **Demo button** → pushes a `lead_submitted` event into
+2. **Demo button** → pushes a `lead_created` event into
    `window.dataLayer`; the latest push renders below the button.
 3. Each push keeps canonical fields flat for tag-manager variables and adds a
    `marketing_trail` envelope (`event_name`, `trail_id`, `click_ids`,

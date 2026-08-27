@@ -37,13 +37,13 @@ surfaces as an action error on the first real send.
 | Action | Event name | Required inputs | Optional inputs |
 | --- | --- | --- | --- |
 | Track Event | free string from input | eventName | data (JSON object) |
-| Identify Lead | `lead` | — | visitorId, email, leadId, name |
-| Attach Attribution | `lead.attribution_attached` | — | visitorId, source, medium, campaign |
-| Record Booking | `booking` | — | value (positive), currency, startDate |
-| Record Qualified Lead | `lead.qualified` | leadId | — |
-| Record Sale | `sale.recorded` | transactionId, value (positive), currency | — |
-| Record Refund | `refund.issued` | originalTransactionId | value (positive) |
-| Update Consent | `consent.granted` / `consent.withdrawn` / `consent.policy_updated` | state (dropdown drives the name) | source, policyVersion |
+| Identify Lead | `lead_created` | — | visitorId, email, leadId, name |
+| Attach Attribution | `lead_created` | — | visitorId, source, medium, campaign |
+| Record Booking | `booking_created` | — | value (positive), currency, startDate |
+| Record Qualified Lead | `lead_qualified` | leadId | — |
+| Record Sale | `sale` | transactionId, value (positive), currency | — |
+| Record Refund | `refund` | originalTransactionId | value (positive) |
+| Update Consent | `consent_updated` | state (`granted`, `withdrawn`, or `policy_updated`) | source, policyVersion |
 
 Each send resolves to `{ ok, status, event }` on success (`event` is the exact
 stamped payload that was delivered) and rejects with an error naming the action

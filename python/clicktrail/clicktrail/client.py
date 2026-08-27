@@ -175,7 +175,7 @@ class ClickTrail:
         return self._send(
             self.build_event(
                 "consent_updated",
-                {"consent_state": st, "consent_source": src, "consent_policy_version": ver},
+                {"consent_state": st, "consent_source": src, "consent_version": ver},
             )
         )
 

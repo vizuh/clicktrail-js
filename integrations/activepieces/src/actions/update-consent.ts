@@ -1,8 +1,8 @@
 /**
- * Update Consent -> 'consent.granted' | 'consent.withdrawn' | 'consent.policy_updated'.
+ * Update Consent -> canonical `consent_updated` + `consent_state`.
  *
- * The State dropdown drives the outbound event name; granted/withdrawn also
- * fold the analytics/advertising flags into the marketing_trail envelope.
+ * Legacy dropdown values remain accepted for saved flows; granted/withdrawn
+ * also fold analytics/advertising flags into the marketing_trail envelope.
  */
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clicktrailAuth } from '../lib/auth.js';
@@ -20,7 +20,7 @@ export const updateConsent = createAction({
   props: {
     state: Property.StaticDropdown({
       displayName: 'Consent State',
-      description: 'Drives the event name sent to ClickTrail.',
+      description: 'Recorded as consent_state on the consent_updated event.',
       required: true,
       options: {
         disabled: false,

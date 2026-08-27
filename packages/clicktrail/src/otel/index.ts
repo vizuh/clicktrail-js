@@ -1,17 +1,15 @@
 /**
  * @vizuh/clicktrail/otel - UNSTABLE entry point.
  *
- * Correlation bridge between ClickTrail journeys and OpenTelemetry-SHAPED
- * context WITHOUT requiring the OTel SDK. "OpenTelemetry-compatible, not
+ * Event bridge between ClickTrail journeys and OpenTelemetry WITHOUT
+ * requiring the OTel SDK. "OpenTelemetry-compatible, not
  * OpenTelemetry-dependent" (docs/ARCHITECTURE.md): zero @opentelemetry/*
- * imports anywhere in this subpath — tracers enter as plain structural
- * objects, ids are derived locally.
+ * imports. Loggers enter as plain structural objects.
  *
- * What this subpath is NOT: it does not record model-call spans, does not
- * replace Langfuse/Phoenix, and does not sample or export telemetry. It
- * derives and propagates CORRELATION identity (W3C traceparent) for journey
- * events, optionally mirroring them into an injected tracer as attributed
- * spans.
+ * ClickTrail facts map to OTel EventRecords through the Logs API. Host code
+ * owns active trace context, sampling, processors, and export. Traceparent
+ * helpers remain explicit correlation utilities; the destination never
+ * invents trace context.
  *
  * SECURITY NOTICE: derived trace/span ids use non-cryptographic FNV-1a over
  * event identity. They are correlation keys, reproducible by anyone who
@@ -34,14 +32,11 @@ export type {
   JourneySpanContext,
   TraceparentSource,
 } from './traceparent.js';
-export {
-  ATTR_EVENT_NAME,
-  ATTR_EVENT_TIME,
-  otelDestination,
-} from './destination.js';
+export { otelDestination } from './destination.js';
 export type {
+  OtelAttributeValue,
   OtelDestination,
   OtelDestinationConfig,
-  OtelSpanLike,
-  OtelTracerLike,
+  OtelEventRecordLike,
+  OtelLoggerLike,
 } from './destination.js';

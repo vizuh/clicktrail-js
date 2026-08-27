@@ -46,7 +46,7 @@ describe('buildEventPayload', () => {
       event_time: '2026-08-23T12:00:00Z',
       plan: 'pro',
     });
-    expect(event['event_name']).toBe('lead.submitted');
+    expect(event['event_name']).toBe('lead_created');
     expect(event['event_time']).toBe('2026-08-23T12:00:00Z');
     expect(event['plan']).toBe('pro');
   });
@@ -107,7 +107,7 @@ describe('buildEventPayload', () => {
       lead_id: 'lead_1',
       workspace_id: 'ws_1',
       site_id: 'site_1',
-      event_name: 'lead_submitted',
+      event_name: 'lead_created',
       occurred_at: '2026-08-24T16:30:00Z',
       landing_page: '/botox-consultation',
       referrer: 'https://google.com/',
@@ -118,5 +118,14 @@ describe('buildEventPayload', () => {
       consent: { analytics: true, advertising: true },
       form: { provider: 'elementor', form_id: 'consultation' },
     });
+  });
+
+  it('normalizes legacy names in both flat and nested wire contracts', () => {
+    const event = buildEventPayload(emptyAttribution(), 'sale.completed', {
+      marketing_trail: { event_name: 'spoofed.event' },
+    });
+
+    expect(event.event_name).toBe('sale');
+    expect(event.marketing_trail.event_name).toBe('sale');
   });
 });

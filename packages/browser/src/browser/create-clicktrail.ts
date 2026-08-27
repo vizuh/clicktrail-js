@@ -11,6 +11,7 @@ import { emptyAttribution } from '@vizuh/clicktrail-core';
 import type { ParsedTouch } from '@vizuh/clicktrail-core';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import { mergeAttributionTouch } from '@vizuh/clicktrail-core';
+import { toCanonicalEventName } from '@vizuh/clicktrail-core';
 import { createIdentityStore } from './identity.js';
 import type { IdentityStore, RandomBytesFn } from './identity.js';
 import {
@@ -376,7 +377,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   };
 
   const isLeadEvent = (eventName: string): boolean =>
-    ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
+    toCanonicalEventName(eventName) === 'lead_created';
 
   /**
    * Cross-domain wiring (work-queue #5): landing-token consumption + outbound

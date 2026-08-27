@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { createApointooDestination } from '../src/apointoo/destination.js';
 import { buildOutcomeEvent } from '../src/apointoo/outcome.js';
-import { EVENT_SALE_COMPLETED } from '@vizuh/clicktrail-core';
+import { EVENT_SALE } from '@vizuh/clicktrail-core';
 
 const CANARY_SECRET = 'canary-long-lived-apointoo-api-key-DO-NOT-LEAK';
 
@@ -35,7 +35,7 @@ describe('auth header handling', () => {
         return `short-lived-token-${minted}`;
       },
     });
-    dest.deliver(buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: 'j1' }));
+    dest.deliver(buildOutcomeEvent(EVENT_SALE, { journeyId: 'j1' }));
     await dest.flush?.();
 
     expect(fetchFn.calls[0]!.headers['authorization']).toBe('Bearer short-lived-token-1');
@@ -48,7 +48,7 @@ describe('auth header handling', () => {
       batchSize: 1,
       fetch: fetchFn,
     });
-    dest.deliver(buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: 'j1' }));
+    dest.deliver(buildOutcomeEvent(EVENT_SALE, { journeyId: 'j1' }));
     await dest.flush?.();
     expect('authorization' in fetchFn.calls[0]!.headers).toBe(false);
   });
@@ -67,7 +67,7 @@ describe('auth header handling', () => {
     });
     dest.deliver(
       buildOutcomeEvent(
-        EVENT_SALE_COMPLETED,
+        EVENT_SALE,
         { journeyId: 'j1', value: 10, currency: 'EUR' },
         { ft_source: 'google', gclid: 'g1' },
       ),

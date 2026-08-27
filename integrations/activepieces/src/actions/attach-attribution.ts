@@ -1,5 +1,5 @@
 /**
- * Attach Attribution -> 'lead.attribution_attached'.
+ * Attach Attribution -> 'lead_created' with attribution fields.
  */
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clicktrailAuth } from '../lib/auth.js';

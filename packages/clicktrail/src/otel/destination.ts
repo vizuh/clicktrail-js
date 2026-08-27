@@ -1,119 +1,98 @@
 /**
- * OpenTelemetry-shaped destination (`/otel`).
+ * OpenTelemetry EventRecord destination (`/otel`).
  *
- * Destination-compatible sink that bridges stamped ClickTrail events into
- * OTel-shaped context. Two modes, composable:
- *
- * - TRACER MODE: an injected tracer-LIKE object (minimal structural
- *   interface: startSpan/setAttribute/end) receives each event as a span
- *   carrying canonical ATTR_* attributes. Structural typing only — we never
- *   import @opentelemetry/* (docs/ARCHITECTURE.md design law), so the real
- *   SDK's Tracer satisfies this interface as-is.
- *
- * - HEADER FALLBACK MODE: with or without a tracer, every delivered event
- *   is enriched (copy, never mutate) with a W3C `traceparent` payload key,
- *   so downstream HTTP hops propagate correlation even when no tracing
- *   vendor exists.
- *
- * Effects: none at import; span emission happens inside deliver() through
- * the injected tracer. Determinism: span ids derive from event identity via
- * journeySpanContext — CORRELATION ids, not high-entropy secrets.
+ * Business events are point-in-time facts, so this adapter emits them through
+ * an injected Logger-like sink instead of manufacturing zero-duration spans.
+ * The host owns OTel context, sampling, processors, and export.
  */
-import type { StampedClickTrailEvent } from '@vizuh/clicktrail-browser';
-import type { Destination } from '@vizuh/clicktrail-browser';
+import type { Destination, StampedClickTrailEvent } from '@vizuh/clicktrail-browser';
 import {
-  ATTR_TRACEPARENT,
-  defaultEventId,
-  defaultEventTimestamp,
-  journeySpanContext,
-} from './traceparent.js';
+  ATTR_AGENT_NAME,
+  ATTR_AGENT_RUN_ID,
+  ATTR_CONVERSATION_ID,
+  ATTR_JOURNEY_ID,
+  ATTR_MESSAGE_ID,
+  toCanonicalEventName,
+} from '@vizuh/clicktrail-core';
+import { defaultEventTimestamp } from './traceparent.js';
 
-/**
- * Minimal structural slice of an OTel Span we rely on. The real SDK Span
- * satisfies this; tests inject fakes.
- */
-export interface OtelSpanLike {
-  setAttribute(key: string, value: unknown): unknown;
-  /** Optional so lightweight fakes stay valid; real spans always have it. */
-  end?(endTime?: unknown): void;
+export type OtelAttributeValue = string | number | boolean;
+
+/** Structural subset accepted by the OpenTelemetry JS Logger API. */
+export interface OtelEventRecordLike {
+  eventName: string;
+  timestamp?: Date | number;
+  attributes?: Record<string, OtelAttributeValue>;
 }
 
-/**
- * Minimal structural slice of an OTel Tracer. Extra SDK parameters are
- * irrelevant to us; only this call shape is consumed.
- */
-export interface OtelTracerLike {
-  startSpan(name: string, options?: Record<string, unknown>): OtelSpanLike;
+/** Real OTel Logger instances and small test fakes satisfy this interface. */
+export interface OtelLoggerLike {
+  emit(record: OtelEventRecordLike): void;
 }
 
 export interface OtelDestinationConfig {
-  /**
-   * Injected tracer-like sink. Omit for pure header-propagation mode
-   * (no vendor dependency at all).
-   */
-  tracer?: OtelTracerLike;
-  /**
-   * Stable identity extractor. Default {@link defaultEventId} (message id →
-   * agent run id → event name). MUST be deterministic across replays.
-   */
-  eventId?: (event: StampedClickTrailEvent) => string;
-  /**
-   * Timestamp extractor feeding the id seed. Default {@link defaultEventTimestamp}.
-   */
-  eventTime?: (event: StampedClickTrailEvent) => string | number | undefined;
+  /** Injected OTel Logger. Omit to keep a side-effect-free inspection buffer. */
+  logger?: OtelLoggerLike;
+  /** Explicit host-owned attribute mapping; raw payload fields are never copied. */
+  attributes?: (event: StampedClickTrailEvent) => Record<string, OtelAttributeValue>;
 }
 
 export interface OtelDestination extends Destination {
-  /**
-   * Delivered events, each enriched with the W3C `traceparent` key.
-   * Inspection seam for tests and for hosts forwarding downstream.
-   */
+  /** Normalized delivered events. No synthetic trace context is added. */
   getEvents(): StampedClickTrailEvent[];
 }
 
-/** Attribute keys this destination always sets on emitted spans. */
-export const ATTR_EVENT_NAME = 'event.name' as const;
-export const ATTR_EVENT_TIME = 'event.time' as const;
+const SAFE_ATTRIBUTES: Readonly<Record<string, string>> = {
+  event_id: 'clicktrail.event.id',
+  schema_version: 'clicktrail.schema.version',
+  classifier_version: 'clicktrail.classifier.version',
+  [ATTR_JOURNEY_ID]: 'clicktrail.journey.id',
+  [ATTR_CONVERSATION_ID]: 'clicktrail.conversation.id',
+  [ATTR_MESSAGE_ID]: 'clicktrail.conversation.message.id',
+  [ATTR_AGENT_RUN_ID]: 'clicktrail.agent.run.id',
+  [ATTR_AGENT_NAME]: 'clicktrail.agent.name',
+};
 
-/**
- * Build the `/otel` destination. Never touches a clock, randomness, or the
- * network itself; all effects flow through the injected tracer.
- */
+function defaultAttributes(event: StampedClickTrailEvent): Record<string, OtelAttributeValue> {
+  const attributes: Record<string, OtelAttributeValue> = {};
+  for (const [source, target] of Object.entries(SAFE_ATTRIBUTES)) {
+    const value = event[source];
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      attributes[target] = value;
+    }
+  }
+  return attributes;
+}
+
+function eventTimestamp(event: StampedClickTrailEvent): Date | number | undefined {
+  const value = defaultEventTimestamp(event);
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'string') return undefined;
+  const milliseconds = Date.parse(value);
+  return Number.isNaN(milliseconds) ? undefined : new Date(milliseconds);
+}
+
+/** Build a dependency-free bridge to an OTel Logger. */
 export function otelDestination(config: OtelDestinationConfig = {}): OtelDestination {
-  const eventId = config.eventId ?? defaultEventId;
-  const eventTime = config.eventTime ?? defaultEventTimestamp;
-  const tracer = config.tracer;
   const events: StampedClickTrailEvent[] = [];
 
   return {
     name: 'otel',
     deliver(event) {
-      const time = eventTime(event);
-      const ctx = journeySpanContext({
-        id: eventId(event),
-        ...(time !== undefined ? { timestamp: time } : {}),
-      });
-      const enriched: StampedClickTrailEvent = { ...event, [ATTR_TRACEPARENT]: ctx.traceparent };
-      events.push(enriched);
+      const eventName = toCanonicalEventName(event.event_name);
+      const normalized: StampedClickTrailEvent = { ...event, event_name: eventName };
+      events.push(normalized);
 
-      if (!tracer) return;
-      // Attribute pass-through rule: canonical ATTR_* keys are dotted
-      // ('journey.id', 'conversation.id', ...). Every dotted key present on
-      // the stamped payload IS an attribute by construction — copy verbatim.
-      const attributes: Record<string, unknown> = {
-        [ATTR_EVENT_NAME]: event.event_name,
-      };
-      if (time !== undefined) attributes[ATTR_EVENT_TIME] = time;
-      for (const [key, value] of Object.entries(event)) {
-        if (key.includes('.') && value !== undefined && value !== null) {
-          if (!(key in attributes)) attributes[key] = value;
-        }
-      }
-      const span = tracer.startSpan(event.event_name, { attributes });
-      for (const [key, value] of Object.entries(attributes)) {
-        span.setAttribute(key, value);
-      }
-      span.end?.();
+      if (!config.logger || eventName === '') return;
+      const timestamp = eventTimestamp(normalized);
+      config.logger.emit({
+        eventName: `clicktrail.${eventName}`,
+        ...(timestamp !== undefined ? { timestamp } : {}),
+        attributes: {
+          ...defaultAttributes(normalized),
+          ...config.attributes?.(normalized),
+        },
+      });
     },
     clear() {
       events.length = 0;

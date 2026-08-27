@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- All shared JS serializers now normalize historical dotted event names to the
+  authoritative nine-event wire contract while retaining legacy inputs and
+  deprecated constant aliases during migration.
+- `/otel` now emits qualified OpenTelemetry EventRecords through an injected
+  Logger-like sink. It no longer models point-in-time business facts as spans
+  or invents trace context, and its default attribute mapping excludes raw
+  attribution and PII fields.
+- n8n, Activepieces, and Python consent builders now use the canonical
+  `consent_state`, `consent_source`, and `consent_version` fields.
+
 ## [0.1.0-rc.4] - 2026-08-25
 
 ### Added

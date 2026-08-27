@@ -1,5 +1,5 @@
 /**
- * Record Sale -> 'sale.recorded'.
+ * Record Sale -> 'sale'.
  */
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clicktrailAuth } from '../lib/auth.js';

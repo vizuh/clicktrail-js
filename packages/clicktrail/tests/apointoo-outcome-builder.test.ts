@@ -10,7 +10,7 @@ import {
   buildOutcomeEvent,
   isOutcomeEvent,
 } from '../src/apointoo/outcome.js';
-import { EVENT_SALE_COMPLETED } from '@vizuh/clicktrail-core';
+import { EVENT_SALE } from '@vizuh/clicktrail-core';
 
 describe('buildOutcomeEvent', () => {
   it('rejects event names outside the outcome set', () => {
@@ -23,20 +23,20 @@ describe('buildOutcomeEvent', () => {
   });
 
   it('requires a non-empty journeyId', () => {
-    expect(() => buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: '' })).toThrow(/journeyId/);
+    expect(() => buildOutcomeEvent(EVENT_SALE, { journeyId: '' })).toThrow(/journeyId/);
     expect(() =>
-      buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: undefined as unknown as string }),
+      buildOutcomeEvent(EVENT_SALE, { journeyId: undefined as unknown as string }),
     ).toThrow(/journeyId/);
   });
 
   it('requires currency when value is present', () => {
     expect(() =>
-      buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: 'j1', value: 100 }),
+      buildOutcomeEvent(EVENT_SALE, { journeyId: 'j1', value: 100 }),
     ).toThrow(/currency/);
     expect(() =>
-      buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: 'j1', value: 100, currency: '' }),
+      buildOutcomeEvent(EVENT_SALE, { journeyId: 'j1', value: 100, currency: '' }),
     ).toThrow(/currency/);
-    const ok = buildOutcomeEvent(EVENT_SALE_COMPLETED, {
+    const ok = buildOutcomeEvent(EVENT_SALE, {
       journeyId: 'j1',
       value: 99.5,
       currency: 'EUR',
@@ -49,14 +49,14 @@ describe('buildOutcomeEvent', () => {
 
   it('rejects non-finite values', () => {
     expect(() =>
-      buildOutcomeEvent(EVENT_SALE_COMPLETED, {
+      buildOutcomeEvent(EVENT_SALE, {
         journeyId: 'j1',
         value: Number.NaN,
         currency: 'EUR',
       }),
     ).toThrow(/finite/);
     expect(() =>
-      buildOutcomeEvent(EVENT_SALE_COMPLETED, {
+      buildOutcomeEvent(EVENT_SALE, {
         journeyId: 'j1',
         value: Infinity,
         currency: 'EUR',
@@ -66,12 +66,12 @@ describe('buildOutcomeEvent', () => {
 
   it('emits deterministic field order regardless of ctx insertion order', () => {
     const a = buildOutcomeEvent(
-      EVENT_SALE_COMPLETED,
+      EVENT_SALE,
       { journeyId: 'j1', value: 10, currency: 'EUR' },
       { ft_source: 'google', ft_medium: 'cpc', visitor_id: 'v1', gclid: 'g1' },
     );
     const b = buildOutcomeEvent(
-      EVENT_SALE_COMPLETED,
+      EVENT_SALE,
       { journeyId: 'j1', value: 10, currency: 'EUR' },
       { gclid: 'g1', visitor_id: 'v1', ft_medium: 'cpc', ft_source: 'google' },
     );
@@ -84,7 +84,7 @@ describe('buildOutcomeEvent', () => {
   });
 
   it('strips unknown ctx keys (payload minimization at the builder)', () => {
-    const rec = buildOutcomeEvent(EVENT_SALE_COMPLETED, { journeyId: 'j1' }, {
+    const rec = buildOutcomeEvent(EVENT_SALE, { journeyId: 'j1' }, {
       ft_source: 'google',
       email: 'hacker@example.com',
       password_hash: 'x',
@@ -94,5 +94,9 @@ describe('buildOutcomeEvent', () => {
     expect('email' in rec).toBe(false);
     expect('password_hash' in rec).toBe(false);
     expect('internal_note' in rec).toBe(false);
+  });
+
+  it('accepts legacy names but emits the canonical wire name', () => {
+    expect(buildOutcomeEvent('sale.completed', { journeyId: 'j1' }).event_name).toBe('sale');
   });
 });

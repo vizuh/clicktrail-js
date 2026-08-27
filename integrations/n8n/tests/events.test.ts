@@ -178,8 +178,9 @@ describe('consent builders', () => {
     for (const state of ['granted', 'denied', 'withdrawn'] as const) {
       const event = await buildRecordConsent({ state, source: 'cookie-banner', policyVersion: '2026-08' });
       expect(event.event_name).toBe('consent_updated');
-      expect(event['state']).toBe(state);
-      expect(event['policy_version']).toBe('2026-08');
+      expect(event['consent_state']).toBe(state);
+      expect(event['consent_source']).toBe('cookie-banner');
+      expect(event['consent_version']).toBe('2026-08');
     }
     await expect(buildRecordConsent({ state: 'maybe' as never })).rejects.toThrow(/state must be one of/);
     await expect(buildRecordConsent({ state: '' as never })).rejects.toThrow(TypeError);
@@ -188,9 +189,12 @@ describe('consent builders', () => {
   it('recordWithdrawal + updateConsentPolicy emit their events', async () => {
     const withdrawn = await buildRecordWithdrawal({ source: 'settings-page' });
     expect(withdrawn.event_name).toBe('consent_updated');
+    expect(withdrawn['consent_state']).toBe('withdrawn');
 
     const policy = await buildUpdateConsentPolicy({ source: 'legal-team', policyVersion: 'v3' });
     expect(policy.event_name).toBe('consent_updated');
+    expect(policy['consent_source']).toBe('legal-team');
+    expect(policy['consent_version']).toBe('v3');
 
     await expect(buildUpdateConsentPolicy({ source: '', policyVersion: 'v3' })).rejects.toThrow(/source/);
     await expect(buildUpdateConsentPolicy({ source: 'legal-team', policyVersion: '' })).rejects.toThrow(

@@ -9,7 +9,7 @@ import {
   WIRE_JOURNEY_ID,
   buildOutcomeEvent,
 } from '../src/apointoo/outcome.js';
-import { EVENT_APPOINTMENT_BOOKED, EVENT_PAGE_VIEW } from '@vizuh/clicktrail-core';
+import { EVENT_BOOKING_CREATED, EVENT_PAGE_VIEW } from '@vizuh/clicktrail-core';
 
 /**
  * Upstream hosts may hand the destination raw records (not yet stamped
@@ -45,7 +45,7 @@ describe('destination payload minimization', () => {
       getJourneyContext: () => ({ ft_source: 'google', gclid: 'g-1' }),
     });
     deliverRaw(dest, {
-      event_name: EVENT_APPOINTMENT_BOOKED,
+      event_name: EVENT_BOOKING_CREATED,
       [WIRE_JOURNEY_ID]: 'j9',
       email: 'victim@example.com',
       credit_card: '4111',
@@ -78,7 +78,7 @@ describe('destination payload minimization', () => {
       }),
     });
     dest.deliver(
-      buildOutcomeEvent(EVENT_APPOINTMENT_BOOKED, {
+      buildOutcomeEvent(EVENT_BOOKING_CREATED, {
         journeyId: 'j1',
         value: 50,
         currency: 'BRL',
@@ -86,7 +86,7 @@ describe('destination payload minimization', () => {
     );
     // An event with NO journey id from any source cannot be correlated and
     // is skipped (fail-closed), not sent with a fabricated id.
-    deliverRaw(dest, { event_name: EVENT_APPOINTMENT_BOOKED });
+    deliverRaw(dest, { event_name: EVENT_BOOKING_CREATED });
     await dest.flush?.();
 
     const first = fetchFn.bodies[0]![0]!;

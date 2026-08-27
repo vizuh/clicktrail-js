@@ -35,15 +35,15 @@ const fields = [
 ];
 
 const translations = [
-  ['lead / form.submitted', 'lead_created (+ form_started where a distinct step exists)'],
+  ['lead / lead.submitted / form.submitted', 'lead_created (+ form_started where a distinct step exists)'],
   ['lead.attribution_attached', 'lead_created with attribution_attached: true detail'],
   ['lead.stage_updated', 'lead_updated (detail.stage) — extension event'],
   ['lead.merged', 'lead_merged — extension event'],
   ['visitor.anonymized', 'visitor_anonymized — deletion request; collector erasure support is separate'],
-  ['booking / appointment.requested', 'booking_created'],
-  ['appointment.completed', 'booking_completed'],
-  ['sale.recorded / purchase', 'sale'],
-  ['refund.issued', 'refund'],
+  ['booking / appointment.booked / appointment.requested', 'booking_created'],
+  ['appointment.attended / appointment.completed', 'booking_completed'],
+  ['sale.completed / sale.recorded / purchase', 'sale'],
+  ['sale.refunded / refund.issued', 'refund'],
   ['offline_conversion.sent', 'sale (detail.kind = offline)'],
   ['consent.granted/withdrawn/policy_updated', 'consent_updated (state/source/version fields)'],
 ];
@@ -153,6 +153,34 @@ const translations = [
           </tbody>
         </table>
       </div>
+
+      <h2>OpenTelemetry signal mapping</h2>
+      <p>
+        ClickTrail business events are point-in-time facts, so the incubating
+        <code>/otel</code> destination emits one OpenTelemetry EventRecord
+        through a host-provided Logger. It does not model facts as
+        zero-duration spans or invent trace context.
+      </p>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th scope="col">ClickTrail</th><th scope="col">OpenTelemetry</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><code>event_name</code></th><td><code>eventName = clicktrail.&lt;canonical_name&gt;</code></td></tr>
+            <tr><th scope="row"><code>occurred_at</code></th><td>EventRecord timestamp; adapter <code>event_time</code> is the fallback</td></tr>
+            <tr><th scope="row">Correlation IDs</th><td>Allowlisted <code>clicktrail.*</code> scalar attributes</td></tr>
+            <tr><th scope="row">Attribution and PII</th><td>Excluded by default; host mapping must opt in field by field</td></tr>
+            <tr><th scope="row">Trace context</th><td>Owned by host OTel instrumentation, sampling, processors, and exporter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        This follows OpenTelemetry's distinction between
+        <a href="https://opentelemetry.io/docs/specs/semconv/general/events/">named events</a>
+        and operations with duration. Explicit <code>traceparent</code> helpers
+        remain available for migration work, outside destination flow.
+      </p>
 
       <h2>Consent policy</h2>
       <ul>

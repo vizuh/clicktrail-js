@@ -5,10 +5,10 @@
 import { describe, expect, it } from 'vitest';
 import { createApointooDestination } from '../src/apointoo/destination.js';
 import { buildOutcomeEvent } from '../src/apointoo/outcome.js';
-import { EVENT_SALE_COMPLETED } from '@vizuh/clicktrail-core';
+import { EVENT_SALE } from '@vizuh/clicktrail-core';
 
 function outcome(n: number) {
-  return buildOutcomeEvent(EVENT_SALE_COMPLETED, {
+  return buildOutcomeEvent(EVENT_SALE, {
     journeyId: `j${n}`,
     value: n,
     currency: 'EUR',

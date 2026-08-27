@@ -19,12 +19,13 @@ import { toCanonicalEventName } from '@vizuh/clicktrail-core';
 /** Action -> outbound event name. Shared contract with the n8n node builders. */
 export const ACTION_EVENT_NAMES = {
   trackEvent: null, // free-string event name supplied per call
-  identifyLead: 'lead',
-  attachAttribution: 'lead.attribution_attached',
-  recordBooking: 'booking',
-  recordQualifiedLead: 'lead.qualified',
-  recordSale: 'sale.recorded',
-  recordRefund: 'refund.issued',
+  identifyLead: 'lead_created',
+  attachAttribution: 'lead_created',
+  recordBooking: 'booking_created',
+  recordQualifiedLead: 'lead_qualified',
+  recordSale: 'sale',
+  recordRefund: 'refund',
+  // Legacy dropdown values stay accepted so saved Activepieces flows migrate safely.
   consentGranted: 'consent.granted',
   consentWithdrawn: 'consent.withdrawn',
   consentPolicyUpdated: 'consent.policy_updated',
@@ -206,23 +207,24 @@ export function resolveConsentEventName(state: unknown): ConsentEventName {
 }
 
 export function buildUpdateConsent(input: UpdateConsentInput): BuilderResult {
-  const eventName = resolveConsentEventName(input.state);
+  const legacyName = resolveConsentEventName(input.state);
   const data = pickDefined({
-    source: optionalString(input.source, 'consent.source'),
-    policy_version: optionalString(input.policyVersion, 'consent.policyVersion'),
+    consent_state: legacyName.slice('consent.'.length),
+    consent_source: optionalString(input.source, 'consent.source'),
+    consent_version: optionalString(input.policyVersion, 'consent.policyVersion'),
   });
-  return { eventName, data };
+  return { eventName: 'consent_updated', data };
 }
 
 /**
  * Consent flags folded into the marketing_trail envelope. `policy_updated`
  * carries no state change, so no consent object is attached.
  */
-export function consentContextFor(eventName: string): MarketingTrailContext['consent'] {
-  if (eventName === ACTION_EVENT_NAMES.consentGranted) {
+export function consentContextFor(state: unknown): MarketingTrailContext['consent'] {
+  if (state === 'granted') {
     return { analytics: true, advertising: true };
   }
-  if (eventName === ACTION_EVENT_NAMES.consentWithdrawn) {
+  if (state === 'withdrawn') {
     return { analytics: false, advertising: false };
   }
   return undefined;
@@ -246,7 +248,7 @@ export function buildActionEvent(
     siteId: context.siteId,
     ...(context.workspaceId !== undefined ? { workspaceId: context.workspaceId } : {}),
   };
-  const consent = consentContextFor(result.eventName);
+  const consent = consentContextFor(result.data['consent_state']);
   return buildEventPayload({}, toCanonicalEventName(result.eventName), result.data, {
     ...envelopeContext,
     ...(consent !== undefined ? { consent } : {}),

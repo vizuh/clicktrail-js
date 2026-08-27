@@ -25,7 +25,7 @@ export const EVENT_NAMES = {
   qualifiedLead: 'lead_qualified',
   appointmentRequested: 'booking_created',
   purchase: 'sale',
-  consent: (state: ConsentState): string => `consent.${state}`,
+  consent: (_state: ConsentState): string => 'consent_updated',
 } as const;
 
 export interface BlockEvent {

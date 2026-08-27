@@ -6,13 +6,14 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // src/browser/index.ts
-  var browser_exports = {};
-  __export(browser_exports, {
+  // ../browser/dist/index.js
+  var dist_exports = {};
+  __export(dist_exports, {
     ATTRIBUTION_KEY: () => ATTRIBUTION_KEY,
     ATTRIBUTION_STORAGE_KEYS: () => ATTRIBUTION_STORAGE_KEYS,
     CANONICAL_PAYLOAD_KEYS: () => CANONICAL_PAYLOAD_KEYS,
     DAY_MS: () => DAY_MS,
+    JOURNEY_ID_KEY: () => JOURNEY_ID_KEY,
     LEGACY_ATTRIBUTION_KEY: () => LEGACY_ATTRIBUTION_KEY,
     LEGACY_KEY_ALIASES: () => LEGACY_KEY_ALIASES,
     SESSION_ID_FALLBACK_KEY: () => SESSION_ID_FALLBACK_KEY,
@@ -38,49 +39,53 @@
     parseCookieMap: () => parseCookieMap,
     parseGaSessionDataValue: () => parseGaSessionDataValue,
     rollSession: () => rollSession,
+    sanitizeServerEventInput: () => sanitizeServerEventInput,
     saveAttributionPayload: () => saveAttributionPayload,
     uuidV4FromBytes: () => uuidV4FromBytes
   });
 
-  // src/conventions/stable.ts
-  var SCHEMA_VERSION = "1.2.0";
-  var CLASSIFIER_VERSION = "1.2.0";
-  var CHANNEL_VALUE_REFERRAL = "referral";
-
-  // src/core/sanitize.ts
+  // ../core/dist/core/sanitize.js
   var MAX_FIELD_LENGTH = 512;
   var MACRO_PATTERN = /^\{\{.+\}\}$/;
   function sanitizeField(value) {
-    if (typeof value !== "string") return "";
+    if (typeof value !== "string")
+      return "";
     const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, "").trim();
-    if (!cleaned || MACRO_PATTERN.test(cleaned)) return "";
-    if (cleaned.length > MAX_FIELD_LENGTH) return cleaned.slice(0, MAX_FIELD_LENGTH);
+    if (!cleaned || MACRO_PATTERN.test(cleaned))
+      return "";
+    if (cleaned.length > MAX_FIELD_LENGTH)
+      return cleaned.slice(0, MAX_FIELD_LENGTH);
     return cleaned;
   }
   function normalizeHost(host) {
     let h = host.trim().toLowerCase();
     h = h.replace(/^https?:\/\//, "");
     const slash = h.indexOf("/");
-    if (slash !== -1) h = h.slice(0, slash);
+    if (slash !== -1)
+      h = h.slice(0, slash);
     const colon = h.indexOf(":");
-    if (colon !== -1) h = h.slice(0, colon);
-    if (h.startsWith("www.")) h = h.slice(4);
+    if (colon !== -1)
+      h = h.slice(0, colon);
+    if (h.startsWith("www."))
+      h = h.slice(4);
     return h;
   }
   function hostMatches(host, base) {
     const h = normalizeHost(host);
     const b = normalizeHost(base);
-    if (!h || !b) return false;
+    if (!h || !b)
+      return false;
     return h === b || h.endsWith(`.${b}`);
   }
   function areRelatedHosts(firstHost, secondHost) {
     const a = normalizeHost(firstHost);
     const b = normalizeHost(secondHost);
-    if (!a || !b) return false;
+    if (!a || !b)
+      return false;
     return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
   }
 
-  // src/core/knowledge.ts
+  // ../core/dist/core/knowledge.js
   var SEARCH_REFERRER_RULES = [
     {
       source: "google",
@@ -265,23 +270,34 @@
     if (["google", "google ads", "googleads", "youtube", "gdn"].includes(source)) {
       return CHANNEL_LABELS.GOOGLE_ADS;
     }
-    if (["bing", "microsoft", "msn"].includes(source)) return CHANNEL_LABELS.MICROSOFT_ADS;
-    if (["facebook", "meta", "instagram", "fb", "ig"].includes(source)) return CHANNEL_LABELS.FACEBOOK_ADS;
-    if (source === "linkedin") return CHANNEL_LABELS.LINKEDIN_ADS;
-    if (["twitter", "x"].includes(source)) return CHANNEL_LABELS.X_ADS;
-    if (source === "reddit") return CHANNEL_LABELS.REDDIT_ADS;
-    if (source === "tiktok") return CHANNEL_LABELS.TIKTOK_ADS;
-    if (source === "pinterest") return CHANNEL_LABELS.PINTEREST_ADS;
-    if (["snapchat", "snap"].includes(source)) return CHANNEL_LABELS.SNAPCHAT_ADS;
+    if (["bing", "microsoft", "msn"].includes(source))
+      return CHANNEL_LABELS.MICROSOFT_ADS;
+    if (["facebook", "meta", "instagram", "fb", "ig"].includes(source))
+      return CHANNEL_LABELS.FACEBOOK_ADS;
+    if (source === "linkedin")
+      return CHANNEL_LABELS.LINKEDIN_ADS;
+    if (["twitter", "x"].includes(source))
+      return CHANNEL_LABELS.X_ADS;
+    if (source === "reddit")
+      return CHANNEL_LABELS.REDDIT_ADS;
+    if (source === "tiktok")
+      return CHANNEL_LABELS.TIKTOK_ADS;
+    if (source === "pinterest")
+      return CHANNEL_LABELS.PINTEREST_ADS;
+    if (["snapchat", "snap"].includes(source))
+      return CHANNEL_LABELS.SNAPCHAT_ADS;
     return medium === "paid_social" ? CHANNEL_LABELS.PAID_SOCIAL : CHANNEL_LABELS.PAID_SEARCH;
   }
   function referrerParts(rawReferrer) {
-    if (!rawReferrer) return null;
+    if (!rawReferrer)
+      return null;
     try {
       const u = new URL(rawReferrer);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      if (u.protocol !== "http:" && u.protocol !== "https:")
+        return null;
       const host = normalizeHost(u.host);
-      if (!host) return null;
+      if (!host)
+        return null;
       return { host, pathname: u.pathname };
     } catch {
       return null;
@@ -294,31 +310,48 @@
     const ids = input.clickIds;
     const medium = input.medium.trim().toLowerCase();
     const hasPaidEvidence = PAID_MEDIUMS.includes(medium);
-    if (ids.gclid || ids.gbraid || ids.wbraid) return CHANNEL_LABELS.GOOGLE_ADS;
-    if (ids.msclkid) return CHANNEL_LABELS.MICROSOFT_ADS;
-    if (ids.li_fat_id) return hasPaidEvidence ? CHANNEL_LABELS.LINKEDIN_ADS : CHANNEL_LABELS.LINKEDIN;
-    if (ids.twclid) return hasPaidEvidence ? CHANNEL_LABELS.X_ADS : CHANNEL_LABELS.TWITTER_X;
-    if (ids.ttclid) return hasPaidEvidence ? CHANNEL_LABELS.TIKTOK_ADS : CHANNEL_LABELS.TIKTOK;
-    if (ids.epik) return hasPaidEvidence ? CHANNEL_LABELS.PINTEREST_ADS : CHANNEL_LABELS.PINTEREST;
-    if (ids.sccid) return hasPaidEvidence ? CHANNEL_LABELS.SNAPCHAT_ADS : CHANNEL_LABELS.SNAPCHAT;
-    if (ids.fbclid) return hasPaidEvidence ? CHANNEL_LABELS.FACEBOOK_ADS : CHANNEL_LABELS.FACEBOOK;
+    if (ids.gclid || ids.gbraid || ids.wbraid)
+      return CHANNEL_LABELS.GOOGLE_ADS;
+    if (ids.msclkid)
+      return CHANNEL_LABELS.MICROSOFT_ADS;
+    if (ids.li_fat_id)
+      return hasPaidEvidence ? CHANNEL_LABELS.LINKEDIN_ADS : CHANNEL_LABELS.LINKEDIN;
+    if (ids.twclid)
+      return hasPaidEvidence ? CHANNEL_LABELS.X_ADS : CHANNEL_LABELS.TWITTER_X;
+    if (ids.ttclid)
+      return hasPaidEvidence ? CHANNEL_LABELS.TIKTOK_ADS : CHANNEL_LABELS.TIKTOK;
+    if (ids.epik)
+      return hasPaidEvidence ? CHANNEL_LABELS.PINTEREST_ADS : CHANNEL_LABELS.PINTEREST;
+    if (ids.sccid)
+      return hasPaidEvidence ? CHANNEL_LABELS.SNAPCHAT_ADS : CHANNEL_LABELS.SNAPCHAT;
+    if (ids.fbclid)
+      return hasPaidEvidence ? CHANNEL_LABELS.FACEBOOK_ADS : CHANNEL_LABELS.FACEBOOK;
     const source = input.source.trim().toLowerCase();
-    if (source === "hubspot") return CHANNEL_LABELS.HUBSPOT;
-    if (source === "pardot") return CHANNEL_LABELS.SALESFORCE_PARDOT;
-    if (source === "constantcontact") return CHANNEL_LABELS.CONSTANT_CONTACT;
-    if (PAID_MEDIUMS.includes(medium)) return paidLabelFromSource(source, medium);
+    if (source === "hubspot")
+      return CHANNEL_LABELS.HUBSPOT;
+    if (source === "pardot")
+      return CHANNEL_LABELS.SALESFORCE_PARDOT;
+    if (source === "constantcontact")
+      return CHANNEL_LABELS.CONSTANT_CONTACT;
+    if (PAID_MEDIUMS.includes(medium))
+      return paidLabelFromSource(source, medium);
     const ref = referrerParts(input.referrer);
     if (ref) {
       for (const rule of AI_ASSISTANT_RULES) {
-        if (matchesAnyDomain(ref.host, rule.domains)) return rule.label;
+        if (matchesAnyDomain(ref.host, rule.domains))
+          return rule.label;
       }
-      if (matchesAnyDomain(ref.host, ["bing.com"]) && ref.pathname.startsWith("/chat")) return CHANNEL_LABELS.MICROSOFT_COPILOT;
-      if (matchesAnyDomain(ref.host, ["x.com"]) && ref.pathname.startsWith("/i/grok")) return CHANNEL_LABELS.GROK;
+      if (matchesAnyDomain(ref.host, ["bing.com"]) && ref.pathname.startsWith("/chat"))
+        return CHANNEL_LABELS.MICROSOFT_COPILOT;
+      if (matchesAnyDomain(ref.host, ["x.com"]) && ref.pathname.startsWith("/i/grok"))
+        return CHANNEL_LABELS.GROK;
       for (const rule of SEARCH_REFERRER_RULES) {
-        if (matchesAnyDomain(ref.host, rule.domains)) return REFERRER_SOURCE_LABELS[rule.source] ?? CHANNEL_LABELS.UNKNOWN;
+        if (matchesAnyDomain(ref.host, rule.domains))
+          return REFERRER_SOURCE_LABELS[rule.source] ?? CHANNEL_LABELS.UNKNOWN;
       }
       for (const rule of SOCIAL_REFERRER_RULES) {
-        if (matchesAnyDomain(ref.host, rule.domains)) return REFERRER_SOURCE_LABELS[rule.source] ?? CHANNEL_LABELS.UNKNOWN;
+        if (matchesAnyDomain(ref.host, rule.domains))
+          return REFERRER_SOURCE_LABELS[rule.source] ?? CHANNEL_LABELS.UNKNOWN;
       }
     }
     return CHANNEL_LABELS.UNKNOWN;
@@ -378,12 +411,14 @@
   };
   function parseGaClientIdValue(raw) {
     const value = raw.trim();
-    if (!value) return "";
+    if (!value)
+      return "";
     const parts = value.split(".");
     if (parts.length >= 4) {
       const left = parts[parts.length - 2];
       const right = parts[parts.length - 1];
-      if (/^\d+$/.test(left) && /^\d+$/.test(right)) return `${left}.${right}`;
+      if (/^\d+$/.test(left) && /^\d+$/.test(right))
+        return `${left}.${right}`;
     }
     return "";
   }
@@ -419,15 +454,207 @@
     };
   }
 
-  // src/core/merge.ts
+  // ../core/dist/core/parse.js
+  function emptyTouch(now, landingPage = "") {
+    return {
+      source: "",
+      medium: "",
+      campaign: "",
+      term: "",
+      content: "",
+      utmId: "",
+      utmSourcePlatform: "",
+      utmCreativeFormat: "",
+      utmMarketingTactic: "",
+      referrer: "",
+      landingPage,
+      touchTimestamp: now ?? "",
+      clickIds: {}
+    };
+  }
+  function matchesRule(referrerHost, rule) {
+    return rule.domains.some((domain) => hostMatches(referrerHost, domain));
+  }
+  function classifyReferrerHost(referrerHost) {
+    for (const rule of SEARCH_REFERRER_RULES) {
+      if (matchesRule(referrerHost, rule))
+        return { source: rule.source, channel: "organic_search" };
+    }
+    for (const rule of SOCIAL_REFERRER_RULES) {
+      if (matchesRule(referrerHost, rule))
+        return { source: rule.source, channel: "organic_social" };
+    }
+    return { source: referrerHost, channel: "referral" };
+  }
+  function referrerHostOf(referrer) {
+    try {
+      const u = new URL(referrer);
+      if (u.protocol !== "http:" && u.protocol !== "https:")
+        return "";
+      return normalizeHost(u.host);
+    } catch {
+      return "";
+    }
+  }
+  function readQuery(url) {
+    try {
+      const flat = /* @__PURE__ */ new Map();
+      for (const [rawKey, rawValue] of new URL(url).searchParams.entries()) {
+        flat.set(rawKey.toLowerCase(), rawValue);
+      }
+      const sortedKeys = Array.from(flat.keys()).sort();
+      return {
+        get: (k) => flat.get(k.toLowerCase()),
+        keys: () => sortedKeys
+      };
+    } catch {
+      return null;
+    }
+  }
+  function parseAttributionUrl(input) {
+    const now = input.now ? input.now : "";
+    const query = readQuery(input.url);
+    const landingPage = landingPageOf(input.url);
+    let hasUtm = false;
+    const touch = emptyTouch(now, landingPage);
+    if (query) {
+      for (const [param, field] of Object.entries(UTM_PARAM_TO_FIELD)) {
+        const raw = query.get(param);
+        if (raw != null && raw !== "") {
+          touch[field] = sanitizeField(raw);
+          hasUtm = true;
+        }
+      }
+    }
+    const clickIds = {};
+    if (query) {
+      for (const key of query.keys()) {
+        const canonical = PARAM_ALIASES[key] ?? key;
+        if (CLICK_ID_KEYS.includes(canonical)) {
+          const value = query.get(key);
+          if (value)
+            clickIds[canonical] = sanitizeField(value);
+        }
+      }
+    }
+    const hasClickId = Object.keys(clickIds).length > 0;
+    const browserIds = {};
+    for (const [param, canonical] of Object.entries(BROWSER_ID_PARAMS)) {
+      if (browserIds[canonical])
+        continue;
+      const raw = query ? query.get(param) : void 0;
+      if (!raw)
+        continue;
+      if (canonical === "ga_client_id") {
+        const parsed = parseGaClientIdValue(sanitizeField(raw));
+        if (parsed)
+          browserIds[canonical] = parsed;
+      } else {
+        browserIds[canonical] = sanitizeField(raw);
+      }
+    }
+    if (!browserIds.fbc && clickIds.fbclid) {
+      const nowMs = now ? Date.parse(now) : NaN;
+      if (!Number.isNaN(nowMs)) {
+        browserIds.fbc = sanitizeField(`fb.1.${nowMs}.${clickIds.fbclid}`);
+      }
+    }
+    if (!hasUtm && !hasClickId) {
+      const rHost = input.referrer ? referrerHostOf(input.referrer) : "";
+      if (!rHost) {
+        return { kind: "none", reason: "no_signal" };
+      }
+      const pageHost = input.currentHost ? normalizeHost(input.currentHost) : "";
+      if (pageHost && areRelatedHosts(rHost, pageHost)) {
+        return { kind: "none", reason: "internal_referrer" };
+      }
+      const inferred = classifyReferrerHost(rHost);
+      touch.source = sanitizeField(inferred.source);
+      touch.medium = inferred.channel === "organic_search" ? "organic" : inferred.channel === "organic_social" ? "social" : "referral";
+      touch.referrer = sanitizeField(input.referrer ?? "");
+      const channelLabel2 = resolveChannelLabel({
+        source: touch.source,
+        medium: touch.medium,
+        clickIds: {},
+        referrer: input.referrer ?? ""
+      });
+      return {
+        kind: "touch",
+        touch: { ...touch, clickIds: {}, browserIds, channel: inferred.channel, channelLabel: channelLabel2 }
+      };
+    }
+    let channel;
+    if (hasClickId) {
+      const matched = CLICK_ID_KEYS.find((key) => Boolean(clickIds[key]));
+      if (matched) {
+        const plat = CLICK_ID_PLATFORMS[matched];
+        if (!touch.source)
+          touch.source = plat.source;
+        if (plat.certainty === "certain") {
+          channel = plat.paidChannel ?? "unknown";
+          if (!touch.medium)
+            touch.medium = "cpc";
+        } else {
+          channel = PAID_MEDIUMS.includes(touch.medium.toLowerCase()) && plat.paidChannel ? plat.paidChannel : classifyUtmChannel(touch.medium);
+        }
+      } else {
+        channel = "unknown";
+      }
+    } else {
+      channel = classifyUtmChannel(touch.medium);
+    }
+    touch.referrer = sanitizeField(input.referrer ?? "");
+    const channelLabel = resolveChannelLabel({
+      source: touch.source,
+      medium: touch.medium,
+      clickIds,
+      referrer: input.referrer ?? ""
+    });
+    const withClickIds = { ...touch, clickIds, browserIds, channel, channelLabel };
+    return { kind: "touch", touch: withClickIds };
+  }
+  function classifyUtmChannel(medium) {
+    const m = medium.toLowerCase();
+    if (m.includes("cpc") || m.includes("ppc") || m.includes("paid"))
+      return "paid_other";
+    if (m === "email" || m.includes("newsletter"))
+      return "email";
+    if (m === "affiliate")
+      return "affiliate";
+    if (m === "referral")
+      return "referral";
+    if (m === "organic")
+      return "organic_search";
+    if (m === "social" || m.includes("social"))
+      return "organic_social";
+    return "unknown";
+  }
+  function landingPageOf(url) {
+    try {
+      return sanitizeField(new URL(url).href);
+    } catch {
+      return "";
+    }
+  }
+
+  // ../core/dist/conventions/stable.js
+  var SCHEMA_VERSION = "1.2.0";
+  var CLASSIFIER_VERSION = "1.2.0";
+  var CHANNEL_VALUE_REFERRAL = "referral";
+
+  // ../core/dist/core/merge.js
   var FT = touchKeys("ft");
   var LT = touchKeys("lt");
   function emptyAttribution() {
     const payload = {};
-    for (const key of Object.values(FT)) payload[key] = "";
-    for (const key of Object.values(LT)) payload[key] = "";
-    for (const key of CLICK_ID_KEYS) payload[key] = "";
-    for (const key of BROWSER_ID_KEYS) payload[key] = "";
+    for (const key of Object.values(FT))
+      payload[key] = "";
+    for (const key of Object.values(LT))
+      payload[key] = "";
+    for (const key of CLICK_ID_KEYS)
+      payload[key] = "";
+    for (const key of BROWSER_ID_KEYS)
+      payload[key] = "";
     payload[CLICK_ID_HISTORY_KEY] = "[]";
     payload[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = "";
     payload[ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY] = "";
@@ -437,7 +664,8 @@
     let history = [];
     try {
       const parsed = next[CLICK_ID_HISTORY_KEY] ? JSON.parse(next[CLICK_ID_HISTORY_KEY]) : [];
-      if (Array.isArray(parsed)) history = parsed;
+      if (Array.isArray(parsed))
+        history = parsed;
     } catch {
       history = [];
     }
@@ -449,7 +677,8 @@
     }
     next[CLICK_ID_HISTORY_KEY] = JSON.stringify(history);
     const newestValid = [...history].reverse().find((e) => typeof e.v === "string" && e.v !== "");
-    if (!newestValid) return;
+    if (!newestValid)
+      return;
     const previousSelected = next[ATTRIBUTION_SELECTED_CLICK_ID_KEY];
     if (!previousSelected) {
       next[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = newestValid.v;
@@ -480,7 +709,8 @@
       next[FT.touchTimestamp] = touch.touchTimestamp;
       for (const key of CLICK_ID_KEYS) {
         const value = touch.clickIds?.[key];
-        if (value) next[`ft_${key}`] = value;
+        if (value)
+          next[`ft_${key}`] = value;
       }
     }
     next[LT.source] = touch.source;
@@ -498,7 +728,8 @@
     next[LT.touchTimestamp] = touch.touchTimestamp;
     for (const key of CLICK_ID_KEYS) {
       const value = touch.clickIds?.[key];
-      if (value) next[`lt_${key}`] = value;
+      if (value)
+        next[`lt_${key}`] = value;
     }
     const capturedNow = [];
     for (const key of CLICK_ID_KEYS) {
@@ -511,7 +742,8 @@
     applyClickIdSelectionAudit(next, capturedNow, touch.touchTimestamp);
     for (const key of BROWSER_ID_KEYS) {
       const value = touch.browserIds?.[key];
-      if (value) next[key] = value;
+      if (value)
+        next[key] = value;
     }
     return next;
   }
@@ -523,7 +755,56 @@
     };
   }
 
-  // src/browser/serialize.ts
+  // ../core/dist/core/diagnostics.js
+  var DIAGNOSTIC_CODES = {
+    CLICK_ID_WITHOUT_UTM: "click_id_without_utm",
+    NO_SIGNAL_LANDING: "no_signal_landing",
+    INTERNAL_REFERRER_IGNORED: "internal_referrer_ignored",
+    CONSENT_DENIED_CAPTURE_ATTEMPTED: "consent_denied_capture_attempted",
+    FIELD_TRUNCATED: "field_truncated"
+  };
+  var nullDiagnosticSink = { report: () => {
+  } };
+
+  // ../core/dist/canonical-events.js
+  var EXTENSION_EVENT_NAME_MAP = {
+    // R2 default adopted: stage changes + visitor merges are EXTENSION events
+    // outside the canonical nine (consumers may ignore).
+    "lead.stage_updated": "lead_updated",
+    "lead.merged": "lead_merged",
+    "visitor.anonymized": "visitor_anonymized"
+  };
+  var LEGACY_EVENT_NAME_MAP = {
+    lead: "lead_created",
+    "form.started": "form_started",
+    "form.submitted": "lead_created",
+    "lead.submitted": "lead_created",
+    lead_submitted: "lead_created",
+    form_submission: "lead_created",
+    "lead.attribution_attached": "lead_created",
+    ...EXTENSION_EVENT_NAME_MAP,
+    "lead.qualified": "lead_qualified",
+    booking: "booking_created",
+    "appointment.booked": "booking_created",
+    "appointment.requested": "booking_created",
+    "appointment.attended": "booking_completed",
+    "appointment.completed": "booking_completed",
+    "sale.completed": "sale",
+    "sale.recorded": "sale",
+    purchase: "sale",
+    "revenue.recurring": "sale",
+    "offline_conversion.sent": "sale",
+    "sale.refunded": "refund",
+    "refund.issued": "refund",
+    "consent.granted": "consent_updated",
+    "consent.withdrawn": "consent_updated",
+    "consent.policy_updated": "consent_updated"
+  };
+  function toCanonicalEventName(eventName) {
+    return LEGACY_EVENT_NAME_MAP[eventName] ?? eventName;
+  }
+
+  // ../browser/dist/browser/serialize.js
   var CLICK_ID_KEYS2 = [
     "gclid",
     "wbraid",
@@ -536,19 +817,39 @@
     "sccid",
     "epik"
   ];
+  var SERVER_RESERVED_KEYS = [
+    "event_id",
+    "event_name",
+    "marketing_trail",
+    "site_id",
+    "workspace_id",
+    "visitor_id",
+    "session_id",
+    "session_number",
+    "trail_id",
+    "anonymous_id"
+  ];
+  function sanitizeServerEventInput(input) {
+    const sanitized = { ...input };
+    for (const key of SERVER_RESERVED_KEYS)
+      delete sanitized[key];
+    return sanitized;
+  }
   function text(value) {
     return typeof value === "string" ? value : value == null ? "" : String(value);
   }
   function firstText(...values) {
     for (const value of values) {
       const candidate = text(value);
-      if (candidate) return candidate;
+      if (candidate)
+        return candidate;
     }
     return "";
   }
   function prefixed(value, prefix) {
     const candidate = text(value);
-    if (!candidate) return "";
+    if (!candidate)
+      return "";
     return candidate.startsWith(prefix) ? candidate : `${prefix}${candidate}`;
   }
   function isRecord(value) {
@@ -557,31 +858,21 @@
   function touchValue(payload, key, data) {
     return firstText(data[key], payload[`lt_${key}`], payload[`ft_${key}`], payload[key]);
   }
-  function canonicalEventName(eventName) {
-    return ["lead", "lead.submitted", "lead_submitted", "form_submission"].includes(eventName) ? "lead_submitted" : eventName;
-  }
   function buildMarketingTrailEnvelope(payload, eventName, data = {}, context = {}) {
+    const canonicalName = toCanonicalEventName(eventName);
     const supplied = isRecord(data["marketing_trail"]) ? data["marketing_trail"] : {};
     const visitorId = firstText(context.identity?.visitorId, data["visitor_id"], payload["visitor_id"]);
     const anonymousId = prefixed(firstText(supplied["anonymous_id"], data["anonymous_id"], visitorId), "anon_");
     const eventId = prefixed(firstText(supplied["event_id"], data["event_id"]), "evt_");
-    const leadEvent = ["lead", "lead.submitted", "lead_submitted", "form_submission"].includes(eventName);
-    const leadId = prefixed(
-      firstText(supplied["lead_id"], data["lead_id"], leadEvent ? eventId.replace(/^evt_/, "") : ""),
-      "lead_"
-    );
+    const leadEvent = canonicalName === "lead_created";
+    const leadId = prefixed(firstText(supplied["lead_id"], data["lead_id"], leadEvent ? eventId.replace(/^evt_/, "") : ""), "lead_");
     const clickIds = {};
     const suppliedClickIds = isRecord(supplied["click_ids"]) ? supplied["click_ids"] : {};
     const dataClickIds = isRecord(data["click_ids"]) ? data["click_ids"] : {};
     for (const key of CLICK_ID_KEYS2) {
-      const value = firstText(
-        suppliedClickIds[key],
-        dataClickIds[key],
-        payload[key],
-        payload[`lt_${key}`],
-        payload[`ft_${key}`]
-      );
-      if (value) clickIds[key] = value;
+      const value = firstText(suppliedClickIds[key], dataClickIds[key], payload[key], payload[`lt_${key}`], payload[`ft_${key}`]);
+      if (value)
+        clickIds[key] = value;
     }
     const suppliedForm = isRecord(supplied["form"]) ? supplied["form"] : {};
     const dataForm = isRecord(data["form"]) ? data["form"] : isRecord(data["lead_context"]) ? data["lead_context"] : {};
@@ -594,9 +885,9 @@
       trail_id: prefixed(firstText(supplied["trail_id"], data["trail_id"], payload["trail_id"], visitorId), "trl_"),
       anonymous_id: anonymousId,
       lead_id: leadId,
-      workspace_id: firstText(supplied["workspace_id"], data["workspace_id"], context.workspaceId),
-      site_id: firstText(supplied["site_id"], data["site_id"], context.siteId),
-      event_name: firstText(supplied["event_name"], canonicalEventName(eventName)),
+      workspace_id: firstText(context.workspaceId, supplied["workspace_id"], data["workspace_id"]),
+      site_id: firstText(context.siteId, supplied["site_id"], data["site_id"]),
+      event_name: canonicalName,
       occurred_at: firstText(supplied["occurred_at"], data["occurred_at"], data["event_time"]),
       landing_page: firstText(supplied["landing_page"], touchValue(payload, "landing_page", data)),
       referrer: firstText(supplied["referrer"], touchValue(payload, "referrer", data)),
@@ -615,20 +906,23 @@
     };
   }
   function buildEventPayload(payload, eventName, data, context) {
+    const canonicalName = toCanonicalEventName(eventName);
     const base = { ...payload };
-    if (data) Object.assign(base, data);
-    base.event_name = eventName;
-    base.marketing_trail = buildMarketingTrailEnvelope(payload, eventName, base, context);
+    if (data)
+      Object.assign(base, data);
+    base.event_name = canonicalName;
+    base.marketing_trail = buildMarketingTrailEnvelope(payload, canonicalName, base, context);
     return stampVersions(base);
   }
 
-  // src/browser/transport.ts
+  // ../browser/dist/browser/transport.js
   var DEFAULT_BATCH_SIZE = 10;
   function defaultSend(useBeacon) {
     return (endpoint, body) => {
       if (useBeacon && typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
         const blob = new Blob([body], { type: "application/json" });
-        if (navigator.sendBeacon(endpoint, blob)) return;
+        if (navigator.sendBeacon(endpoint, blob))
+          return;
       }
       return fetch(endpoint, {
         method: "POST",
@@ -644,7 +938,8 @@
     const send = config.send ?? defaultSend(useBeacon);
     let batch = [];
     const flushBatch = async () => {
-      if (batch.length === 0) return;
+      if (batch.length === 0)
+        return;
       const events = batch;
       const body = JSON.stringify({ events });
       batch = [];
@@ -661,9 +956,13 @@
       name: "http",
       deliver(event) {
         batch.push(event);
-        if (batch.length >= batchSize) void flushBatch();
+        if (batch.length >= batchSize)
+          void flushBatch();
       },
-      flush: flushBatch
+      flush: flushBatch,
+      clear() {
+        batch = [];
+      }
     };
   }
   function dataLayerDestination(config = {}) {
@@ -676,13 +975,15 @@
       deliver(event) {
         (arr ??= []).push({ ...event, event: event.event_name });
       },
+      clear() {
+      },
       getArray() {
         return arr ??= [];
       }
     };
   }
 
-  // src/browser/global-adapter.ts
+  // ../browser/dist/browser/global-adapter.js
   function createLegacyGlobal(instance) {
     return {
       getData: () => instance.getData(),
@@ -692,17 +993,21 @@
     };
   }
 
-  // src/browser/browser-ids.ts
+  // ../browser/dist/browser/browser-ids.js
   function parseCookieMap(raw) {
     const out = {};
-    if (!raw) return out;
+    if (!raw)
+      return out;
     for (const pair of raw.split(";")) {
       const trimmed = pair.trim();
-      if (!trimmed) continue;
+      if (!trimmed)
+        continue;
       const eq = trimmed.indexOf("=");
-      if (eq <= 0) continue;
+      if (eq <= 0)
+        continue;
       const name = trimmed.slice(0, eq).trim().toLowerCase();
-      if (!name) continue;
+      if (!name)
+        continue;
       let value = trimmed.slice(eq + 1);
       try {
         value = decodeURIComponent(value);
@@ -714,63 +1019,84 @@
   }
   function parseGaSessionDataValue(rawValue) {
     const value = rawValue.trim();
-    if (!value) return {};
+    if (!value)
+      return {};
     const out = {};
     const gs2SessionId = value.match(/(?:^|\$)s(\d{6,})(?:\$|$)/);
     const gs2SessionNumber = value.match(/(?:^|\$)o(\d+)(?:\$|$)/);
     const gs2Id = gs2SessionId?.[1];
     const gs2Num = gs2SessionNumber?.[1];
-    if (gs2Id) out.ga_session_id = gs2Id;
-    if (gs2Num) out.ga_session_number = gs2Num;
-    if (out.ga_session_id || out.ga_session_number) return out;
+    if (gs2Id)
+      out.ga_session_id = gs2Id;
+    if (gs2Num)
+      out.ga_session_number = gs2Num;
+    if (out.ga_session_id || out.ga_session_number)
+      return out;
     if (value.startsWith("GS1.")) {
       const parts = value.split(".");
       const gs1SessionId = parts[2];
       const gs1SessionNumber = parts[3];
-      if (gs1SessionId) out.ga_session_id = gs1SessionId;
-      if (gs1SessionNumber) out.ga_session_number = gs1SessionNumber;
-      if (out.ga_session_id || out.ga_session_number) return out;
+      if (gs1SessionId)
+        out.ga_session_id = gs1SessionId;
+      if (gs1SessionNumber)
+        out.ga_session_number = gs1SessionNumber;
+      if (out.ga_session_id || out.ga_session_number)
+        return out;
     }
     const numericTokens = value.match(/\d+/g) ?? [];
-    if (numericTokens[0]) out.ga_session_id = numericTokens[0];
-    if (numericTokens[1]) out.ga_session_number = numericTokens[1];
+    if (numericTokens[0])
+      out.ga_session_id = numericTokens[0];
+    if (numericTokens[1])
+      out.ga_session_number = numericTokens[1];
     return out;
   }
   function firstCookie(cookies, names) {
     for (const name of names) {
       const value = cookies[name];
-      if (value) return value;
+      if (value)
+        return value;
     }
     return "";
   }
   function collectBrowserIdsFromCookies(cookies) {
     const out = {};
     const fbp = firstCookie(cookies, ["_fbp", "fbp"]);
-    if (fbp) out.fbp = fbp;
+    if (fbp)
+      out.fbp = fbp;
     const fbc = firstCookie(cookies, ["_fbc", "fbc"]);
-    if (fbc) out.fbc = fbc;
+    if (fbc)
+      out.fbc = fbc;
     const ttp = firstCookie(cookies, ["_ttp", "ttp"]);
-    if (ttp) out.ttp = ttp;
+    if (ttp)
+      out.ttp = ttp;
     const liGc = cookies.li_gc;
-    if (liGc) out.li_gc = liGc;
+    if (liGc)
+      out.li_gc = liGc;
     const gaClientId = parseGaClientIdValue(firstCookie(cookies, ["_ga"]));
-    if (gaClientId) out.ga_client_id = gaClientId;
+    if (gaClientId)
+      out.ga_client_id = gaClientId;
     for (const [name, value] of Object.entries(cookies)) {
-      if (name === "_ga" || !name.startsWith("_ga_")) continue;
+      if (name === "_ga" || !name.startsWith("_ga_"))
+        continue;
       const session = parseGaSessionDataValue(value);
-      if (!session.ga_session_id && !session.ga_session_number) continue;
-      if (session.ga_session_id) out.ga_session_id = session.ga_session_id;
-      if (session.ga_session_number) out.ga_session_number = session.ga_session_number;
+      if (!session.ga_session_id && !session.ga_session_number)
+        continue;
+      if (session.ga_session_id)
+        out.ga_session_id = session.ga_session_id;
+      if (session.ga_session_number)
+        out.ga_session_number = session.ga_session_number;
       break;
     }
-    if (!out.ga_session_id && cookies.ga_session_id) out.ga_session_id = cookies.ga_session_id;
+    if (!out.ga_session_id && cookies.ga_session_id)
+      out.ga_session_id = cookies.ga_session_id;
     if (!out.ga_session_number && cookies.ga_session_number) {
       out.ga_session_number = cookies.ga_session_number;
     }
     const canonical = {};
     for (const key of BROWSER_ID_KEYS) {
       const value = out[key];
-      if (value) canonical[key] = value;
+      if (value)
+        canonical[key] = value;
     }
     return canonical;
   }
@@ -779,27 +1105,20 @@
     const next = { ...payload };
     for (const key of BROWSER_ID_KEYS) {
       const value = ids[key];
-      if (!value) continue;
-      if (next[key] === value) continue;
+      if (!value)
+        continue;
+      if (next[key] === value)
+        continue;
       next[key] = value;
       changed = true;
     }
     return changed ? next : payload;
   }
 
-  // src/core/diagnostics.ts
-  var DIAGNOSTIC_CODES = {
-    CLICK_ID_WITHOUT_UTM: "click_id_without_utm",
-    NO_SIGNAL_LANDING: "no_signal_landing",
-    INTERNAL_REFERRER_IGNORED: "internal_referrer_ignored",
-    CONSENT_DENIED_CAPTURE_ATTEMPTED: "consent_denied_capture_attempted",
-    FIELD_TRUNCATED: "field_truncated"
-  };
-  var nullDiagnosticSink = { report: () => {
-  } };
-
-  // src/browser/storage.ts
+  // ../browser/dist/browser/storage.js
   var DAY_MS = 864e5;
+  var DEFAULT_RETENTION_DAYS = 90;
+  var MAX_RETENTION_DAYS = 400;
   var ATTRIBUTION_KEY = "attribution";
   var LEGACY_ATTRIBUTION_KEY = "ct_attribution";
   var SESSION_ID_FALLBACK_KEY = "ct_session_id";
@@ -818,24 +1137,32 @@
   ];
   function clearAttributionStorage(...adapters) {
     for (const adapter of adapters) {
-      for (const key of ATTRIBUTION_STORAGE_KEYS) adapter.delete(key);
+      for (const key of ATTRIBUTION_STORAGE_KEYS)
+        adapter.delete(key);
     }
   }
   function serializeCookie(name, value, attrs) {
     let out = `${name}=${encodeURIComponent(value)}`;
-    if (attrs.path !== void 0) out += `; Path=${attrs.path}`;
-    if (attrs.domain !== void 0) out += `; Domain=${attrs.domain}`;
-    if (attrs.maxAgeSeconds !== void 0) out += `; Max-Age=${attrs.maxAgeSeconds}`;
-    if (attrs.secure === true) out += "; Secure";
-    if (attrs.sameSite !== void 0) out += `; SameSite=${attrs.sameSite}`;
+    if (attrs.path !== void 0)
+      out += `; Path=${attrs.path}`;
+    if (attrs.domain !== void 0)
+      out += `; Domain=${attrs.domain}`;
+    if (attrs.maxAgeSeconds !== void 0)
+      out += `; Max-Age=${attrs.maxAgeSeconds}`;
+    if (attrs.secure === true)
+      out += "; Secure";
+    if (attrs.sameSite !== void 0)
+      out += `; SameSite=${attrs.sameSite}`;
     return out;
   }
   function parseCookies(raw) {
     const map = /* @__PURE__ */ new Map();
-    if (raw === "") return map;
+    if (raw === "")
+      return map;
     for (const pair of raw.split(";")) {
       const idx = pair.indexOf("=");
-      if (idx <= 0) continue;
+      if (idx <= 0)
+        continue;
       const name = pair.slice(0, idx).trim();
       const value = pair.slice(idx + 1).trim();
       try {
@@ -852,7 +1179,8 @@
       read: () => doc()?.cookie ?? "",
       write: (cookieString) => {
         const d = doc();
-        if (d) d.cookie = cookieString;
+        if (d)
+          d.cookie = cookieString;
       }
     };
   }
@@ -871,9 +1199,7 @@
         jar.write(serializeCookie(key, value, attrs));
       },
       delete(key) {
-        jar.write(
-          serializeCookie(key, "", { ...attrs, maxAgeSeconds: 0 })
-        );
+        jar.write(serializeCookie(key, "", { ...attrs, maxAgeSeconds: 0 }));
       }
     };
   }
@@ -884,13 +1210,18 @@
   function parseEnvelope(raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null) return null;
+      if (typeof parsed !== "object" || parsed === null)
+        return null;
       const env = parsed;
-      if (env["v"] !== 1) return null;
-      if (!("expires_at" in env)) return null;
-      if (typeof env["data"] !== "string") return null;
+      if (env["v"] !== 1)
+        return null;
+      if (!("expires_at" in env))
+        return null;
+      if (typeof env["data"] !== "string")
+        return null;
       const expiresAt = env["expires_at"];
-      if (expiresAt !== null && typeof expiresAt !== "number") return null;
+      if (typeof expiresAt !== "number" || !Number.isFinite(expiresAt))
+        return null;
       return { v: 1, expires_at: expiresAt, data: env["data"] };
     } catch {
       return null;
@@ -899,28 +1230,35 @@
   function mirrorStorage(config = {}) {
     const backend = config.backend !== void 0 ? config.backend : defaultMirrorBackend();
     const nowMs = config.nowMs ?? (() => Date.now());
-    const ttlMs = config.retentionDays !== void 0 ? config.retentionDays * DAY_MS : null;
+    const retentionDays = config.retentionDays ?? DEFAULT_RETENTION_DAYS;
+    if (!Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > MAX_RETENTION_DAYS) {
+      throw new RangeError(`clicktrail: retentionDays must be an integer from 1 through ${MAX_RETENTION_DAYS}.`);
+    }
+    const ttlMs = retentionDays * DAY_MS;
     return {
       get(key) {
-        if (!backend) return null;
+        if (!backend)
+          return null;
         const raw = backend.getItem(key);
-        if (raw === null) return null;
+        if (raw === null)
+          return null;
         const env = parseEnvelope(raw);
         if (env === null) {
           backend.removeItem(key);
           return null;
         }
-        if (env.expires_at !== null && nowMs() >= env.expires_at) {
+        if (nowMs() >= env.expires_at) {
           backend.removeItem(key);
           return null;
         }
         return env.data;
       },
       set(key, value) {
-        if (!backend) return;
+        if (!backend)
+          return;
         const env = {
           v: 1,
-          expires_at: ttlMs === null ? null : nowMs() + ttlMs,
+          expires_at: nowMs() + ttlMs,
           data: value
         };
         try {
@@ -929,16 +1267,18 @@
         }
       },
       delete(key) {
-        if (!backend) return;
+        if (!backend)
+          return;
         backend.removeItem(key);
       }
     };
   }
 
-  // src/browser/identity.ts
+  // ../browser/dist/browser/identity.js
   var SESSION_TIMEOUT_MS = 30 * 60 * 1e3;
   function uuidV4FromBytes(bytes) {
-    if (bytes.length < 16) throw new Error("uuidV4FromBytes needs 16 bytes");
+    if (bytes.length < 16)
+      throw new Error("uuidV4FromBytes needs 16 bytes");
     const b = bytes.slice(0, 16);
     b[6] = b[6] & 15 | 64;
     b[8] = b[8] & 63 | 128;
@@ -950,23 +1290,30 @@
   }
   function rollSession(input) {
     const { lastEventTs, now, timeoutMs } = input;
-    if (lastEventTs === null) return true;
-    if (now < lastEventTs) return false;
+    if (lastEventTs === null)
+      return true;
+    if (now < lastEventTs)
+      return false;
     return now - lastEventTs >= timeoutMs;
   }
   function readStoredSession(adapter) {
     const raw = adapter.get(SESSION_STATE_KEY);
-    if (raw === null) return null;
+    if (raw === null)
+      return null;
     try {
       const parsed = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null) return null;
+      if (typeof parsed !== "object" || parsed === null)
+        return null;
       const rec = parsed;
       const sessionId = rec["session_id"];
       const sessionNumber = rec["session_number"];
       const lastEventTs = rec["last_event_ts"];
-      if (typeof sessionId !== "string" || sessionId === "") return null;
-      if (typeof sessionNumber !== "number" || !Number.isInteger(sessionNumber)) return null;
-      if (typeof lastEventTs !== "number") return null;
+      if (typeof sessionId !== "string" || sessionId === "")
+        return null;
+      if (typeof sessionNumber !== "number" || !Number.isInteger(sessionNumber))
+        return null;
+      if (typeof lastEventTs !== "number")
+        return null;
       return { session_id: sessionId, session_number: sessionNumber, last_event_ts: lastEventTs };
     } catch {
       return null;
@@ -984,10 +1331,12 @@
     const timeoutMs = config.timeoutMs ?? SESSION_TIMEOUT_MS;
     let cachedVisitorId = null;
     const resolveVisitorId = (stored) => {
-      if (cachedVisitorId !== null) return cachedVisitorId;
+      if (cachedVisitorId !== null)
+        return cachedVisitorId;
       if (stored !== null && stored.session_id !== "") {
         cachedVisitorId = adapter.get(VISITOR_ID_FALLBACK_KEY) ?? "";
-        if (cachedVisitorId !== "") return cachedVisitorId;
+        if (cachedVisitorId !== "")
+          return cachedVisitorId;
       }
       cachedVisitorId = generateId(randomBytes);
       return cachedVisitorId;
@@ -1010,7 +1359,8 @@
       },
       touch() {
         const stored = readStoredSession(adapter);
-        if (stored === null) return;
+        if (stored === null)
+          return;
         const visitorId = resolveVisitorId(stored);
         persist(adapter, { ...stored, last_event_ts: nowMs() }, visitorId);
       },
@@ -1023,7 +1373,7 @@
     };
   }
 
-  // src/browser/payload-store.ts
+  // ../browser/dist/browser/payload-store.js
   var FT_KEYS = touchKeys("ft");
   var LT_KEYS = touchKeys("lt");
   var CANONICAL_PAYLOAD_KEYS = [
@@ -1058,19 +1408,18 @@
     "landing_page",
     "touch_timestamp"
   ];
-  var LEGACY_KEY_ALIASES = Object.freeze(Object.fromEntries(
-    TOUCH_SUFFIXES.flatMap((suffix) => [
-      // DATA-MODEL.md:123 — legacy `first_*` aliases normalized on read.
-      [`first_${suffix}`, `ft_${suffix}`],
-      // DATA-MODEL.md:123 — legacy `last_*` aliases normalized on read.
-      [`last_${suffix}`, `lt_${suffix}`]
-    ])
-  ));
+  var LEGACY_KEY_ALIASES = Object.freeze(Object.fromEntries(TOUCH_SUFFIXES.flatMap((suffix) => [
+    // DATA-MODEL.md:123 — legacy `first_*` aliases normalized on read.
+    [`first_${suffix}`, `ft_${suffix}`],
+    // DATA-MODEL.md:123 — legacy `last_*` aliases normalized on read.
+    [`last_${suffix}`, `lt_${suffix}`]
+  ])));
   function normalizeLegacyAliases(raw) {
     const out = { ...raw };
     for (const [alias, canonical] of Object.entries(LEGACY_KEY_ALIASES)) {
       const aliasValue = out[alias];
-      if (aliasValue === void 0) continue;
+      if (aliasValue === void 0)
+        continue;
       if (out[canonical] === void 0 || out[canonical] === "") {
         out[canonical] = aliasValue;
       }
@@ -1081,25 +1430,30 @@
   function filterCanonical(raw) {
     const out = {};
     for (const [key, value] of Object.entries(raw)) {
-      if (!CANONICAL_KEY_SET.has(key)) continue;
-      if (typeof value !== "string") continue;
+      if (!CANONICAL_KEY_SET.has(key))
+        continue;
+      if (typeof value !== "string")
+        continue;
       out[key] = value;
     }
     return out;
   }
   function loadAttributionPayload(adapter, key = ATTRIBUTION_KEY) {
     const raw = adapter.get(key);
-    if (raw === null) return {};
+    if (raw === null)
+      return {};
     let parsed;
     try {
       parsed = JSON.parse(raw);
     } catch {
       return {};
     }
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return {};
     const record = {};
     for (const [k, v] of Object.entries(parsed)) {
-      if (typeof v !== "string") continue;
+      if (typeof v !== "string")
+        continue;
       record[k] = v;
     }
     return filterCanonical(normalizeLegacyAliases(record));
@@ -1108,10 +1462,11 @@
     adapter.set(key, JSON.stringify(filterCanonical(payload)));
   }
 
-  // src/browser/form-injection.ts
+  // ../browser/dist/browser/form-injection.js
   function defaultFormDocument() {
     const doc = globalThis.document;
-    if (!doc) return null;
+    if (!doc)
+      return null;
     return {
       // Real DOM elements carry the full form/input surface; the structural
       // lookup types only guarantee attribute access.
@@ -1122,7 +1477,8 @@
   }
   function defaultObserverFactory() {
     const ctor = globalThis.MutationObserver;
-    if (!ctor) return null;
+    if (!ctor)
+      return null;
     return (callback) => new ctor(callback);
   }
   var FORM_SELECTOR = "form";
@@ -1167,22 +1523,29 @@
     for (const key of input.fields) {
       let value = input.payload[key] ?? "";
       if (!value) {
-        if (key === "visitor_id") value = input.identity.visitorId ?? "";
-        else if (key === "trail_id") value = input.identity.trailId ?? (input.identity.visitorId ? `trl_${input.identity.visitorId}` : "");
-        else if (key === "session_id") value = input.identity.sessionId ?? "";
-        else if (key === "session_number") value = input.identity.sessionNumber ?? "";
+        if (key === "visitor_id")
+          value = input.identity.visitorId ?? "";
+        else if (key === "trail_id")
+          value = input.identity.trailId ?? (input.identity.visitorId ? `trl_${input.identity.visitorId}` : "");
+        else if (key === "session_id")
+          value = input.identity.sessionId ?? "";
+        else if (key === "session_number")
+          value = input.identity.sessionNumber ?? "";
       }
-      if (value) out.push([FORM_FIELD_PREFIX + key, value]);
+      if (value)
+        out.push([FORM_FIELD_PREFIX + key, value]);
     }
     return out;
   }
   function applyEntryToForm(form, doc, name, value, overwrite) {
     const existing = form.querySelectorAll(HIDDEN_INPUT_SELECTOR);
     for (const node of existing) {
-      if (node.getAttribute("name") !== name) continue;
+      if (node.getAttribute("name") !== name)
+        continue;
       const current = node.getAttribute("value");
       if (current) {
-        if (!overwrite || current === value) return false;
+        if (!overwrite || current === value)
+          return false;
         node.setAttribute("value", value);
         return true;
       }
@@ -1199,10 +1562,13 @@
   function createFormInjector(config) {
     const fields = config.fields ?? DEFAULT_FORM_FIELDS;
     const overwrite = config.overwrite ?? false;
+    const owned = /* @__PURE__ */ new Map();
     const injectOnce = () => {
-      if (!config.consentAllowed()) return;
+      if (!config.consentAllowed())
+        return;
       const doc = config.doc;
-      if (!doc) return;
+      if (!doc)
+        return;
       const entries = resolveInjectionEntries({
         payload: config.getPayload(),
         identity: config.getIdentity(),
@@ -1211,196 +1577,75 @@
       const forms = doc.querySelectorAll(FORM_SELECTOR);
       for (const form of forms) {
         for (const [name, value] of entries) {
-          applyEntryToForm(form, doc, name, value, overwrite);
+          const before = form.querySelectorAll(HIDDEN_INPUT_SELECTOR);
+          const existing = before.find((node2) => node2.getAttribute("name") === name);
+          const originalValue = existing?.getAttribute("value") ?? null;
+          if (!applyEntryToForm(form, doc, name, value, overwrite))
+            continue;
+          const node = existing ?? form.querySelectorAll(HIDDEN_INPUT_SELECTOR).find((candidate) => !before.includes(candidate) && candidate.getAttribute("name") === name);
+          if (!node)
+            continue;
+          const prior = owned.get(node);
+          if (prior) {
+            prior.appliedValue = node.getAttribute("value") ?? value;
+          } else {
+            owned.set(node, {
+              form,
+              originalValue,
+              appliedValue: node.getAttribute("value") ?? value,
+              created: existing === void 0
+            });
+          }
         }
       }
+    };
+    const clearOwned = () => {
+      for (const [node, mutation] of owned) {
+        if (node.getAttribute("value") !== mutation.appliedValue)
+          continue;
+        if (mutation.created) {
+          const isChild = mutation.form.querySelectorAll(HIDDEN_INPUT_SELECTOR).includes(node);
+          if (isChild && mutation.form.removeChild) {
+            mutation.form.removeChild(node);
+          } else if (isChild) {
+            node.setAttribute("value", "");
+          }
+          continue;
+        }
+        if (mutation.originalValue === null) {
+          node.removeAttribute?.("value");
+          if (node.getAttribute("value") !== null)
+            node.setAttribute("value", "");
+        } else {
+          node.setAttribute("value", mutation.originalValue);
+        }
+      }
+      owned.clear();
     };
     let observer = null;
     return {
       start() {
         injectOnce();
-        if (observer !== null) return;
+        if (observer !== null)
+          return;
         const factory = config.observer !== void 0 ? config.observer : defaultObserverFactory();
-        if (!factory) return;
+        if (!factory)
+          return;
         observer = factory(injectOnce);
         observer.observe(config.doc?.body ?? {}, { childList: true, subtree: true });
       },
       stop() {
         observer?.disconnect();
         observer = null;
+        clearOwned();
+      },
+      clear() {
+        clearOwned();
       }
     };
   }
 
-  // src/core/parse.ts
-  function emptyTouch(now, landingPage = "") {
-    return {
-      source: "",
-      medium: "",
-      campaign: "",
-      term: "",
-      content: "",
-      utmId: "",
-      utmSourcePlatform: "",
-      utmCreativeFormat: "",
-      utmMarketingTactic: "",
-      referrer: "",
-      landingPage,
-      touchTimestamp: now ?? "",
-      clickIds: {}
-    };
-  }
-  function matchesRule(referrerHost, rule) {
-    return rule.domains.some((domain) => hostMatches(referrerHost, domain));
-  }
-  function classifyReferrerHost(referrerHost) {
-    for (const rule of SEARCH_REFERRER_RULES) {
-      if (matchesRule(referrerHost, rule)) return { source: rule.source, channel: "organic_search" };
-    }
-    for (const rule of SOCIAL_REFERRER_RULES) {
-      if (matchesRule(referrerHost, rule)) return { source: rule.source, channel: "organic_social" };
-    }
-    return { source: referrerHost, channel: "referral" };
-  }
-  function referrerHostOf(referrer) {
-    try {
-      const u = new URL(referrer);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
-      return normalizeHost(u.host);
-    } catch {
-      return "";
-    }
-  }
-  function readQuery(url) {
-    try {
-      const flat = /* @__PURE__ */ new Map();
-      for (const [rawKey, rawValue] of new URL(url).searchParams.entries()) {
-        flat.set(rawKey.toLowerCase(), rawValue);
-      }
-      const sortedKeys = Array.from(flat.keys()).sort();
-      return {
-        get: (k) => flat.get(k.toLowerCase()),
-        keys: () => sortedKeys
-      };
-    } catch {
-      return null;
-    }
-  }
-  function parseAttributionUrl(input) {
-    const now = input.now ? input.now : "";
-    const query = readQuery(input.url);
-    const landingPage = landingPageOf(input.url);
-    let hasUtm = false;
-    const touch = emptyTouch(now, landingPage);
-    if (query) {
-      for (const [param, field] of Object.entries(UTM_PARAM_TO_FIELD)) {
-        const raw = query.get(param);
-        if (raw != null && raw !== "") {
-          touch[field] = sanitizeField(raw);
-          hasUtm = true;
-        }
-      }
-    }
-    const clickIds = {};
-    if (query) {
-      for (const key of query.keys()) {
-        const canonical = PARAM_ALIASES[key] ?? key;
-        if (CLICK_ID_KEYS.includes(canonical)) {
-          const value = query.get(key);
-          if (value) clickIds[canonical] = sanitizeField(value);
-        }
-      }
-    }
-    const hasClickId = Object.keys(clickIds).length > 0;
-    const browserIds = {};
-    for (const [param, canonical] of Object.entries(BROWSER_ID_PARAMS)) {
-      if (browserIds[canonical]) continue;
-      const raw = query ? query.get(param) : void 0;
-      if (!raw) continue;
-      if (canonical === "ga_client_id") {
-        const parsed = parseGaClientIdValue(sanitizeField(raw));
-        if (parsed) browserIds[canonical] = parsed;
-      } else {
-        browserIds[canonical] = sanitizeField(raw);
-      }
-    }
-    if (!browserIds.fbc && clickIds.fbclid) {
-      const nowMs = now ? Date.parse(now) : NaN;
-      if (!Number.isNaN(nowMs)) {
-        browserIds.fbc = sanitizeField(`fb.1.${nowMs}.${clickIds.fbclid}`);
-      }
-    }
-    if (!hasUtm && !hasClickId) {
-      const rHost = input.referrer ? referrerHostOf(input.referrer) : "";
-      if (!rHost) {
-        return { kind: "none", reason: "no_signal" };
-      }
-      const pageHost = input.currentHost ? normalizeHost(input.currentHost) : "";
-      if (pageHost && areRelatedHosts(rHost, pageHost)) {
-        return { kind: "none", reason: "internal_referrer" };
-      }
-      const inferred = classifyReferrerHost(rHost);
-      touch.source = sanitizeField(inferred.source);
-      touch.medium = inferred.channel === "organic_search" ? "organic" : inferred.channel === "organic_social" ? "social" : "referral";
-      touch.referrer = sanitizeField(input.referrer ?? "");
-      const channelLabel2 = resolveChannelLabel({
-        source: touch.source,
-        medium: touch.medium,
-        clickIds: {},
-        referrer: input.referrer ?? ""
-      });
-      return {
-        kind: "touch",
-        touch: { ...touch, clickIds: {}, browserIds, channel: inferred.channel, channelLabel: channelLabel2 }
-      };
-    }
-    let channel;
-    if (hasClickId) {
-      const matched = CLICK_ID_KEYS.find((key) => Boolean(clickIds[key]));
-      if (matched) {
-        const plat = CLICK_ID_PLATFORMS[matched];
-        if (!touch.source) touch.source = plat.source;
-        if (plat.certainty === "certain") {
-          channel = plat.paidChannel ?? "unknown";
-          if (!touch.medium) touch.medium = "cpc";
-        } else {
-          channel = PAID_MEDIUMS.includes(touch.medium.toLowerCase()) && plat.paidChannel ? plat.paidChannel : classifyUtmChannel(touch.medium);
-        }
-      } else {
-        channel = "unknown";
-      }
-    } else {
-      channel = classifyUtmChannel(touch.medium);
-    }
-    touch.referrer = sanitizeField(input.referrer ?? "");
-    const channelLabel = resolveChannelLabel({
-      source: touch.source,
-      medium: touch.medium,
-      clickIds,
-      referrer: input.referrer ?? ""
-    });
-    const withClickIds = { ...touch, clickIds, browserIds, channel, channelLabel };
-    return { kind: "touch", touch: withClickIds };
-  }
-  function classifyUtmChannel(medium) {
-    const m = medium.toLowerCase();
-    if (m.includes("cpc") || m.includes("ppc") || m.includes("paid")) return "paid_other";
-    if (m === "email" || m.includes("newsletter")) return "email";
-    if (m === "affiliate") return "affiliate";
-    if (m === "referral") return "referral";
-    if (m === "organic") return "organic_search";
-    if (m === "social" || m.includes("social")) return "organic_social";
-    return "unknown";
-  }
-  function landingPageOf(url) {
-    try {
-      return sanitizeField(new URL(url).href);
-    } catch {
-      return "";
-    }
-  }
-
-  // src/browser/link-decoration.ts
+  // ../browser/dist/browser/link-decoration.js
   var TOKEN_TTL_MS = 30 * DAY_MS;
   var MAX_TOKEN_LENGTH = 2048;
   var DEFAULT_TOKEN_PARAM = "ct_token";
@@ -1418,7 +1663,8 @@
   ];
   function isApprovedHost(host, domains) {
     const h = normalizeHostForMatch(host);
-    if (!h) return false;
+    if (!h)
+      return false;
     return domains.some((d) => {
       const base = normalizeHostForMatch(d);
       return base !== "" && (h === base || h.endsWith(`.${base}`));
@@ -1426,14 +1672,12 @@
   }
   function normalizeHostForMatch(host) {
     const stripped = host.trim().toLowerCase().replace(/:\d+$/, "");
-    if (stripped.includes("/") || stripped.includes("@")) return "";
+    if (stripped.includes("/") || stripped.includes("@"))
+      return "";
     return stripped;
   }
   function asciiJson(value) {
-    return JSON.stringify(value).replace(
-      /[^\u0020-\u007E]/g,
-      (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`
-    );
+    return JSON.stringify(value).replace(/[^\u0020-\u007E]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
   }
   var B64URL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   function bytesToBase64Url(bytes) {
@@ -1444,22 +1688,24 @@
       const b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
       out += B64URL_ALPHABET[b0 >> 2];
       out += B64URL_ALPHABET[(b0 & 3) << 4 | b1 >> 4];
-      if (i + 1 < bytes.length) out += B64URL_ALPHABET[(b1 & 15) << 2 | b2 >> 6];
-      if (i + 2 < bytes.length) out += B64URL_ALPHABET[b2 & 63];
+      if (i + 1 < bytes.length)
+        out += B64URL_ALPHABET[(b1 & 15) << 2 | b2 >> 6];
+      if (i + 2 < bytes.length)
+        out += B64URL_ALPHABET[b2 & 63];
     }
     return out;
   }
-  var B64URL_LOOKUP = Object.freeze(
-    Object.fromEntries(B64URL_ALPHABET.split("").map((c, i) => [c, i]))
-  );
+  var B64URL_LOOKUP = Object.freeze(Object.fromEntries(B64URL_ALPHABET.split("").map((c, i) => [c, i])));
   function base64UrlToBytes(s) {
-    if (s.length === 0) return new Uint8Array(0);
+    if (s.length === 0)
+      return new Uint8Array(0);
     const out = [];
     let buffer = 0;
     let bits = 0;
     for (const ch of s) {
       const v = B64URL_LOOKUP[ch];
-      if (v === void 0) return null;
+      if (v === void 0)
+        return null;
       buffer = buffer << 6 | v;
       bits += 6;
       if (bits >= 8) {
@@ -1480,19 +1726,19 @@
     const signature = await input.sign(body);
     const token = `${body}.${signature}`;
     if (token.length > MAX_TOKEN_LENGTH) {
-      throw new Error(
-        `clicktrail: continuation token exceeds MAX_TOKEN_LENGTH (${token.length} > ${MAX_TOKEN_LENGTH}).`
-      );
+      throw new Error(`clicktrail: continuation token exceeds MAX_TOKEN_LENGTH (${token.length} > ${MAX_TOKEN_LENGTH}).`);
     }
     return token;
   }
   async function decodeContinuationToken(token, verify, nowMs) {
     const dot = token.indexOf(".");
-    if (dot <= 0 || dot === token.length - 1) return { kind: "invalid", reason: "malformed" };
+    if (dot <= 0 || dot === token.length - 1)
+      return { kind: "invalid", reason: "malformed" };
     const body = token.slice(0, dot);
     const signature = token.slice(dot + 1);
     const decoded = base64UrlToBytes(body);
-    if (decoded === null) return { kind: "invalid", reason: "malformed" };
+    if (decoded === null)
+      return { kind: "invalid", reason: "malformed" };
     let json;
     try {
       json = new TextDecoder("utf-8").decode(decoded);
@@ -1506,34 +1752,45 @@
       return { kind: "invalid", reason: "malformed" };
     }
     const checked = validateContinuationShape(parsed);
-    if (checked === null) return { kind: "invalid", reason: "malformed" };
+    if (checked === null)
+      return { kind: "invalid", reason: "malformed" };
     const ok = await verify(body, signature);
-    if (!ok) return { kind: "invalid", reason: "bad_signature" };
-    if (nowMs >= checked.exp) return { kind: "invalid", reason: "expired" };
+    if (!ok)
+      return { kind: "invalid", reason: "bad_signature" };
+    if (nowMs >= checked.exp)
+      return { kind: "invalid", reason: "expired" };
     return { kind: "valid", payload: checked };
   }
   function validateContinuationShape(value) {
-    if (typeof value !== "object" || value === null) return null;
+    if (typeof value !== "object" || value === null)
+      return null;
     const rec = value;
     const { visitor_id: vid, session_id: sid, attribution, exp } = rec;
-    if (typeof vid !== "string" || typeof sid !== "string") return null;
-    if (typeof exp !== "number" || !Number.isFinite(exp)) return null;
-    if (typeof attribution !== "object" || attribution === null) return null;
+    if (typeof vid !== "string" || typeof sid !== "string")
+      return null;
+    if (typeof exp !== "number" || !Number.isFinite(exp))
+      return null;
+    if (typeof attribution !== "object" || attribution === null)
+      return null;
     const attrs = {};
     for (const [k, v] of Object.entries(attribution)) {
-      if (typeof v !== "string") return null;
+      if (typeof v !== "string")
+        return null;
       attrs[k] = v;
     }
     return { visitor_id: vid, session_id: sid, attribution: attrs, exp };
   }
   function urlHasStrongerSignal(url) {
     const query = readQuery(url);
-    if (!query) return false;
+    if (!query)
+      return false;
     for (const key of query.keys()) {
       const k = key.toLowerCase();
-      if (k.startsWith("utm_")) return true;
+      if (k.startsWith("utm_"))
+        return true;
       const canonical = k === "sc_click_id" ? "sccid" : k;
-      if (CLICK_ID_KEYS.includes(canonical)) return true;
+      if (CLICK_ID_KEYS.includes(canonical))
+        return true;
     }
     return false;
   }
@@ -1553,9 +1810,7 @@
       referrer: a["lt_landing_page"] ?? "",
       landingPage: input.landingUrl,
       touchTimestamp: input.nowIso,
-      clickIds: Object.fromEntries(
-        CLICK_ID_KEYS.filter((k) => a[k]).map((k) => [k, a[k]])
-      ),
+      clickIds: Object.fromEntries(CLICK_ID_KEYS.filter((k) => a[k]).map((k) => [k, a[k]])),
       channel: CHANNEL_VALUE_REFERRAL
     };
     return {
@@ -1571,7 +1826,8 @@
   function defaultLocationSeam() {
     const loc = globalThis.location;
     const hist = globalThis.history;
-    if (!loc || !hist) return null;
+    if (!loc || !hist)
+      return null;
     return {
       href: () => loc.href,
       replaceState: (url) => hist.replaceState(null, "", url)
@@ -1586,7 +1842,8 @@
       return "no_token";
     }
     const rawValues = parsed.searchParams.getAll(input.tokenParam);
-    if (rawValues.length === 0) return "no_token";
+    if (rawValues.length === 0)
+      return "no_token";
     const raw = rawValues[0];
     parsed.searchParams.delete(input.tokenParam);
     const strippedHref = parsed.toString();
@@ -1594,19 +1851,19 @@
       input.seam.replaceState(strippedHref);
     } catch {
     }
-    if (!input.consentAllowed()) return "consent_denied";
+    if (!input.consentAllowed())
+      return "consent_denied";
     const result = await decodeContinuationToken(raw, input.verify, input.nowMs());
     if (result.kind === "invalid") {
       return `invalid_${result.reason}`;
     }
-    if (urlHasStrongerSignal(strippedHref)) return "skipped_stronger_signal";
-    input.mergeTouch(
-      buildReferralTouch({
-        payload: result.payload,
-        landingUrl: strippedHref,
-        nowIso: input.nowIso()
-      })
-    );
+    if (urlHasStrongerSignal(strippedHref))
+      return "skipped_stronger_signal";
+    input.mergeTouch(buildReferralTouch({
+      payload: result.payload,
+      landingUrl: strippedHref,
+      nowIso: input.nowIso()
+    }));
     return "merged";
   }
   function decorateUrl(input) {
@@ -1617,7 +1874,8 @@
       return null;
     }
     if (parsed.searchParams.has(input.tokenParam)) {
-      if (input.skipSignedUrls) return null;
+      if (input.skipSignedUrls)
+        return null;
     }
     parsed.searchParams.set(input.tokenParam, input.token);
     return parsed.toString();
@@ -1625,29 +1883,38 @@
   var ANCHOR_SELECTOR = "a[href]";
   function defaultLinkDocument() {
     const doc = globalThis.document;
-    if (!doc) return null;
+    if (!doc)
+      return null;
     return { querySelectorAll: (s) => Array.from(doc.querySelectorAll(s)), body: doc.body };
   }
   function defaultLinkObserver() {
     const ctor = globalThis.MutationObserver;
-    if (!ctor) return null;
+    if (!ctor)
+      return null;
     return (cb) => new ctor(cb);
   }
   function createLinkDecorator(config) {
     const tokenParam = config.tokenParam ?? DEFAULT_TOKEN_PARAM;
     const skipSignedUrls = config.skipSignedUrls ?? true;
     let token = "";
+    let active = false;
+    let generation = 0;
+    const owned = /* @__PURE__ */ new Map();
     const decorateOnce = () => {
-      if (!token || !config.consentAllowed()) return;
+      if (!active || !token || !config.consentAllowed())
+        return;
       const doc = config.doc;
-      if (!doc) return;
+      if (!doc)
+        return;
       const base = config.getBaseUrl();
       for (const anchor of doc.querySelectorAll(ANCHOR_SELECTOR)) {
         const href = anchor.getAttribute("href");
-        if (!href) continue;
+        if (!href)
+          continue;
         try {
           const resolved = new URL(href, base || void 0);
-          if (!isApprovedHost(resolved.host, config.domains)) continue;
+          if (!isApprovedHost(resolved.host, config.domains))
+            continue;
         } catch {
           continue;
         }
@@ -1658,12 +1925,31 @@
           tokenParam,
           skipSignedUrls
         });
-        if (next !== null && next !== href) anchor.setAttribute("href", next);
+        if (next !== null && next !== href) {
+          const prior = owned.get(anchor);
+          if (prior && prior.decoratedHref !== href)
+            prior.originalHref = href;
+          owned.set(anchor, prior ?? { originalHref: href, decoratedHref: next });
+          const mutation = owned.get(anchor);
+          mutation.decoratedHref = next;
+          anchor.setAttribute("href", next);
+        }
       }
+    };
+    const clearOwned = () => {
+      for (const [anchor, mutation] of owned) {
+        if (anchor.getAttribute("href") === mutation.decoratedHref) {
+          anchor.setAttribute("href", mutation.originalHref);
+        }
+      }
+      owned.clear();
+      token = "";
     };
     let observer = null;
     return {
       start() {
+        active = true;
+        const startGeneration = ++generation;
         if (config.observer !== void 0 && config.observer === null) {
         } else if (observer === null) {
           const factory = config.observer ?? defaultLinkObserver();
@@ -1673,6 +1959,8 @@
           }
         }
         void config.getToken().then((t) => {
+          if (!active || startGeneration !== generation)
+            return;
           token = t;
           decorateOnce();
         }).catch(() => {
@@ -1680,17 +1968,22 @@
         });
       },
       stop() {
+        active = false;
+        generation += 1;
         observer?.disconnect();
         observer = null;
+        clearOwned();
+      },
+      clear() {
+        generation += 1;
+        clearOwned();
       }
     };
   }
   function subtleOrThrow() {
     const crypto = globalThis.crypto;
     if (!crypto?.subtle) {
-      throw new Error(
-        "clicktrail: no WebCrypto available; inject crossDomain.sign / crossDomain.verify."
-      );
+      throw new Error("clicktrail: no WebCrypto available; inject crossDomain.sign / crossDomain.verify.");
     }
     return crypto.subtle;
   }
@@ -1699,25 +1992,21 @@
       const raw = adapter.get(SIGNING_KEY_KEY);
       if (raw !== null) {
         const bytes = base64UrlToBytes(raw);
-        if (bytes !== null && bytes.length > 0) return bytes;
+        if (bytes !== null && bytes.length > 0)
+          return bytes;
       }
     }
     const fresh = randomBytes(32);
     const encoded = bytesToBase64Url(fresh);
-    for (const adapter of adapters) adapter.set(SIGNING_KEY_KEY, encoded);
+    for (const adapter of adapters)
+      adapter.set(SIGNING_KEY_KEY, encoded);
     return fresh;
   }
   function defaultHmacSign(adapters, randomBytes) {
     return async (data) => {
       const subtle = subtleOrThrow();
       const keyBytes = await loadOrCreateKeyBytes(adapters, randomBytes);
-      const key = await subtle.importKey(
-        "raw",
-        keyBytes,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
+      const key = await subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
       const mac = await subtle.sign({ name: "HMAC" }, key, new TextEncoder().encode(data));
       return bytesToBase64Url(new Uint8Array(mac));
     };
@@ -1725,69 +2014,89 @@
   function defaultHmacVerify(adapters) {
     return async (data, signatureB64Url) => {
       const raw = adapters.map((a) => a.get(SIGNING_KEY_KEY)).find((v) => v !== null);
-      if (raw === void 0 || raw === null) return false;
+      if (raw === void 0 || raw === null)
+        return false;
       const keyBytes = base64UrlToBytes(raw);
       const sigBytes = base64UrlToBytes(signatureB64Url);
-      if (keyBytes === null || sigBytes === null || keyBytes.length === 0) return false;
+      if (keyBytes === null || sigBytes === null || keyBytes.length === 0)
+        return false;
       const subtle = subtleOrThrow();
       try {
-        const key = await subtle.importKey(
-          "raw",
-          keyBytes,
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["verify"]
-        );
-        return await subtle.verify(
-          { name: "HMAC" },
-          key,
-          sigBytes,
-          new TextEncoder().encode(data)
-        );
+        const key = await subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+        return await subtle.verify({ name: "HMAC" }, key, sigBytes, new TextEncoder().encode(data));
       } catch {
         return false;
       }
     };
   }
 
-  // src/browser/create-clicktrail.ts
+  // ../browser/dist/browser/create-clicktrail.js
   var warnConsoleSink = {
     report: (d) => console.warn(`[clicktrail:${d.code}] ${d.message}`)
   };
   function resolveSink(config) {
-    if (config.diagnosticSink) return config.diagnosticSink;
-    if ((config.diagnosticsLevel ?? "silent") === "warn") return warnConsoleSink;
+    if (config.diagnosticSink)
+      return config.diagnosticSink;
+    if ((config.diagnosticsLevel ?? "silent") === "warn")
+      return warnConsoleSink;
     return nullDiagnosticSink;
   }
   var defaultRandomBytes = (byteLength) => {
     const crypto = globalThis.crypto;
     if (!crypto?.getRandomValues) {
-      throw new Error(
-        "clicktrail: no crypto.getRandomValues available; inject config.storage.randomBytes."
-      );
+      throw new Error("clicktrail: no crypto.getRandomValues available; inject config.storage.randomBytes.");
     }
     return crypto.getRandomValues(new Uint8Array(byteLength));
   };
   function createClickTrail(config) {
     const destinations = [...config.destinations];
+    if (destinations.some((destination) => !destination || typeof destination.clear !== "function")) {
+      throw new TypeError("clicktrail: every destination must implement clear() for consent-safe withdrawal.");
+    }
     const now = config.now;
     const consentGate = config.consentGate;
     const sink = resolveSink(config);
     let eventSequence = 0;
+    let destinationCleanupFailed = false;
+    const clearDestinationQueues = () => {
+      let cleared = true;
+      for (const dest of destinations) {
+        try {
+          dest.clear();
+        } catch (error) {
+          void error;
+          cleared = false;
+        }
+      }
+      destinationCleanupFailed = !cleared;
+      return cleared;
+    };
     let started = false;
     let payload = emptyAttribution();
     let consentDeniedReported = false;
+    const consentIsGranted = () => !consentGate || consentGate();
     const storageCfg = config.storage;
     let adapters = null;
     let identity = null;
     let formInjector = null;
     let linkDecorator = null;
+    const clearBrowserAttributionDom = () => {
+      try {
+        formInjector?.clear();
+      } catch (error) {
+        void error;
+      }
+      try {
+        linkDecorator?.clear();
+      } catch (error) {
+        void error;
+      }
+    };
     const initStorage = () => {
-      if (!storageCfg || adapters !== null) return;
+      if (!storageCfg || adapters !== null)
+        return;
       const nowMs = storageCfg.nowMs ?? (() => Date.now());
-      const primary = storageCfg.primaryAdapter ?? cookieStorage(
-        storageCfg.cookieAttrs !== void 0 ? { attrs: storageCfg.cookieAttrs } : {}
-      );
+      const primary = storageCfg.primaryAdapter ?? cookieStorage(storageCfg.cookieAttrs !== void 0 ? { attrs: storageCfg.cookieAttrs } : {});
       const mirror = storageCfg.mirrorAdapter ?? mirrorStorage({
         ...storageCfg.retentionDays !== void 0 ? { retentionDays: storageCfg.retentionDays } : {},
         nowMs
@@ -1800,12 +2109,16 @@
       });
     };
     const persistPayload = () => {
-      if (!adapters) return;
+      if (!adapters || !consentIsGranted())
+        return;
       saveAttributionPayload(adapters.primary, payload);
+      if (!consentAllows())
+        return;
       saveAttributionPayload(adapters.mirror, payload);
     };
     const mergeCookieBrowserIds = () => {
-      if (consentGate && !consentGate()) return;
+      if (consentGate && !consentGate())
+        return;
       let ids;
       try {
         const jar = storageCfg?.browserIdCookieJar ?? defaultCookieJar();
@@ -1816,7 +2129,8 @@
       const merged = applyBrowserIdentifiers(payload, ids);
       if (merged !== payload) {
         payload = merged;
-        if (started && adapters) persistPayload();
+        if (started && adapters)
+          persistPayload();
       }
     };
     const snapshotFromIdentity = (snap) => ({
@@ -1827,37 +2141,53 @@
     const consentAllows = () => {
       if (!consentGate || consentGate()) {
         consentDeniedReported = false;
+        if (destinationCleanupFailed && !clearDestinationQueues())
+          return false;
         return true;
       }
       if (!consentDeniedReported) {
         consentDeniedReported = true;
-        sink.report({
-          code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
-          level: "warn",
-          message: "Capture attempted while consent denied; event dropped."
-        });
-        payload = emptyAttribution();
-        if (adapters) {
-          clearAttributionStorage(adapters.primary, adapters.mirror);
-          identity?.clear();
+        try {
+          sink.report({
+            code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
+            level: "warn",
+            message: "Capture attempted while consent denied; event dropped."
+          });
+        } catch (error) {
+          void error;
         }
       }
+      payload = emptyAttribution();
+      if (adapters) {
+        try {
+          clearAttributionStorage(adapters.primary, adapters.mirror);
+        } catch (error) {
+          void error;
+        }
+        try {
+          identity?.clear();
+        } catch (error) {
+          void error;
+        }
+      }
+      clearDestinationQueues();
+      clearBrowserAttributionDom();
       return false;
     };
     const generateEventId = () => {
       const crypto = globalThis.crypto;
-      if (crypto?.randomUUID) return `evt_${crypto.randomUUID()}`;
+      if (crypto?.randomUUID)
+        return `evt_${crypto.randomUUID()}`;
       eventSequence += 1;
       return `evt_${Date.now().toString(36)}_${eventSequence}`;
     };
-    const isLeadEvent = (eventName) => ["lead", "lead.submitted", "lead_submitted", "form_submission"].includes(eventName);
+    const isLeadEvent = (eventName) => toCanonicalEventName(eventName) === "lead_created";
     function wireCrossDomain(instance2) {
       const crossCfg = config.crossDomain;
-      if (!crossCfg) return;
+      if (!crossCfg)
+        return;
       if ((!crossCfg.sign || !crossCfg.verify) && !storageCfg) {
-        throw new Error(
-          "clicktrail: crossDomain default sign/verify requires config.storage; inject both sign and verify for externally provisioned keys."
-        );
+        throw new Error("clicktrail: crossDomain default sign/verify requires config.storage; inject both sign and verify for externally provisioned keys.");
       }
       const nowMs = storageCfg?.nowMs ?? (() => Date.now());
       const randomBytes = storageCfg?.randomBytes ?? defaultRandomBytes;
@@ -1889,11 +2219,13 @@
         getBaseUrl: () => seam?.href() ?? "",
         getToken: async () => {
           const snap = instance2.getSession();
-          if (!snap.visitorId && !snap.sessionId) return "";
+          if (!snap.visitorId && !snap.sessionId)
+            return "";
           const attribution = {};
           for (const key of CONTINUATION_FIELDS) {
             const value = payload[key];
-            if (value) attribution[key] = value;
+            if (value)
+              attribution[key] = value;
           }
           try {
             return await encodeContinuationToken({
@@ -1912,36 +2244,104 @@
     }
     const instance = {
       start() {
-        if (started) return;
+        if (started)
+          return;
         started = true;
-        for (const dest of destinations) dest.start?.();
-        if (storageCfg) {
-          initStorage();
-          const stored = loadAttributionPayload(adapters.primary);
-          payload = Object.keys(stored).length > 0 ? { ...emptyAttribution(), ...stored } : { ...emptyAttribution(), ...loadAttributionPayload(adapters.mirror) };
-          persistPayload();
-        }
-        mergeCookieBrowserIds();
-        if (config.forms) {
-          const { fields, overwrite, observer } = config.forms;
-          formInjector = createFormInjector({
-            fields,
-            overwrite,
-            observer,
-            consentAllowed: () => !consentGate || consentGate(),
-            getPayload: () => payload,
-            getIdentity: () => instance.getSession(),
-            doc: config.forms.doc ?? defaultFormDocument() ?? void 0
-          });
-          formInjector.start();
-        }
-        if (config.crossDomain) {
-          wireCrossDomain(instance);
+        const startedDestinations = [];
+        try {
+          for (const dest of destinations) {
+            startedDestinations.push(dest);
+            dest.start?.();
+          }
+          if (storageCfg) {
+            initStorage();
+            if (consentAllows()) {
+              const stored = consentIsGranted() ? loadAttributionPayload(adapters.primary) : {};
+              const fallback = consentIsGranted() ? loadAttributionPayload(adapters.mirror) : {};
+              if (consentAllows()) {
+                payload = Object.keys(stored).length > 0 ? { ...emptyAttribution(), ...stored } : { ...emptyAttribution(), ...fallback };
+                if (consentAllows())
+                  persistPayload();
+              }
+              if (!consentIsGranted()) {
+                payload = emptyAttribution();
+                clearAttributionStorage(adapters.primary, adapters.mirror);
+                identity?.clear();
+              }
+            } else {
+              payload = emptyAttribution();
+              clearAttributionStorage(adapters.primary, adapters.mirror);
+              identity?.clear();
+            }
+          }
+          if (!consentAllows()) {
+            payload = emptyAttribution();
+            clearDestinationQueues();
+          } else {
+            mergeCookieBrowserIds();
+            if (adapters && consentAllows())
+              persistPayload();
+          }
+          if (config.forms) {
+            const { fields, overwrite, observer } = config.forms;
+            formInjector = createFormInjector({
+              fields,
+              overwrite,
+              observer,
+              consentAllowed: () => !consentGate || consentGate(),
+              getPayload: () => payload,
+              getIdentity: () => instance.getSession(),
+              doc: config.forms.doc ?? defaultFormDocument() ?? void 0
+            });
+            formInjector.start();
+          }
+          if (config.crossDomain) {
+            wireCrossDomain(instance);
+          }
+        } catch (error) {
+          formInjector?.stop();
+          formInjector = null;
+          linkDecorator?.stop();
+          linkDecorator = null;
+          for (const dest of [...startedDestinations].reverse()) {
+            try {
+              dest.stop?.();
+            } catch (rollbackError) {
+              void rollbackError;
+            }
+          }
+          started = false;
+          throw error;
         }
       },
       stop() {
-        if (!started) return;
-        for (const dest of destinations) void Promise.resolve(dest.flush?.());
+        if (!started)
+          return;
+        if (consentAllows()) {
+          for (const dest of destinations) {
+            try {
+              void Promise.resolve(dest.flush?.()).catch(() => {
+                try {
+                  sink.report({
+                    code: "destination_flush_failed",
+                    level: "warn",
+                    message: `Destination '${dest.name}' failed to flush during stop().`
+                  });
+                } catch {
+                }
+              });
+            } catch {
+              try {
+                sink.report({
+                  code: "destination_flush_failed",
+                  level: "warn",
+                  message: `Destination '${dest.name}' failed to flush during stop().`
+                });
+              } catch {
+              }
+            }
+          }
+        }
         formInjector?.stop();
         formInjector = null;
         linkDecorator?.stop();
@@ -1958,49 +2358,72 @@
           });
           return;
         }
-        if (!consentAllows()) return;
+        if (!consentAllows())
+          return;
         const eventData = {};
-        if (now && data?.["event_time"] === void 0) eventData.event_time = now();
+        if (now && data?.["event_time"] === void 0)
+          eventData.event_time = now();
         Object.assign(eventData, data);
         eventData.event_id = eventData.event_id || generateEventId();
         if (isLeadEvent(eventName) && !eventData.lead_id) {
           eventData.lead_id = `lead_${String(eventData.event_id).replace(/^evt_/, "")}`;
         }
         const envelopeContext = { identity: instance.getSession() };
-        if (config.workspaceId !== void 0) envelopeContext.workspaceId = config.workspaceId;
-        if (config.siteId !== void 0) envelopeContext.siteId = config.siteId;
+        if (config.workspaceId !== void 0)
+          envelopeContext.workspaceId = config.workspaceId;
+        if (config.siteId !== void 0)
+          envelopeContext.siteId = config.siteId;
         const consentState = config.consentState?.();
-        if (consentState !== void 0) envelopeContext.consent = consentState;
+        if (consentState !== void 0)
+          envelopeContext.consent = consentState;
         const event = buildEventPayload(payload, eventName, eventData, envelopeContext);
-        for (const dest of destinations) dest.deliver(event);
+        for (const dest of destinations) {
+          if (!consentAllows())
+            return;
+          dest.deliver(event);
+        }
       },
       mergeParsedTouch(touch) {
+        if (!consentAllows())
+          return;
         mergeCookieBrowserIds();
         payload = mergeAttributionTouch(payload, touch);
-        if (started && adapters) persistPayload();
+        if (started && adapters)
+          persistPayload();
       },
       hydrateStoredPayload(incoming) {
+        if (!consentAllows())
+          return;
         for (const key of Object.keys(incoming)) {
           const value = incoming[key];
           if (CANONICAL_KEY_SET.has(key) && typeof value === "string" && value !== "") {
             payload[key] = value;
           }
         }
-        if (started && adapters) persistPayload();
+        if (started && adapters)
+          persistPayload();
       },
-      getData: () => ({ ...payload }),
+      getData: () => consentAllows() ? { ...payload } : emptyAttribution(),
       getField(key) {
-        return payload[key] ?? "";
+        return consentAllows() ? payload[key] ?? "" : "";
       },
       clearData() {
         payload = emptyAttribution();
-        if (started && adapters) {
+        clearDestinationQueues();
+        clearBrowserAttributionDom();
+        if (storageCfg) {
+          initStorage();
+        }
+        if (adapters) {
           clearAttributionStorage(adapters.primary, adapters.mirror);
           identity?.clear();
         }
       },
       getSession() {
-        if (started && identity && (!consentGate || consentGate())) {
+        if (!consentAllows()) {
+          return { visitorId: "", sessionId: "", sessionNumber: "" };
+        }
+        if (started && identity) {
           return snapshotFromIdentity(identity.current());
         }
         return {
@@ -2015,5 +2438,5 @@
 
   // src/global-entry.ts
   var globals = globalThis;
-  globals["ClickTrail"] = { ...browser_exports, parseAttributionUrl };
+  globals["ClickTrail"] = { ...dist_exports, parseAttributionUrl };
 })();

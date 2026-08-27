@@ -1,11 +1,11 @@
 /**
- * W3C Trace Context derivation for journey events (`/otel`).
+ * Explicit W3C Trace Context correlation helpers (`/otel`).
  *
  * PURE helpers: derive a deterministic traceparent from a journey event's
  * stable identity, and parse inbound traceparent headers. NO @opentelemetry/*
  * imports — OpenTelemetry-COMPATIBLE, never OpenTelemetry-DEPENDENT
- * (docs/ARCHITECTURE.md design law). Consumers hand us structural tracers;
- * we never pull the SDK.
+ * (docs/ARCHITECTURE.md design law). The OTel destination does not call these
+ * helpers: host instrumentation owns actual propagation context.
  *
  * DETERMINISM LAW: trace/span ids are derived from the event id (+ its
  * caller-supplied timestamp) via a seeded FNV-1a hash chain. Same event,
@@ -148,8 +148,8 @@ export function journeySpanContext(event: JourneyEventRef): JourneySpanContext {
  * Pick the best stable identity from a flat stamped event payload
  * (ClickTrail wire shape). Prefers explicit journey-level ids (message,
  * agent run); falls back to the event name. Callers needing tighter
- * uniqueness should compose their own id and pass it via
- * {@link OtelDestinationConfig.eventId}.
+ * uniqueness should compose their own id before calling
+ * {@link journeySpanContext}.
  */
 export function defaultEventId(event: Record<string, unknown>): string {
   const messageId = event[ATTR_MESSAGE_ID];
@@ -160,13 +160,13 @@ export function defaultEventId(event: Record<string, unknown>): string {
 }
 
 /**
- * First present timestamp field on a stamped payload, preferring the
- * canonical millisecond ISO-8601 `timestamp` key.
+ * First present timestamp field on a stamped payload, preferring canonical
+ * `occurred_at`, then adapter `event_time`, then legacy `timestamp`.
  */
 export function defaultEventTimestamp(
   event: Record<string, unknown>,
 ): string | number | undefined {
-  for (const key of ['timestamp', 'event_time']) {
+  for (const key of ['occurred_at', 'event_time', 'timestamp']) {
     const v = event[key];
     if (typeof v === 'string' && v !== '') return v;
     if (typeof v === 'number') return v;

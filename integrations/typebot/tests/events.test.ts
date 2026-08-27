@@ -127,7 +127,7 @@ describe('rejection matrix (required fields throw TypeError)', () => {
     expect(() => buildPurchaseEvent({ value: 100, currency: 'EUR' }, {}, meta)).toThrow(/sale\.transaction_id/);
   });
 
-  it('purchase with invalid value -> TypeError sale.recorded.value', () => {
+  it('purchase with invalid value -> TypeError sale.value', () => {
     for (const bad of [undefined, 0, -5, Number.NaN, 'abc']) {
       expect(() =>
         buildPurchaseEvent({ transactionId: 'tx_1', value: bad, currency: 'EUR' }, {}, meta),
@@ -135,7 +135,7 @@ describe('rejection matrix (required fields throw TypeError)', () => {
     }
   });
 
-  it('purchase without currency -> TypeError sale.recorded.currency', () => {
+  it('purchase without currency -> TypeError sale.currency', () => {
     expect(() =>
       buildPurchaseEvent({ transactionId: 'tx_1', value: 100 }, {}, meta),
     ).toThrow(/sale\.currency/);

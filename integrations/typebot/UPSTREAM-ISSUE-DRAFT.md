@@ -45,7 +45,7 @@ Per-action inputs (all mappable to Typebot variables): `Email`, `Phone`, `Lead I
 
 ## Event names
 
-Identify → `lead` · Form Started → `form.started` · Lead Submitted → `form.submitted` · Qualified Lead → `lead.qualified` · Appointment Requested → `appointment.requested` · Purchase → `sale.recorded` · Consent → `consent.granted` / `consent.withdrawn` / `consent.policy_updated`.
+Identify → `lead_created` · Form Started → `form_started` · Lead Submitted → `lead_created` · Qualified Lead → `lead_qualified` · Appointment Requested → `booking_created` · Purchase → `sale` · Consent → `consent_updated` with `consent_state`.
 
 Wire shape: `POST {endpoint}` with `{ events: [{ schema_version: 1, event_name, occurred_at, ...mappedFields }] }`.
 

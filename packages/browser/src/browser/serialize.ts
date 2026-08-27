@@ -6,7 +6,7 @@
  * (via core's {@link stampVersions}). Deterministic: the caller supplies any
  * timestamp through the optional `data` bag (e.g. `event_time`).
  */
-import { stampVersions } from '@vizuh/clicktrail-core';
+import { stampVersions, toCanonicalEventName } from '@vizuh/clicktrail-core';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
 
 export interface MarketingTrailEnvelope {
@@ -102,23 +102,18 @@ function touchValue(payload: AttributionPayload, key: string, data: Record<strin
   return firstText(data[key], payload[`lt_${key}`], payload[`ft_${key}`], payload[key]);
 }
 
-function canonicalEventName(eventName: string): string {
-  return ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName)
-    ? 'lead_submitted'
-    : eventName;
-}
-
 export function buildMarketingTrailEnvelope(
   payload: AttributionPayload,
   eventName: string,
   data: Record<string, unknown> = {},
   context: MarketingTrailContext = {},
 ): MarketingTrailEnvelope {
+  const canonicalName = toCanonicalEventName(eventName);
   const supplied = isRecord(data['marketing_trail']) ? data['marketing_trail'] : {};
   const visitorId = firstText(context.identity?.visitorId, data['visitor_id'], payload['visitor_id']);
   const anonymousId = prefixed(firstText(supplied['anonymous_id'], data['anonymous_id'], visitorId), 'anon_');
   const eventId = prefixed(firstText(supplied['event_id'], data['event_id']), 'evt_');
-  const leadEvent = ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
+  const leadEvent = canonicalName === 'lead_created';
   const leadId = prefixed(
     firstText(supplied['lead_id'], data['lead_id'], leadEvent ? eventId.replace(/^evt_/, '') : ''),
     'lead_',
@@ -151,7 +146,7 @@ export function buildMarketingTrailEnvelope(
     lead_id: leadId,
     workspace_id: firstText(context.workspaceId, supplied['workspace_id'], data['workspace_id']),
     site_id: firstText(context.siteId, supplied['site_id'], data['site_id']),
-    event_name: firstText(supplied['event_name'], canonicalEventName(eventName)),
+    event_name: canonicalName,
     occurred_at: firstText(supplied['occurred_at'], data['occurred_at'], data['event_time']),
     landing_page: firstText(supplied['landing_page'], touchValue(payload, 'landing_page', data)),
     referrer: firstText(supplied['referrer'], touchValue(payload, 'referrer', data)),
@@ -182,9 +177,10 @@ export function buildEventPayload(
   data?: Record<string, unknown>,
   context?: MarketingTrailContext,
 ): ClickTrailEvent {
+  const canonicalName = toCanonicalEventName(eventName);
   const base: Record<string, unknown> = { ...payload };
   if (data) Object.assign(base, data);
-  base.event_name = eventName;
-  base.marketing_trail = buildMarketingTrailEnvelope(payload, eventName, base, context);
+  base.event_name = canonicalName;
+  base.marketing_trail = buildMarketingTrailEnvelope(payload, canonicalName, base, context);
   return stampVersions(base) as ClickTrailEvent;
 }

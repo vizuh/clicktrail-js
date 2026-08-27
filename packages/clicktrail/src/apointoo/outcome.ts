@@ -9,16 +9,16 @@
  * (journey/outcome ids, value/currency stamps, canonical ft_/lt_ attribution
  * keys). Unknown extra keys are STRIPPED, never forwarded.
  */
-import { stampVersions } from '@vizuh/clicktrail-core';
+import { stampVersions, toCanonicalEventName } from '@vizuh/clicktrail-core';
 import { CANONICAL_PAYLOAD_KEYS } from '@vizuh/clicktrail-browser';
 import {
-  EVENT_APPOINTMENT_ATTENDED,
-  EVENT_APPOINTMENT_BOOKED,
-  EVENT_LEAD_SUBMITTED,
-  EVENT_SALE_COMPLETED,
-  EVENT_SALE_REFUNDED,
+  EVENT_BOOKING_COMPLETED,
+  EVENT_BOOKING_CREATED,
+  EVENT_LEAD_CREATED,
+  EVENT_LEAD_QUALIFIED,
+  EVENT_REFUND,
+  EVENT_SALE,
 } from '@vizuh/clicktrail-core';
-import { EVENT_LEAD_QUALIFIED } from '@vizuh/clicktrail-core';
 
 /** Journey correlation key on the wire (incubating convention ATTR_JOURNEY_ID). */
 export const WIRE_JOURNEY_ID = 'journey.id' as const;
@@ -28,19 +28,19 @@ export const ATTR_OUTCOME_ID = 'outcome.id' as const;
 
 /** Outcome event names accepted by the /apointoo subpath. */
 export const APOINTOO_OUTCOME_EVENTS: readonly string[] = [
-  EVENT_LEAD_SUBMITTED,
+  EVENT_LEAD_CREATED,
   EVENT_LEAD_QUALIFIED,
-  EVENT_APPOINTMENT_BOOKED,
-  EVENT_APPOINTMENT_ATTENDED,
-  EVENT_SALE_COMPLETED,
-  EVENT_SALE_REFUNDED,
+  EVENT_BOOKING_CREATED,
+  EVENT_BOOKING_COMPLETED,
+  EVENT_SALE,
+  EVENT_REFUND,
 ];
 
 const OUTCOME_EVENT_SET: ReadonlySet<string> = new Set(APOINTOO_OUTCOME_EVENTS);
 
 /** True when `name` is an outcome event this destination delivers. */
 export function isOutcomeEvent(name: unknown): name is string {
-  return typeof name === 'string' && OUTCOME_EVENT_SET.has(name);
+  return typeof name === 'string' && OUTCOME_EVENT_SET.has(toCanonicalEventName(name));
 }
 
 /**
@@ -93,7 +93,8 @@ export function buildOutcomeEvent(
   input: OutcomeInput,
   ctx?: Record<string, unknown>,
 ): ApointooOutcomeRecord {
-  if (!isOutcomeEvent(name)) {
+  const canonicalName = toCanonicalEventName(name);
+  if (!OUTCOME_EVENT_SET.has(canonicalName)) {
     throw new Error(`apointoo: unknown outcome event '${String(name)}'`);
   }
   const journeyId = requireNonEmptyString(input.journeyId, 'journeyId');
@@ -108,7 +109,7 @@ export function buildOutcomeEvent(
   }
 
   const record: Record<string, unknown> = {};
-  record.event_name = name;
+  record.event_name = canonicalName;
   record[WIRE_JOURNEY_ID] = journeyId;
   if (input.outcomeId !== undefined) {
     record[ATTR_OUTCOME_ID] = requireNonEmptyString(input.outcomeId, 'outcomeId');
@@ -147,8 +148,8 @@ function explicitOutcomeKeys(input: OutcomeInput): Record<string, unknown> {
 export function stripToOutcomeRecord(event: Record<string, unknown>): Record<string, unknown> | null {
   const name = event['event_name'];
   if (!isOutcomeEvent(name)) return null;
-  const out: Record<string, unknown> = {};
-  for (const key of ['event_name', WIRE_JOURNEY_ID, ATTR_OUTCOME_ID, 'value', 'currency']) {
+  const out: Record<string, unknown> = { event_name: toCanonicalEventName(name) };
+  for (const key of [WIRE_JOURNEY_ID, ATTR_OUTCOME_ID, 'value', 'currency']) {
     if (key in event) out[key] = event[key];
   }
   // CANONICAL_PAYLOAD_KEYS is already in its fixed canonical order.

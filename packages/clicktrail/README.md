@@ -42,7 +42,7 @@ so TypeScript consumers can typecheck against the same public entry points.
 | `@vizuh/clicktrail/browser` | Stable adapter | Browser lifecycle, storage, forms, dataLayer, HTTP |
 | `@vizuh/clicktrail/conversation` | Incubating | Journey and conversation metadata |
 | `@vizuh/clicktrail/agent` | Incubating | Metadata-only agent-run and tool summaries |
-| `@vizuh/clicktrail/otel` | Incubating | Trace-context helpers and destination |
+| `@vizuh/clicktrail/otel` | Incubating | EventRecord Logger bridge + explicit trace-context helpers |
 | `@vizuh/clicktrail/apointoo` | Incubating | Apointoo outcome delivery |
 | `@vizuh/clicktrail/incubating` | Incubating | Experimental constants |
 
@@ -160,6 +160,24 @@ run.finish({ endTime: new Date().toISOString(), ok: true });
 Conversation content is dropped by default. If a product explicitly needs
 content, `captureContent: true` requires a host redaction function first; do
 not pass raw model or customer content to metadata fields.
+
+### OpenTelemetry EventRecords (`/otel`)
+
+Pass a host-owned OpenTelemetry Logger. ClickTrail emits one qualified
+EventRecord per business fact and leaves trace context, sampling, processing,
+and export to host instrumentation.
+
+```ts
+import { otelDestination } from '@vizuh/clicktrail/otel';
+
+const destination = otelDestination({ logger: hostLogger });
+// sale.completed is accepted during migration; emitted as clicktrail.sale.
+destination.deliver(clickTrailEvent);
+```
+
+Raw attribution and PII fields are excluded from default OTel attributes. Use
+the `attributes` callback only for reviewed scalar fields. Traceparent helpers
+are explicit utilities and are never called by this destination.
 
 ### Incubating entry point (`@vizuh/clicktrail/incubating`)
 

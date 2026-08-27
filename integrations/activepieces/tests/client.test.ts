@@ -44,7 +44,7 @@ describe('auth/header wiring', () => {
 
 describe('ActionError surfacing', () => {
   it('includes the action displayName and status', () => {
-    const error = new ActionError('Record Sale', 'event "sale.recorded" was not delivered (HTTP 401)', 401);
+    const error = new ActionError('Record Sale', 'event "sale" was not delivered (HTTP 401)', 401);
     expect(error.message).toContain('clicktrail Record Sale');
     expect(error.message).toContain('401');
     expect(error.actionDisplayName).toBe('Record Sale');

@@ -1,5 +1,5 @@
 /**
- * Record Qualified Lead -> 'lead.qualified'.
+ * Record Qualified Lead -> 'lead_qualified'.
  */
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clicktrailAuth } from '../lib/auth.js';

@@ -97,7 +97,7 @@ Teste a integração com consentimento concedido, negado e retirado. Inclua tamb
 | `@vizuh/clicktrail/browser` | Stable adapter | Ciclo de vida no navegador, armazenamento, formulários, `dataLayer` e HTTP |
 | `@vizuh/clicktrail/conversation` | Incubating | Metadados de jornada e conversa |
 | `@vizuh/clicktrail/agent` | Incubating | Metadados de execuções de agentes e resumos de ferramentas |
-| `@vizuh/clicktrail/otel` | Incubating | Helpers e destino para contexto de trace |
+| `@vizuh/clicktrail/otel` | Incubating | Bridge de EventRecord/Logger + helpers explícitos de trace context |
 | `@vizuh/clicktrail/apointoo` | Incubating | Entrega de resultados do Apointoo |
 
 Os pontos de entrada Incubating podem mudar entre versões menores. Mantenha-os atrás de um adapter do host até que seus contratos estejam estáveis.

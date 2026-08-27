@@ -107,7 +107,7 @@ export class ClickTrailBlock {
     return result;
   }
 
-  /** Action 1 — Identify Visitor/Lead -> event 'lead'. */
+  /** Action 1 — Identify Visitor/Lead -> event 'lead_created'. */
   identifyVisitor(variables: VariableBag = {}): Promise<SendResult> {
     try {
       const event = buildLeadEvent(variables, this.payload, this.meta());
@@ -118,7 +118,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 2 — Track Form Started -> event 'form.started'. */
+  /** Action 2 — Track Form Started -> event 'form_started'. */
   trackFormStarted(variables: VariableBag = {}): Promise<SendResult> {
     try {
       return this.deliver(buildFormStartedEvent(variables, this.payload, this.meta()));
@@ -127,7 +127,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 3 — Track Lead Submitted -> event 'form.submitted'. */
+  /** Action 3 — Track Lead Submitted -> event 'lead_created'. */
   trackLeadSubmitted(variables: VariableBag = {}): Promise<SendResult> {
     try {
       return this.deliver(buildFormSubmittedEvent(variables, this.payload, this.meta()));
@@ -136,7 +136,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 4 — Track Qualified Lead -> event 'lead.qualified' (leadId REQUIRED). */
+  /** Action 4 — Track Qualified Lead -> event 'lead_qualified' (leadId REQUIRED). */
   trackQualifiedLead(variables: VariableBag = {}): Promise<SendResult> {
     try {
       return this.deliver(buildQualifiedLeadEvent(variables, this.payload, this.meta()));
@@ -145,7 +145,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 5 — Track Appointment Requested -> event 'appointment.requested'. */
+  /** Action 5 — Track Appointment Requested -> event 'booking_created'. */
   trackAppointmentRequested(variables: VariableBag = {}): Promise<SendResult> {
     try {
       return this.deliver(buildAppointmentRequestedEvent(variables, this.payload, this.meta()));
@@ -154,7 +154,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 6 — Track Purchase -> event 'sale.recorded' (transactionId/value/currency REQUIRED). */
+  /** Action 6 — Track Purchase -> event 'sale' (transactionId/value/currency REQUIRED). */
   trackPurchase(input: PurchaseInput): Promise<SendResult> {
     try {
       return this.deliver(buildPurchaseEvent(input, this.payload, this.meta()));
@@ -163,7 +163,7 @@ export class ClickTrailBlock {
     }
   }
 
-  /** Action 7 — Update Consent -> 'consent.granted' | 'consent.withdrawn' | 'consent.policy_updated'. */
+  /** Action 7 — Update Consent -> `consent_updated` + `consent_state`. */
   updateConsent(state: ConsentState, variables: VariableBag = {}): Promise<SendResult> {
     try {
       return this.deliver(buildConsentUpdateEvent(state, variables, this.payload, this.meta()));

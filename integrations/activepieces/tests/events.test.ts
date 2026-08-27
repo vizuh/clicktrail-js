@@ -25,7 +25,7 @@ function expectNoThrow(fn: () => BuilderResult): BuilderResult {
 }
 
 describe('builder happy paths', () => {
-  it('Identify Lead -> "lead" with snake_case identity fields', () => {
+  it('Identify Lead -> "lead_created" with snake_case identity fields', () => {
     const r = expectNoThrow(() =>
       buildIdentifyLead({ visitorId: 'v-1', email: 'a@b.co', leadId: 'L-1', name: 'Ana' }),
     );
@@ -43,7 +43,7 @@ describe('builder happy paths', () => {
     expect(r.data).toEqual({});
   });
 
-  it('Attach Attribution -> "lead.attribution_attached"', () => {
+  it('Attach Attribution -> "lead_created"', () => {
     const r = buildAttachAttribution({
       visitorId: 'v-2',
       source: 'google',
@@ -55,36 +55,39 @@ describe('builder happy paths', () => {
     expect(r.data['campaign']).toBe('spring');
   });
 
-  it('Record Booking -> "booking" with value/currency/start_date', () => {
+  it('Record Booking -> "booking_created" with value/currency/start_date', () => {
     const r = buildRecordBooking({ value: 120.5, currency: 'EUR', startDate: '2026-09-01' });
-    expect(r.eventName).toBe('booking');
+    expect(r.eventName).toBe('booking_created');
     expect(r.data).toEqual({ value: 120.5, currency: 'EUR', start_date: '2026-09-01' });
   });
 
-  it('Record Qualified Lead -> "lead.qualified" with required lead_id', () => {
+  it('Record Qualified Lead -> "lead_qualified" with required lead_id', () => {
     const r = buildQualifiedLead({ leadId: 'lead_9' });
     expect(r.eventName).toBe('lead_qualified');
     expect(r.data).toEqual({ lead_id: 'lead_9' });
   });
 
-  it('Record Sale -> "sale.recorded" with transaction/value/currency', () => {
+  it('Record Sale -> "sale" with transaction/value/currency', () => {
     const r = buildRecordSale({ transactionId: 'T-77', value: 250, currency: 'USD' });
     expect(r.eventName).toBe('sale');
     expect(r.data).toEqual({ transaction_id: 'T-77', value: 250, currency: 'USD' });
   });
 
-  it('Record Refund -> "refund.issued" with original_transaction_id', () => {
+  it('Record Refund -> "refund" with original_transaction_id', () => {
     const r = buildRecordRefund({ originalTransactionId: 'T-77', value: 50 });
     expect(r.eventName).toBe('refund');
     expect(r.data).toEqual({ original_transaction_id: 'T-77', value: 50 });
   });
 
   it('Update Consent dropdown state drives the three event names', () => {
-    expect(buildUpdateConsent({ state: 'consent_updated' }).eventName).toBe('consent_updated');
-    expect(buildUpdateConsent({ state: 'consent_updated' }).eventName).toBe('consent_updated');
+    expect(buildUpdateConsent({ state: 'consent.granted' })).toEqual({
+      eventName: 'consent_updated',
+      data: { consent_state: 'granted' },
+    });
+    expect(buildUpdateConsent({ state: 'consent.withdrawn' }).eventName).toBe('consent_updated');
     expect(
-      buildUpdateConsent({ state: 'consent_updated', policyVersion: '2026-01' }).data,
-    ).toEqual({ policy_version: '2026-01' });
+      buildUpdateConsent({ state: 'consent.policy_updated', policyVersion: '2026-01' }).data,
+    ).toEqual({ consent_state: 'policy_updated', consent_version: '2026-01' });
   });
 
   it('Track Event passes a free-string event name plus JSON object through', () => {
@@ -157,17 +160,17 @@ describe('buildActionEvent stamps + envelope', () => {
   });
 
   it('folds granted/withdrawn consent into the envelope, leaves policy_updated alone', () => {
-    const granted = buildActionEvent(buildUpdateConsent({ state: 'consent_updated' }), CONTEXT);
+    const granted = buildActionEvent(buildUpdateConsent({ state: 'consent.granted' }), CONTEXT);
     expect(granted.marketing_trail.consent.analytics).toBe(true);
     expect(granted.marketing_trail.consent.advertising).toBe(true);
 
-    const withdrawn = buildActionEvent(buildUpdateConsent({ state: 'consent_updated' }), CONTEXT);
+    const withdrawn = buildActionEvent(buildUpdateConsent({ state: 'consent.withdrawn' }), CONTEXT);
     expect(withdrawn.marketing_trail.consent.analytics).toBe(false);
 
-    const updated = buildActionEvent(buildUpdateConsent({ state: 'consent_updated' }), CONTEXT);
+    const updated = buildActionEvent(buildUpdateConsent({ state: 'consent.policy_updated' }), CONTEXT);
     // No state change implied: default consent flags resolve to false.
     expect(updated.event_name).toBe('consent_updated');
-    expect(consentContextFor(updated.event_name)).toBeUndefined();
+    expect(consentContextFor(updated.consent_state)).toBeUndefined();
   });
 
   it('does not stamp consent context onto money/id events', () => {

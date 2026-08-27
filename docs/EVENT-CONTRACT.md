@@ -33,15 +33,15 @@ Migration mapping from pre-0.2 scaffold names:
 
 | Pre-0.2 | Canonical |
 |---|---|
-| lead / form.submitted | lead_created (+ form_started where a distinct step exists) |
+| lead / lead.submitted / form.submitted | lead_created (+ form_started where a distinct step exists) |
 | lead.attribution_attached | lead_created with `attribution_attached: true` detail |
 | lead.stage_updated | lead_updated (detail.stage) — pending ruling, see below |
-| lead.merged | lead_created with merged identity ids |
+| lead.merged | lead_merged with merged identity ids |
 | visitor.anonymized | visitor_anonymized — deletion request; collector erasure support is separate |
-| booking / appointment.requested | booking_created |
-| appointment.completed | booking_completed |
-| sale.recorded / purchase | sale |
-| refund.issued | refund |
+| booking / appointment.booked / appointment.requested | booking_created |
+| appointment.attended / appointment.completed | booking_completed |
+| sale.completed / sale.recorded / purchase | sale |
+| sale.refunded / refund.issued | refund |
 | offline_conversion.sent | sale (detail.kind='offline') |
 | consent.granted/withdrawn/policy_updated | consent_updated (state/source/version fields) |
 
@@ -49,6 +49,29 @@ Lead stage changes, visitor merges, and visitor anonymization are not in the
 canonical nine. Keep them as `lead_updated`, `lead_merged`, and
 `visitor_anonymized` EXTENSION events that integrations may emit but consumers
 must not require.
+
+Legacy names remain valid inputs during migration. Shared serializers must
+normalize them before delivery; new code and documentation use only canonical
+names. Unknown custom names pass through for host-defined events but never
+replace the nine predefined ClickTrail facts.
+
+## OpenTelemetry signal mapping
+
+ClickTrail events are point-in-time facts, so `/otel` maps each delivery to one
+OpenTelemetry EventRecord through an injected Logger-like sink:
+
+- `eventName`: `clicktrail.<canonical_event_name>`, for example
+  `clicktrail.sale`;
+- `timestamp`: canonical `occurred_at`, then adapter `event_time`, when valid;
+- default attributes: ClickTrail event/schema/classifier versions plus explicit
+  journey, conversation, message, and agent correlation IDs;
+- attribution URLs, click IDs, arbitrary dotted fields, and PII are not copied;
+  hosts may add reviewed scalar attributes through the mapping callback;
+- the host owns active trace context, sampling, processors, and export.
+
+The destination never creates a span or synthetic `traceparent`. Spans remain
+appropriate for real operations with duration. Explicit trace-context helpers
+stay available for non-OTel correlation migrations, outside destination flow.
 
 ## Required field vocabulary
 

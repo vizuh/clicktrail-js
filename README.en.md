@@ -119,7 +119,7 @@ cached page; and with a form added after load.
 | `@vizuh/clicktrail/browser` | Stable adapter | Browser lifecycle, storage, forms, dataLayer, HTTP |
 | `@vizuh/clicktrail/conversation` | Incubating | Journey and conversation metadata |
 | `@vizuh/clicktrail/agent` | Incubating | Metadata-only agent-run and tool summaries |
-| `@vizuh/clicktrail/otel` | Incubating | Trace-context helpers and destination |
+| `@vizuh/clicktrail/otel` | Incubating | EventRecord Logger bridge + explicit trace-context helpers |
 | `@vizuh/clicktrail/apointoo` | Incubating | Apointoo outcome delivery |
 
 Incubating entry points can change between minor versions. Keep them behind a

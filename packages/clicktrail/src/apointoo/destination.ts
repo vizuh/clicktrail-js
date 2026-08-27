@@ -118,8 +118,8 @@ export interface ApointooDestination extends Destination {
 
 /**
  * Batched outcome destination for the commercial loop. Only OUTCOME events
- * (`lead.submitted`, `lead.qualified`, `appointment.booked`,
- * `appointment.attended`, `sale.completed`, `sale.refunded`) are processed;
+ * (`lead_created`, `lead_qualified`, `booking_created`,
+ * `booking_completed`, `sale`, `refund`) are processed;
  * other event names are ignored by design — this lane carries outcomes only.
  */
 export function createApointooDestination(

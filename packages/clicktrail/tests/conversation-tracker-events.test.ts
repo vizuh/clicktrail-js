@@ -61,7 +61,7 @@ describe('createConversationTracker events', () => {
     expect(e.data['event_time']).toBe('2026-08-23T10:00:00.000Z');
   });
 
-  it('lead.qualified and handoff.human emit the incubating names with actor overrides', () => {
+  it('lead_qualified and handoff.human emit expected names with actor overrides', () => {
     const { tracker, host } = makeTracker();
     tracker.qualifyLead({
       conversationId: 'cw-77',

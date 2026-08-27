@@ -43,7 +43,6 @@ export const EVENT_CONVERSATION_STARTED = 'conversation.started' as const;
 export const EVENT_AGENT_RUN_STARTED = 'agent.run.started' as const;
 export const EVENT_AGENT_RUN_FINISHED = 'agent.run.finished' as const;
 export const EVENT_HUMAN_HANDOFF = 'handoff.human' as const;
-export const EVENT_LEAD_QUALIFIED = 'lead.qualified' as const;
 
 /**
  * Known AI assistant referrer hosts. Incubating: membership and naming may

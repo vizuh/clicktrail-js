@@ -43,12 +43,17 @@ against the frozen contract, never inside core.
 | `@vizuh/clicktrail/browser` | stable adapter | Browser lifecycle, storage, forms, dataLayer and HTTP destinations |
 | `@vizuh/clicktrail/conversation` | incubating | Journey and conversation tracking |
 | `@vizuh/clicktrail/agent` | incubating | Metadata-only agent-run recording |
-| `@vizuh/clicktrail/otel` | incubating | Trace-context helpers and destination |
+| `@vizuh/clicktrail/otel` | incubating | EventRecord Logger bridge + explicit trace-context helpers |
 | `@vizuh/clicktrail/apointoo` | incubating | Apointoo outcome destination |
 | `@vizuh/clicktrail/incubating` | unstable, may break between minors | Journey/conversation/agent conventions, experimental attributes |
 
 Constant naming follows the OTel convention:
 `ATTR_${name}`, `${NAME}_VALUE_${enum}`, `EVENT_${name}`.
+
+Business events follow OTel signal semantics: named point-in-time facts use
+EventRecords through the Logs API; spans represent operations with duration.
+ClickTrail does not synthesize trace context. See `docs/EVENT-CONTRACT.md` for
+the wire mapping and safe default attribute set.
 
 ## Phased plan
 

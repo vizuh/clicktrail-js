@@ -175,7 +175,7 @@ export interface UpdateStageInput extends Record<string, unknown> {
   leadId?: string;
 }
 
-/** 'lead.stage_updated' — move a lead through its pipeline stage. */
+/** 'lead_updated' extension event — move a lead through its pipeline stage. */
 export async function buildUpdateStage(
   input: UpdateStageInput,
   context?: BuilderContext,
@@ -192,7 +192,7 @@ export interface MarkQualifiedInput extends Record<string, unknown> {
   leadId: string;
 }
 
-/** 'lead.qualified' — flag a lead as qualified. */
+/** 'lead_qualified' — flag a lead as qualified. */
 export async function buildMarkQualified(
   input: MarkQualifiedInput,
   context?: BuilderContext,
@@ -209,7 +209,7 @@ export interface MergeVisitorInput extends Record<string, unknown> {
   knownContactId: string;
 }
 
-/** 'lead.merged' — merge an anonymous visitor into a known contact. */
+/** 'lead_merged' extension event — merge an anonymous visitor into a known contact. */
 export async function buildMergeVisitor(
   input: MergeVisitorInput,
   context?: BuilderContext,
@@ -376,9 +376,9 @@ export async function buildRecordConsent(
     throw new TypeError(`clicktrail: state must be one of ${CONSENT_STATES.join(', ')}.`);
   }
   const data = {
-    state,
-    source: optionalNonEmptyString(input.source, 'source'),
-    policy_version: optionalNonEmptyString(input.policyVersion, 'policyVersion'),
+    consent_state: state,
+    consent_source: optionalNonEmptyString(input.source, 'source'),
+    consent_version: optionalNonEmptyString(input.policyVersion, 'policyVersion'),
     ...extras(input, ['state', 'source', 'policyVersion']),
   };
   return build('consent_updated', {}, data, context);
@@ -395,8 +395,9 @@ export async function buildRecordWithdrawal(
   context?: BuilderContext,
 ): Promise<ClickTrailEvent> {
   const data = {
-    source: optionalNonEmptyString(input.source, 'source'),
-    policy_version: optionalNonEmptyString(input.policyVersion, 'policyVersion'),
+    consent_state: 'withdrawn',
+    consent_source: optionalNonEmptyString(input.source, 'source'),
+    consent_version: optionalNonEmptyString(input.policyVersion, 'policyVersion'),
     ...extras(input, ['source', 'policyVersion']),
   };
   return build('consent_updated', {}, data, context);
@@ -413,8 +414,8 @@ export async function buildUpdateConsentPolicy(
   context?: BuilderContext,
 ): Promise<ClickTrailEvent> {
   const data = {
-    source: requireNonEmptyString(input.source, 'source'),
-    policy_version: requireNonEmptyString(input.policyVersion, 'policyVersion'),
+    consent_source: requireNonEmptyString(input.source, 'source'),
+    consent_version: requireNonEmptyString(input.policyVersion, 'policyVersion'),
     ...extras(input, ['source', 'policyVersion']),
   };
   return build('consent_updated', {}, data, context);

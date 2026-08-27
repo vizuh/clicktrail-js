@@ -1,7 +1,7 @@
 /**
  * Journey-aware conversation tracking (`/conversation`).
  *
- * Emits stamped journey events (`conversation.started`, `lead.qualified`,
+ * Emits stamped journey events (`conversation.started`, `lead_qualified`,
  * `handoff.human` — incubating names) through the host ClickTrail instance's
  * `track()` lane, so every event carries the canonical attribution payload
  * plus the schema_version/classifier_version stamps from core.
@@ -98,7 +98,7 @@ export interface JourneyEventInput {
 export interface ConversationTracker {
   /** Emit `conversation.started` (incubating name). */
   conversationStarted(input: JourneyEventInput): void;
-  /** Emit `lead.qualified` (incubating name). */
+  /** Emit canonical `lead_qualified`. */
   qualifyLead(input: JourneyEventInput): void;
   /** Emit `handoff.human` (incubating name). */
   handoffToHuman(input: JourneyEventInput): void;

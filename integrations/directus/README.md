@@ -10,10 +10,8 @@ every outbound event carries `schema_version`, `classifier_version`, and the
 `marketing_trail` envelope. Event names follow the cross-integration contract:
 
 ```
-lead · lead.attribution_attached · lead.stage_updated · lead.qualified ·
-lead.merged · booking · appointment.completed · sale.recorded ·
-revenue.recurring · refund.issued · offline_conversion.sent ·
-consent.granted · consent.withdrawn · consent.policy_updated
+lead_created · lead_updated · lead_qualified · lead_merged · booking_created ·
+booking_completed · sale · refund · consent_updated · visitor_anonymized
 ```
 
 ## The four components
@@ -54,7 +52,7 @@ typically within hours of npm publish.
 1. Create a Flow with any trigger (e.g. item created on `orders`).
 2. Add an operation of type **Send event to ClickTrail**.
 3. Configure:
-   - **Event name**: one of the contract names above (e.g. `sale.recorded`).
+   - **Event name**: one of the contract names above (e.g. `sale`).
    - **Payload**: optional JSON object string, e.g.
      `{"lt_campaign":"spring","visitor_id":"v_123"}`.
    - **Site ID / Workspace ID / Consent flags**: optional overrides; unset
@@ -83,8 +81,8 @@ URL-shaped input goes through the SDK's canonical
 `parseAttributionUrl → mergeAttributionTouch`, so first-touch write-once and
 last-touch overwrite behave exactly like every other ClickTrail integration.
 
-Collection → event map: `leads → lead`, `bookings → booking`,
-`orders → sale.recorded`.
+Collection → event map: `leads → lead_created`, `bookings → booking_created`,
+`orders → sale`.
 
 ### Local storage collection
 

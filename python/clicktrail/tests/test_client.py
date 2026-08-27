@@ -96,7 +96,7 @@ def test_consent_event_fields():
     assert event["event_name"] == "consent_updated"
     assert event["consent_state"] == "granted"
     assert event["consent_source"] == "cmp"
-    assert event["consent_policy_version"] == "2026-08"
+    assert event["consent_version"] == "2026-08"
 
 
 # --------------------------------------------------------------- wire format
@@ -121,11 +121,20 @@ def test_no_key_header_without_api_key():
     assert t.calls[0]["body"]["events"][0]["site_id"] == "s"
 
 
-def test_legacy_event_name_translated_on_wire():
+@pytest.mark.parametrize(
+    ("legacy", "canonical"),
+    [
+        ("lead.submitted", "lead_created"),
+        ("appointment.attended", "booking_completed"),
+        ("sale.completed", "sale"),
+        ("sale.refunded", "refund"),
+    ],
+)
+def test_legacy_event_name_translated_on_wire(legacy, canonical):
     t = FakeTransport()
     ct = make_client(t)
-    ct.track("purchase")
-    assert t.calls[0]["body"]["events"][0]["event_name"] == "sale"
+    ct.track(legacy)
+    assert t.calls[0]["body"]["events"][0]["event_name"] == canonical
 
 
 # ---------------------------------------------------------- validation matrix

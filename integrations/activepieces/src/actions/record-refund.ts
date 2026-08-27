@@ -1,5 +1,5 @@
 /**
- * Record Refund -> 'refund.issued'.
+ * Record Refund -> 'refund'.
  */
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clicktrailAuth } from '../lib/auth.js';

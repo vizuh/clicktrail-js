@@ -18,7 +18,7 @@ describe('dataLayerDestination', () => {
 
     expect(dataLayer).toEqual([
       { ...e1, event: 'page_view' },
-      { ...e2, event: 'lead.submitted' },
+      { ...e2, event: 'lead_created' },
     ]);
   });
 

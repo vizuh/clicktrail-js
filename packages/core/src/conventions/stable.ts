@@ -118,8 +118,22 @@ export type Channel =
 // --- events -------------------------------------------------------------------
 
 export const EVENT_PAGE_VIEW = 'page_view' as const;
-export const EVENT_LEAD_SUBMITTED = 'lead.submitted' as const;
-export const EVENT_APPOINTMENT_BOOKED = 'appointment.booked' as const;
-export const EVENT_APPOINTMENT_ATTENDED = 'appointment.attended' as const;
-export const EVENT_SALE_COMPLETED = 'sale.completed' as const;
-export const EVENT_SALE_REFUNDED = 'sale.refunded' as const;
+export const EVENT_FORM_STARTED = 'form_started' as const;
+export const EVENT_LEAD_CREATED = 'lead_created' as const;
+export const EVENT_LEAD_QUALIFIED = 'lead_qualified' as const;
+export const EVENT_BOOKING_CREATED = 'booking_created' as const;
+export const EVENT_BOOKING_COMPLETED = 'booking_completed' as const;
+export const EVENT_SALE = 'sale' as const;
+export const EVENT_REFUND = 'refund' as const;
+export const EVENT_CONSENT_UPDATED = 'consent_updated' as const;
+
+/** @deprecated Use EVENT_LEAD_CREATED. */
+export const EVENT_LEAD_SUBMITTED = EVENT_LEAD_CREATED;
+/** @deprecated Use EVENT_BOOKING_CREATED. */
+export const EVENT_APPOINTMENT_BOOKED = EVENT_BOOKING_CREATED;
+/** @deprecated Use EVENT_BOOKING_COMPLETED. */
+export const EVENT_APPOINTMENT_ATTENDED = EVENT_BOOKING_COMPLETED;
+/** @deprecated Use EVENT_SALE. */
+export const EVENT_SALE_COMPLETED = EVENT_SALE;
+/** @deprecated Use EVENT_REFUND. */
+export const EVENT_SALE_REFUNDED = EVENT_REFUND;

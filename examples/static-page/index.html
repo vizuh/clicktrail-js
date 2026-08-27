@@ -37,7 +37,7 @@
      <code>clicktrail.stop()</code>. While started, the button below pushes a
      demo conversion event into <code>window.dataLayer</code>.</p>
 
-  <button id="demo-event">Fire demo <code>lead_submitted</code> event</button>
+  <button id="demo-event">Fire demo <code>lead_created</code> event</button>
 
   <h2>Latest dataLayer push</h2>
   <pre id="out">// nothing yet — grant consent, then fire the demo event</pre>
@@ -100,7 +100,7 @@
           out.textContent = '// grant consent first — the instance is stopped';
           return;
         }
-        clickTrail.track('lead_submitted', {
+        clickTrail.track('lead_created', {
           lead_context: { form_id: 'demo-form' },
         });
       });

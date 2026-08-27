@@ -10,13 +10,13 @@ Zero runtime dependencies. Zero `@typebot.io` imports by design (see "Upstream P
 
 | Typebot variable | Canonical field | Used by |
 |---|---|---|
-| `{{Email}}` | `email` | lead, form.submitted, sale.recorded |
-| `{{Phone}}` | `phone` | lead, form.submitted |
-| `{{Lead ID}}` | `lead_id` | **required** for `lead.qualified` |
+| `{{Email}}` | `email` | `lead_created`, `sale` |
+| `{{Phone}}` | `phone` | `lead_created` |
+| `{{Lead ID}}` | `lead_id` | **required** for `lead_qualified` |
 | `{{utm_campaign}}` | `campaign` | attribution passthrough on every event |
 | `{{gclid}}` | `gclid` (click id) | attribution passthrough on every event |
-| `{{Quoted value}}` | `value` | `sale.recorded` |
-| `{{Marketing consent}}` | `consent_state` (`granted` / `withdrawn` / `policy_updated`) | `consent.*` events |
+| `{{Quoted value}}` | `value` | `sale` |
+| `{{Marketing consent}}` | `consent_state` (`granted` / `withdrawn` / `policy_updated`) | `consent_updated` |
 
 Missing optional variables are omitted from events entirely — never sent as empty strings.
 
@@ -29,7 +29,7 @@ Typebot cannot load third-party npm blocks yet, but its **Code step** runs arbit
 3. Repeat per action, or keep one block instance in scope across steps.
 
 ```js
-// Code step: Identify Visitor/Lead -> event 'lead'
+// Code step: Identify Visitor/Lead -> event 'lead_created'
 const res = await fetch('https://YOUR-SITE.com/api/clicktrail', {
   method: 'POST',
   headers: {
@@ -39,7 +39,7 @@ const res = await fetch('https://YOUR-SITE.com/api/clicktrail', {
   body: JSON.stringify({
     events: [{
       schema_version: 1,
-      event_name: 'lead',
+      event_name: 'lead_created',
       occurred_at: new Date().toISOString(),
       site_id: 'YOUR_SITE_ID',
       email: {{Email}},
@@ -66,28 +66,28 @@ const block = createClickTrailBlock({
 });
 
 block.attachVariables({ utm_campaign: {{utm_campaign}}, gclid: {{gclid}} }); // action 8
-await block.identifyVisitor({ Email: {{Email}}, Phone: {{Phone}} });         // action 1 -> 'lead'
-await block.trackFormStarted();                                              // action 2 -> 'form.started'
-await block.trackLeadSubmitted({ Email: {{Email}} });                        // action 3 -> 'form.submitted'
-await block.trackQualifiedLead({ 'Lead ID': {{'Lead ID'}} });                // action 4 -> 'lead.qualified'
-await block.trackAppointmentRequested();                                     // action 5 -> 'appointment.requested'
-await block.trackPurchase({                                                  // action 6 -> 'sale.recorded'
+await block.identifyVisitor({ Email: {{Email}}, Phone: {{Phone}} });         // action 1 -> 'lead_created'
+await block.trackFormStarted();                                              // action 2 -> 'form_started'
+await block.trackLeadSubmitted({ Email: {{Email}} });                        // action 3 -> 'lead_created'
+await block.trackQualifiedLead({ 'Lead ID': {{'Lead ID'}} });                // action 4 -> 'lead_qualified'
+await block.trackAppointmentRequested();                                     // action 5 -> 'booking_created'
+await block.trackPurchase({                                                  // action 6 -> 'sale'
   transactionId: {{Transaction ID}}, value: {{Quoted value}}, currency: 'EUR',
 });
-await block.updateConsent('granted');                                        // action 7 -> 'consent.granted'
+await block.updateConsent('granted');                                        // action 7 -> 'consent_updated'
 ```
 
 ### The eight actions
 
 | # | Action | Event name | Required fields |
 |---|---|---|---|
-| 1 | Identify Visitor/Lead | `lead` | — |
-| 2 | Track Form Started | `form.started` | — |
-| 3 | Track Lead Submitted | `form.submitted` | — |
-| 4 | Track Qualified Lead | `lead.qualified` | `lead_id` |
-| 5 | Track Appointment Requested | `appointment.requested` | — |
-| 6 | Track Purchase | `sale.recorded` | `transaction_id`, `value`, `currency` |
-| 7 | Update Consent | `consent.granted` / `consent.withdrawn` / `consent.policy_updated` | state |
+| 1 | Identify Visitor/Lead | `lead_created` | — |
+| 2 | Track Form Started | `form_started` | — |
+| 3 | Track Lead Submitted | `lead_created` | — |
+| 4 | Track Qualified Lead | `lead_qualified` | `lead_id` |
+| 5 | Track Appointment Requested | `booking_created` | — |
+| 6 | Track Purchase | `sale` | `transaction_id`, `value`, `currency` |
+| 7 | Update Consent | `consent_updated` | state |
 | 8 | Attach Variables as Properties | *(no event; merges onto current visitor payload)* | — |
 
 Action 8 is pure attribution passthrough: `utm_campaign` maps onto the `campaign` field, `gclid` onto the gclid click id, and any arbitrary extra properties JSON input is merged under `properties`. Subsequent events carry the merged fields.

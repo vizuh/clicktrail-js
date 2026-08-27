@@ -31,8 +31,8 @@ name:
 
 ```
 {
-  "event": "lead_submitted",          // GTM custom-event key
-  "event_name": "lead_submitted",
+  "event": "lead_created",          // GTM custom-event key
+  "event_name": "lead_created",
   "event_id": "evt_...",              // deduplication wiring
   "schema_version": "1.2.0",
   "classifier_version": "1.2.0",
@@ -48,7 +48,7 @@ name:
     "anonymous_id": "anon_...",
     "lead_id": "lead_...",
     "workspace_id": "ws_...", "site_id": "...",
-    "event_name": "lead_submitted",
+    "event_name": "lead_created",
     "occurred_at": "2026-08-24T10:00:00.000Z",
     "landing_page": "https://...",
     "referrer": "https://www.google.com/",
@@ -83,10 +83,10 @@ Notes:
 
 1. **Trigger type:** Custom Event.
 2. **Event name:** `.*` with "Use regex matching" checked to fire on every
-   ClickTrail push, or list explicit names (`lead_submitted`, plus any custom
+   ClickTrail push, or list explicit names (`lead_created`, plus any custom
    `track()` names you use) for tighter control.
 3. **This trigger fires on:** some Custom Events — add conditions such as
-   `CT Event Name` matches RegEx `^(lead_submitted|page_view)$` if you only
+   `CT Event Name` matches RegEx `^(lead_created|page_view)$` if you only
    want conversions downstream.
 4. Attach your conversion/pixel tags to this trigger and pass the variables
    from step 3. For Google Ads conversions, map `marketing_trail.click_ids.gclid`

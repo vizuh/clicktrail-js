@@ -21,21 +21,21 @@ n8n: **Settings → Community Nodes → Install** → enter the package name.
 
 | Resource | Operation | Event | Required inputs |
 |---|---|---|---|
-| Lead | Create or Identify Lead | `lead` | — |
-| Lead | Attach Attribution | `lead.attribution_attached` | attribution JSON or flat ft_/lt_ collection |
-| Lead | Update Stage | `lead.stage_updated` | `stage` |
-| Lead | Mark Qualified | `lead.qualified` | `leadId` |
-| Lead | Merge Visitor | `lead.merged` | `anonymousVisitorId`, `knownContactId` |
-| Conversion | Record Appointment | `appointment.booked` | — |
-| Conversion | Record Completed Appointment | `appointment.completed` | — |
-| Conversion | Record Sale | `sale.recorded` | `transactionId`, `value`, `currency` |
-| Conversion | Record Recurring Revenue | `revenue.recurring` | `subscriptionId`, `value`, `currency` |
-| Conversion | Record Refund | `refund.issued` | `originalTransactionId` (value is negative-safe) |
-| Conversion | Send Offline Conversion | `offline_conversion.sent` | `conversionName` + `clickId` or `trailId` |
-| Consent | Record Consent | `consent.granted` | `state` (granted\|denied\|withdrawn) |
-| Consent | Record Withdrawal | `consent.withdrawn` | — |
-| Consent | Update Consent Policy | `consent.policy_updated` | `source`, `policyVersion` |
-| Consent | Anonymize Visitor | `visitor.anonymized` | `visitorId` |
+| Lead | Create or Identify Lead | `lead_created` | — |
+| Lead | Attach Attribution | `lead_created` | attribution JSON or flat ft_/lt_ collection |
+| Lead | Update Stage | `lead_updated` | `stage` |
+| Lead | Mark Qualified | `lead_qualified` | `leadId` |
+| Lead | Merge Visitor | `lead_merged` | `anonymousVisitorId`, `knownContactId` |
+| Conversion | Record Appointment | `booking_created` | — |
+| Conversion | Record Completed Appointment | `booking_completed` | — |
+| Conversion | Record Sale | `sale` | `transactionId`, `value`, `currency` |
+| Conversion | Record Recurring Revenue | `sale` | `subscriptionId`, `value`, `currency` |
+| Conversion | Record Refund | `refund` | `originalTransactionId` (value is negative-safe) |
+| Conversion | Send Offline Conversion | `sale` | `conversionName` + `clickId` or `trailId` |
+| Consent | Record Consent | `consent_updated` | `state` (granted\|denied\|withdrawn) |
+| Consent | Record Withdrawal | `consent_updated` | — |
+| Consent | Update Consent Policy | `consent_updated` | `source`, `policyVersion` |
+| Consent | Anonymize Visitor | `visitor_anonymized` | `visitorId` |
 
 Every operation POSTs `{ events: [event] }` to the collector and returns
 `{ ok, status }` per item. Failures surface as `NodeApiError` with the
