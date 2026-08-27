@@ -1,7 +1,7 @@
 {
   "name": "@vizuh/clicktrail-qwik",
   "version": "0.1.0-rc.3",
-  "description": "First-party attribution and conversion tracking for Qwik + Qwik City. Consent-aware server middleware captures initial attribution into a first-party cookie without an inline analytics script, the browser module activates only on demand (resumability-friendly), and server-side senders cover leads, bookings, and purchases.",
+  "description": "Carry observed acquisition context through Qwik City request handlers, consent-aware first-party storage, and explicit server event helpers.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

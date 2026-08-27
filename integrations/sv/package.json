@@ -1,7 +1,7 @@
 {
   "name": "@clicktrail/sv",
   "version": "0.1.0-rc.3",
-  "description": "EXPERIMENTAL Svelte CLI community add-on for ClickTrail. Scaffolds the @clicktrail/sveltekit server hook, root layout component, .env placeholder, and an example conversion endpoint.",
+  "description": "Experimental Svelte CLI add-on that scaffolds the ClickTrail SvelteKit hook, layout, environment placeholder, and example event endpoint.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

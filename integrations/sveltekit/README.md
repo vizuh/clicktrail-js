@@ -1,8 +1,15 @@
 # @clicktrail/sveltekit
 
-First-party attribution and conversion tracking for [SvelteKit](https://kit.svelte.dev).
+**Carry observed acquisition context through SvelteKit server requests and
+client navigations.**
 
-A handle hook captures landing UTMs and click IDs into a first-party cookie, the browser SDK tracks page views across SvelteKit navigations without duplicates, consent gates all persistence, an optional first-party proxy forwards events upstream without leaking visitor IPs, and server helpers send conversions from `+page.server.ts` and form actions.
+A handle hook parses arrival UTMs and click IDs. When configured, the consent
+gate controls first-party persistence. The browser SDK deduplicates page views
+across SvelteKit navigations, an optional proxy forwards allowlisted request
+data, and server helpers build events from `+page.server.ts` and form actions.
+
+The package preserves observed context. It does not prove campaign causation,
+configure destinations, or certify delivery.
 
 ## Install
 
@@ -37,8 +44,8 @@ The `ClickTrail` component boots the browser SDK with an `afterNavigate`-based n
 
 | Option | Default | Description |
 |---|---|---|
-| `siteId` | — | Copied into normalized marketing trail envelopes. |
-| `workspaceId` | — | Copied into normalized marketing trail envelopes. |
+| `siteId` | not set | Copied into normalized marketing trail envelopes. |
+| `workspaceId` | not set | Copied into normalized marketing trail envelopes. |
 | `endpoint` | `/api/clicktrail` | Where the browser delivers events. Absolute `https://` URLs bypass the proxy. |
 | `consentRequired` | `false` | When true, nothing is persisted until `ct_consent=granted`. An explicit `ct_consent=denied` always suppresses persistence. |
 | `trackPageViews` | `true` | Track page views across client navigations. |
@@ -46,8 +53,8 @@ The `ClickTrail` component boots the browser SDK with an `afterNavigate`-based n
 
 ## Cookies
 
-- `ct_attribution` — canonical flat attribution payload JSON (`Path=/`, `SameSite=Lax`, 180 days). The browser SDK's canonical `attribution` cookie name is honored on read.
-- `ct_consent` — consent decision (`granted` | `denied`). Write it from your CMP integration; both the handle and the client honor it.
+- `ct_attribution`: canonical flat attribution payload JSON (`Path=/`, `SameSite=Lax`, 180 days). The browser SDK's canonical `attribution` cookie name is honored on read.
+- `ct_consent`: consent decision (`granted` | `denied`). Write it from your CMP integration; both the handle and the client honor it.
 
 ## Server-side conversions
 
@@ -62,7 +69,7 @@ export const actions = {
       endpoint: 'https://collector.example.com/v1/events',
       siteId: 'my-site',
     });
-    // result: { ok, status } — never throws on network failure
+    // result: { ok, status }; never throws on network failure
   },
 };
 ```

@@ -1,7 +1,7 @@
 {
   "name": "@clicktrail/sveltekit",
   "version": "0.1.0-rc.3",
-  "description": "First-party attribution and conversion tracking for SvelteKit. A handle hook captures landing UTMs and click IDs into a first-party cookie, the browser SDK tracks page views across SvelteKit navigations without duplicates, consent gates all persistence and transmission, an optional first-party proxy forwards events upstream, and server helpers send conversions from +page.server.ts and form actions.",
+  "description": "Carry observed acquisition context through SvelteKit requests and navigations with configurable consent, first-party storage, and explicit event helpers.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
