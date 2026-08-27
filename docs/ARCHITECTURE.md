@@ -101,3 +101,48 @@ Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DR
   preserved forever within the major) or ACCIDENT (legacy bug, may be fixed
   at next major).
 - No fixture update without a semver decision recorded beside it.
+
+## Bounded attribution envelope (decision, not yet shipped)
+
+WooCommerce issue #62060 exposed a failure mode ClickTrail must prevent:
+attribution fields are bounded individually, but the serialized cookie is not.
+Repeated landing URLs, click-ID history, and percent encoding can therefore
+turn campaign input into an unbounded request-header channel.
+
+The browser storage contract will enforce both per-field encoded-byte limits
+and one aggregate request-cookie budget. The current RC4 implementation does
+not enforce this aggregate budget; release evidence must not claim otherwise.
+
+### Candidate limits to freeze with fixtures
+
+All limits count the UTF-8 bytes after cookie encoding, not JavaScript string
+length. Values are cut only at code-point boundaries.
+
+| Field class | Candidate maximum |
+|---|---:|
+| `source`, `medium` | 96 bytes each |
+| `campaign`, `term`, `content`, known click IDs | 256 bytes each |
+| first/current landing path, referrer origin + path | 512 bytes each |
+| timestamps, visit/session counters | 32 bytes each |
+| complete ClickTrail attribution cookie, including name and separators | 2,048 bytes |
+
+The numbers above are merge candidates, not frozen constants. Representative
+normal, long-ASCII, multibyte, delimiter-injection, and legacy fixtures must
+prove that common source/medium/campaign values survive unchanged before code
+adopts them.
+
+### Deterministic reduction rules
+
+1. Parse only recognized attribution parameters before reducing URLs.
+2. Store landing paths without query or fragment; store referrer origin + path.
+3. Remove controls, reject unresolved template macros, and ignore unknown keys.
+4. Apply per-field byte limits.
+5. If the aggregate budget is still exceeded, reduce in this order: user agent,
+   referrer, content, term, non-selected click-ID history, landing-path tail,
+   campaign tail. Preserve source, medium, timestamps, counters, and the
+   selected click ID as long as the schema can be represented.
+
+First touch remains write-once. Current/last touch changes only on a valid new
+signal. Legacy `first_*` / `last_*` aliases remain readable; a normal future
+write emits only the bounded canonical form. A request already rejected by a
+front proxy cannot be repaired in browser JavaScript.
