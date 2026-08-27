@@ -13,6 +13,7 @@ export interface Destination {
    * dataLayer array reference) HERE, never at factory/import time.
    */
   start?(): void;
+  stop?(): void;
   deliver(event: StampedClickTrailEvent): void;
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;

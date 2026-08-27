@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { bootClickTrailClient } from '../src/client.js';
+import { describe, expect, it, vi } from 'vitest';
+import { bootClickTrailClient, defaultNavigationSeam } from '../src/client.js';
 import { CONSENT_EVENT } from '../src/consent-client.js';
 
 function harness(href = 'https://example.com/') {
@@ -36,6 +36,42 @@ function harness(href = 'https://example.com/') {
 }
 
 describe('SvelteKit client consent lifecycle', () => {
+  it('restores fallback navigation hooks after the last consumer detaches', () => {
+    const originalPushState = vi.fn();
+    const addEventListener = vi.fn();
+    const removeEventListener = vi.fn();
+    vi.stubGlobal('history', { pushState: originalPushState });
+    vi.stubGlobal('addEventListener', addEventListener);
+    vi.stubGlobal('removeEventListener', removeEventListener);
+
+    const seam = defaultNavigationSeam();
+    const first = vi.fn();
+    const second = vi.fn();
+    const detachFirst = seam.afterNavigate(first);
+    const patchedPushState = globalThis.history.pushState;
+    const detachSecond = seam.afterNavigate(second);
+
+    expect(addEventListener).toHaveBeenCalledTimes(1);
+    globalThis.history.pushState({}, '', '/first');
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+
+    detachFirst();
+    expect(removeEventListener).not.toHaveBeenCalled();
+    expect(globalThis.history.pushState).toBe(patchedPushState);
+    globalThis.history.pushState({}, '', '/second');
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(2);
+
+    detachSecond();
+    expect(removeEventListener).toHaveBeenCalledTimes(1);
+    expect(globalThis.history.pushState).toBe(originalPushState);
+    globalThis.history.pushState({}, '', '/third');
+    expect(originalPushState).toHaveBeenCalledTimes(3);
+    expect(second).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
   it('does not merge initial attribution before consent', () => {
     const h = harness('https://example.com/?utm_source=google');
     const client = bootClickTrailClient({

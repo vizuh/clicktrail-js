@@ -75,6 +75,7 @@ describe('Formbricks URL and response mapping', () => {
       lt_campaign: 'brand',
       gclid: 'gclid-123',
     });
+    expect(mapping?.eventId).toBe('evt_s-f33c73796edafdb78438305cb81d747c');
     expect(mapping?.data).toMatchObject({
       event_id: 'evt_s-f33c73796edafdb78438305cb81d747c',
       form_id: 'survey-1',

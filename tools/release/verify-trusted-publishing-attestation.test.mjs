@@ -23,11 +23,9 @@ function trustDocument() {
   return [{
     id: 'test-trust-id',
     type: 'github',
-    claims: {
-      repository: 'vizuh/clicktrail-js',
-      workflow_ref: { file: 'publish.yml' },
-      environment: 'npm',
-    },
+    file: 'publish.yml',
+    repository: 'vizuh/clicktrail-js',
+    environment: 'npm',
     permissions: ['createPackage'],
   }];
 }

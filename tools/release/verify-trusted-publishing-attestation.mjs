@@ -33,13 +33,12 @@ function exactPackages(value) {
 function trustDocumentMatches(document) {
   if (!Array.isArray(document) || document.length !== 1) return false;
   const entry = document[0];
-  const claims = entry?.claims;
-  const workflowRef = claims?.workflow_ref;
+  const claims = entry?.claims ?? {};
   return (
     entry?.type === 'github' &&
-    claims?.repository === expectedRepository &&
-    workflowRef?.file === expectedWorkflow &&
-    claims?.environment === expectedEnvironment &&
+    (entry?.repository ?? claims.repository) === expectedRepository &&
+    (entry?.file ?? claims.workflow_ref?.file) === expectedWorkflow &&
+    (entry?.environment ?? claims.environment) === expectedEnvironment &&
     Array.isArray(entry.permissions) &&
     entry.permissions.includes('createPackage')
   );

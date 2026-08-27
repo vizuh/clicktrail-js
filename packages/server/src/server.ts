@@ -88,6 +88,7 @@ export interface ConversionInput<D extends Record<string, unknown>> {
   identity: ServerIdentity;
   data?: D;
   now?: string;
+  eventId?: string;
 }
 
 export interface LeadData extends Record<string, unknown> {
@@ -166,6 +167,9 @@ export class ClickTrailServer {
     const data = sanitizeServerEventInput(input.data ?? {});
     return buildEventPayload(payload, toCanonicalEventName(eventName), {
       ...data,
+      ...(input.eventId !== undefined
+        ? { event_id: requireNonEmptyString(input.eventId, 'eventId') }
+        : {}),
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),

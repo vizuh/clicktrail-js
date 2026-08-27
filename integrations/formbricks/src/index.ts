@@ -52,6 +52,7 @@ export interface FormbricksLeadMapping {
     payload: AttributionPayload;
   };
   data: Record<string, unknown>;
+  eventId: string;
 }
 
 export interface FormbricksLeadMappingOptions extends FormbricksFieldOptions {
@@ -181,8 +182,9 @@ export function toClickTrailLead(
     if (value !== undefined) payload[field] = value;
   }
 
+  const eventId = deriveStableEventId(siteId, `formbricks:${webhook.data.id}:${webhook.event}`);
   const data: Record<string, unknown> = {
-    event_id: deriveStableEventId(siteId, `formbricks:${webhook.data.id}:${webhook.event}`),
+    event_id: eventId,
     event_time: occurredAt,
     form_id: webhook.data.surveyId,
     lead_id: webhook.data.id,
@@ -201,5 +203,6 @@ export function toClickTrailLead(
   return {
     identity: { payload },
     data,
+    eventId,
   };
 }

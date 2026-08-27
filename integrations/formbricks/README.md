@@ -66,8 +66,15 @@ if (!verifyFormbricksWebhookSignature(rawBody, headers, process.env.FORMBRICKS_W
 const webhook = parseFormbricksWebhook(JSON.parse(rawBody));
 const mapping = toClickTrailLead(webhook, { siteId: 'site_123' });
 if (mapping) {
-  const clickTrail = new ClickTrailServer({ endpoint: 'https://collector.example/events' });
-  await clickTrail.trackLead(mapping);
+  const clickTrail = new ClickTrailServer({
+    endpoint: 'https://collector.example/events',
+    siteId: 'site_123',
+  });
+  await clickTrail.trackLead({
+    identity: mapping.identity,
+    data: mapping.data,
+    eventId: mapping.eventId,
+  });
 }
 ```
 

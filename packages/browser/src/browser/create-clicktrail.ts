@@ -424,8 +424,12 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     start() {
       if (started) return;
       started = true;
+      const startedDestinations: Destination[] = [];
       try {
-        for (const dest of destinations) dest.start?.();
+        for (const dest of destinations) {
+          startedDestinations.push(dest);
+          dest.start?.();
+        }
         if (storageCfg) {
           initStorage();
           if (consentAllows()) {
@@ -483,6 +487,13 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         formInjector = null;
         linkDecorator?.stop();
         linkDecorator = null;
+        for (const dest of [...startedDestinations].reverse()) {
+          try {
+            dest.stop?.();
+          } catch (rollbackError) {
+            void rollbackError;
+          }
+        }
         started = false;
         throw error;
       }

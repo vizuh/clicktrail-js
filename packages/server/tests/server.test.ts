@@ -100,6 +100,21 @@ describe('ClickTrailServer', () => {
     expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
   });
 
+  it('carries a trusted typed event ID while ignoring a raw reserved event ID', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({
+      identity: { payload: {} },
+      eventId: 'evt_trusted',
+      data: { event_id: 'evt_attacker' },
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_id']).toBe('evt_trusted');
+    expect(event['marketing_trail']).toMatchObject({ event_id: 'evt_trusted' });
+  });
+
   it('trackPurchase validates transaction fields before sending', async () => {
     const server = makeServer(okFetch());
     await expect(

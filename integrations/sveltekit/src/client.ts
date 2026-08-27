@@ -89,7 +89,7 @@ function defaultCookieJar(): CookieJar {
   };
 }
 
-function defaultNavigationSeam(): NavigationSeam {
+export function defaultNavigationSeam(): NavigationSeam {
   const w = globalThis as unknown as {
     location?: Location;
     document?: Document;
@@ -114,19 +114,29 @@ function defaultNavigationSeam(): NavigationSeam {
     host: () => loc().host,
     afterNavigate(callback) {
       listeners.add(callback);
-      // popstate covers back/forward. pushState is patched once so SPA
-      // navigations without SvelteKit's afterNavigate still fire.
-      if (!patchedPush && w.history) {
-        originalPush = w.history.pushState.bind(w.history);
-        patchedPush = (...args: Parameters<History['pushState']>) => {
-          originalPush?.(...args);
-          notify();
-        };
-        w.history.pushState = patchedPush as History['pushState'];
+      if (listeners.size === 1) {
+        if (w.history) {
+          originalPush = w.history.pushState;
+          patchedPush = (...args: Parameters<History['pushState']>) => {
+            originalPush?.apply(w.history, args);
+            notify();
+          };
+          w.history.pushState = patchedPush as History['pushState'];
+        }
+        w.addEventListener?.('popstate', notify);
       }
-      w.addEventListener?.('popstate', notify);
+      let active = true;
       return () => {
+        if (!active) return;
+        active = false;
         listeners.delete(callback);
+        if (listeners.size !== 0) return;
+        w.removeEventListener?.('popstate', notify);
+        if (w.history && patchedPush && originalPush && w.history.pushState === patchedPush) {
+          w.history.pushState = originalPush;
+        }
+        patchedPush = null;
+        originalPush = null;
       };
     },
   };

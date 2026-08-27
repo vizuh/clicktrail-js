@@ -116,6 +116,35 @@ describe('createClickTrail', () => {
     expect(ct.isStarted()).toBe(true);
   });
 
+  it('rolls back every destination started before a later startup failure', () => {
+    let fail = true;
+    const stopped: string[] = [];
+    const first: Destination = {
+      name: 'first',
+      start() {},
+      stop() { stopped.push('first'); },
+      deliver() {},
+      clear() {},
+    };
+    const second: Destination = {
+      name: 'second',
+      start() {
+        if (fail) {
+          fail = false;
+          throw new Error('later startup failed');
+        }
+      },
+      stop() { stopped.push('second'); },
+      deliver() {},
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [first, second] });
+
+    expect(() => ct.start()).toThrow('later startup failed');
+    expect(stopped).toEqual(['second', 'first']);
+    expect(() => ct.start()).not.toThrow();
+  });
+
   it('mergeParsedTouch feeds the payload that later events carry', () => {
     const rec = recordingDestination();
     const ct = createClickTrail({ destinations: [rec], now: () => '2026-08-23T10:00:00Z' });
