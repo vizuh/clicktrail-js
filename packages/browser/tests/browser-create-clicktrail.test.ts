@@ -89,6 +89,30 @@ describe('createClickTrail', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('rechecks consent before delivering to each destination', () => {
+    let consent = true;
+    const delivered: string[] = [];
+    const first: Destination = {
+      name: 'first',
+      deliver() {
+        delivered.push('first');
+        consent = false;
+      },
+      clear() {},
+    };
+    const second: Destination = {
+      name: 'second',
+      deliver() { delivered.push('second'); },
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [first, second], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+
+    expect(delivered).toEqual(['first']);
+  });
+
   it('rejects destinations that cannot clear queued events', () => {
     expect(() => createClickTrail({
       destinations: [{ name: 'unclearable', deliver: () => {} } as never],

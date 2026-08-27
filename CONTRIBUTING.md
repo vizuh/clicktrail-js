@@ -49,21 +49,20 @@ The GitHub release path is:
 
 1. Commit the release candidate and open a pull request from the release branch.
 2. Merge the reviewed branch into `master`.
-3. Create and push the matching tag, for example:
+3. Before tagging, complete namespace bootstrap and trusted-publisher setup for
+   every first-wave package. After Hugo completes npm 2FA locally, run
+   [`tools/release/bootstrap-new-packages.sh`](tools/release/bootstrap-new-packages.sh)
+   for missing first-wave names. Then configure the npmjs.com trusted publisher
+   for each package with repository `vizuh/clicktrail-js`, workflow `publish.yml`,
+   and environment `npm`. Do not commit npm tokens or create a fallback
+   token-based workflow.
+4. Create and push the matching tag, for example:
    `git tag -a v0.1.0-rc.4 -m "ClickTrail 0.1.0-rc.4"` followed by
    `git push origin v0.1.0-rc.4`.
-4. The tag triggers `.github/workflows/publish.yml`.
-5. The workflow reruns the checks and publishes the first wave with npm OIDC
+5. The tag triggers `.github/workflows/publish.yml`.
+6. The workflow reruns the checks and publishes the first wave with npm OIDC
    provenance. This RC4 workflow publishes only prerelease versions under
    the `next` dist-tag.
-
-New package names cannot be published by trusted publishing until their
-one-time npm bootstrap exists. After Hugo completes npm 2FA locally, run
-[`tools/release/bootstrap-new-packages.sh`](tools/release/bootstrap-new-packages.sh)
-for missing first-wave names. Then configure the npmjs.com trusted publisher
-for each package with repository `vizuh/clicktrail-js`, workflow
-`publish.yml`, and environment `npm`. Do not commit npm tokens or create a
-fallback token-based workflow.
 
 The complete gate order and evidence requirements are in
 [`docs/internal/FIRST-PUBLICATION-CHECKLIST.md`](docs/internal/FIRST-PUBLICATION-CHECKLIST.md).

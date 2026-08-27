@@ -75,15 +75,7 @@ export class TenantAdapter {
       JSON.stringify([this.config.tenantId, this.config.adapterName, eventName, externalEventId]),
     );
     const inputProperties = isRecord(input.data?.['properties']) ? input.data['properties'] : {};
-    const data = { ...(input.data ?? {}) };
-    delete data['event_id'];
-    delete data['event_name'];
-    delete data['marketing_trail'];
-    delete data['site_id'];
-    delete data['workspace_id'];
-    delete data['visitor_id'];
-    delete data['session_id'];
-    delete data['session_number'];
+    const data = sanitizeServerEventInput({ ...(input.data ?? {}) });
 
     return buildEventPayload(sanitizeServerEventInput(input.identity.payload ?? {}), eventName, {
       ...data,

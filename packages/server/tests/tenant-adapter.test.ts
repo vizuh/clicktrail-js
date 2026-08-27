@@ -80,6 +80,8 @@ describe('TenantAdapter', () => {
         visitor_id: 'attacker-visitor',
         session_id: 'attacker-session',
         session_number: '999',
+        trail_id: 'attacker-trail',
+        anonymous_id: 'attacker-anonymous',
         properties: { tenant_id: 'other-tenant' },
       },
     });
@@ -112,7 +114,10 @@ describe('TenantAdapter', () => {
     expect(event.visitor_id).toBeUndefined();
     expect(event.session_id).toBeUndefined();
     expect(event.session_number).toBeUndefined();
+    expect(event.trail_id).toBeUndefined();
+    expect(event.anonymous_id).toBeUndefined();
     expect(event.marketing_trail.anonymous_id).toBe('');
+    expect(event.marketing_trail.trail_id).toBe('');
   });
 
   it('keeps colon-containing tenant tuple components distinct', () => {

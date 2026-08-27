@@ -11,10 +11,10 @@ function parseJson(name) {
 
 function resultTime(result) {
   const raw = result.kind === 'check'
-    ? result.started_at ?? result.run_started_at ?? result.created_at ?? result.completed_at ?? result.updated_at
-    : result.created_at ?? result.updated_at;
+    ? result.completed_at ?? result.updated_at ?? result.started_at ?? result.run_started_at ?? result.created_at
+    : result.updated_at ?? result.created_at;
   const time = Date.parse(raw ?? '');
-  return Number.isFinite(time) ? time : Number.NEGATIVE_INFINITY;
+  return Number.isFinite(time) ? time : null;
 }
 
 function latestResult(context, sha, checkPages, combinedStatus) {
@@ -26,9 +26,13 @@ function latestResult(context, sha, checkPages, combinedStatus) {
   const statuses = (combinedStatus?.statuses ?? [])
     .filter((status) => status?.context === context && typeof status?.sha === 'string' && status.sha.toLowerCase() === normalizedSha)
     .map((status) => ({ ...status, kind: 'status' }));
-  return [...checks, ...statuses]
-    .sort((left, right) => resultTime(left) - resultTime(right) || (left.id ?? 0) - (right.id ?? 0))
-    .at(-1) ?? null;
+  const results = [...checks, ...statuses];
+  const times = results.map(resultTime);
+  if (times.some((time) => time === null)) return null;
+  const validTimes = times.filter((time) => time !== null);
+  const latestTime = Math.max(...validTimes);
+  const latest = results.filter((result, index) => times[index] === latestTime);
+  return latest.length === 1 ? latest[0] : null;
 }
 
 export function verifyRemoteChecks(input) {

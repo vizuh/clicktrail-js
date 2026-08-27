@@ -231,7 +231,13 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let eventSequence = 0;
 
   const clearDestinationQueues = (): void => {
-    for (const dest of destinations) dest.clear();
+    for (const dest of destinations) {
+      try {
+        dest.clear();
+      } catch (error) {
+        void error;
+      }
+    }
   };
 
   let started = false;
@@ -247,8 +253,16 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let linkDecorator: LinkDecorator | null = null;
 
   const clearBrowserAttributionDom = (): void => {
-    formInjector?.clear();
-    linkDecorator?.clear();
+    try {
+      formInjector?.clear();
+    } catch (error) {
+      void error;
+    }
+    try {
+      linkDecorator?.clear();
+    } catch (error) {
+      void error;
+    }
   };
 
   const initStorage = (): void => {
@@ -320,23 +334,31 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     }
     if (!consentDeniedReported) {
       consentDeniedReported = true;
-      sink.report({
-        code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
-        level: 'warn',
-        message: 'Capture attempted while consent denied; event dropped.',
-      });
-      // Contract: consent denied clears ALL attribution storage — the
-      // in-memory payload plus every cookie/mirror/identity key, including
-      // legacy-named surfaces (portable prompt "Storage rules";
-      // DATA-MODEL.md:122, :246).
-      payload = emptyAttribution();
-      if (adapters) {
-        clearAttributionStorage(adapters.primary, adapters.mirror);
-        identity?.clear();
+      try {
+        sink.report({
+          code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
+          level: 'warn',
+          message: 'Capture attempted while consent denied; event dropped.',
+        });
+      } catch (error) {
+        void error;
       }
-      clearDestinationQueues();
-      clearBrowserAttributionDom();
     }
+    payload = emptyAttribution();
+    if (adapters) {
+      try {
+        clearAttributionStorage(adapters.primary, adapters.mirror);
+      } catch (error) {
+        void error;
+      }
+      try {
+        identity?.clear();
+      } catch (error) {
+        void error;
+      }
+    }
+    clearDestinationQueues();
+    clearBrowserAttributionDom();
     return false;
   };
 
@@ -567,7 +589,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       const consentState = config.consentState?.();
       if (consentState !== undefined) envelopeContext.consent = consentState;
       const event: ClickTrailEvent = buildEventPayload(payload, eventName, eventData, envelopeContext);
-      for (const dest of destinations) dest.deliver(event);
+      for (const dest of destinations) {
+        if (!consentAllows()) return;
+        dest.deliver(event);
+      }
     },
 
     mergeParsedTouch(touch) {

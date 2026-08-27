@@ -248,6 +248,31 @@ describe('createClickTrail storage wiring', () => {
     expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
   });
 
+  it('continues consent cleanup when diagnostics or one destination clear fails', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'old' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'old' }));
+    let consent = true;
+    let survivingDestinationClears = 0;
+    const ct = createClickTrail({
+      destinations: [
+        { name: 'broken', deliver: () => {}, clear: () => { throw new Error('clear failed'); } },
+        { name: 'survives', deliver: () => {}, clear: () => { survivingDestinationClears += 1; } },
+      ],
+      consentGate: () => consent,
+      diagnosticSink: { report: () => { throw new Error('diagnostic failed'); } },
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.start();
+    consent = false;
+
+    expect(() => ct.track('page_view')).not.toThrow();
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(survivingDestinationClears).toBe(1);
+  });
+
   it('suppresses stale session identifiers immediately after consent revocation', () => {
     let consent = true;
     const ct = createClickTrail({

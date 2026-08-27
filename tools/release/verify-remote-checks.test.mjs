@@ -66,6 +66,29 @@ test('rejects an older successful status followed by a failure', () => {
   assert.match(result.stderr, /currently successful/);
 });
 
+test('rejects a success status older than a later completed failed check-run', () => {
+  const result = run({
+    statuses: {
+      sha,
+      state: 'failure',
+      statuses: [
+        { id: 1, context: 'ci/test', sha, state: 'success', created_at: '2026-08-27T10:01:00Z' },
+      ],
+    },
+    checkPages: [{ check_runs: [{
+      id: 2,
+      name: 'ci/test',
+      head_sha: sha,
+      status: 'completed',
+      conclusion: 'failure',
+      started_at: '2026-08-27T10:00:00Z',
+      completed_at: '2026-08-27T10:05:00Z',
+    }] }],
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /currently successful/);
+});
+
 test('rejects missing and pending required contexts', () => {
   const missing = run({
     statuses: { sha, state: 'success', statuses: [] },
