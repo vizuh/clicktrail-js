@@ -30,6 +30,7 @@ describe('createProxyHandler status matrix', () => {
     const headers = new Headers(init.headers);
     expect(headers.get('user-agent')).toBe('UA-1');
     expect(headers.get('x-forwarded-for')).toBeNull();
+    expect(init.redirect).toBe('error');
   });
 
   it('returns 405 for GET and non-POST methods', async () => {

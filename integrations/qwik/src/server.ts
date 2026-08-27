@@ -13,7 +13,11 @@
  *    `@vizuh/clicktrail-qwik/qwik-city` middleware (preferred)
  * 2. `parseIdentityFromCookies()` — raw Cookie header fallback
  */
-import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail-browser';
+import {
+  buildEventPayload,
+  parseCookieMap,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail-browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import {
@@ -178,8 +182,10 @@ export class ClickTrailServer {
     eventName: string,
     input: ConversionInput<Record<string, unknown>>,
   ): ClickTrailEvent {
-    return buildEventPayload(input.identity.payload ?? {}, toCanonicalEventName(eventName), {
-      ...input.data,
+    const payload = sanitizeServerEventInput(input.identity.payload ?? {});
+    const data = sanitizeServerEventInput(input.data ?? {});
+    return buildEventPayload(payload, toCanonicalEventName(eventName), {
+      ...data,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),

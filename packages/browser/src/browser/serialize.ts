@@ -57,6 +57,23 @@ const CLICK_ID_KEYS = [
   'li_fat_id', 'sccid', 'epik',
 ] as const;
 
+const SERVER_RESERVED_KEYS = [
+  'event_id',
+  'event_name',
+  'marketing_trail',
+  'site_id',
+  'workspace_id',
+  'visitor_id',
+  'session_id',
+  'session_number',
+] as const;
+
+export function sanitizeServerEventInput<T extends Record<string, unknown>>(input: T): T {
+  const sanitized: Record<string, unknown> = { ...input };
+  for (const key of SERVER_RESERVED_KEYS) delete sanitized[key];
+  return sanitized as T;
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value : value == null ? '' : String(value);
 }

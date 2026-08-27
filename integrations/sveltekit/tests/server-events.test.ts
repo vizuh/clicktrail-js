@@ -110,6 +110,33 @@ describe('trackConversion send contract', () => {
     expect(event['gclid']).toBe('g-1');
   });
 
+  it('does not promote canonical fields from attribution cookies', async () => {
+    const fetchImpl = okFetch();
+    const cookies = `ct_attribution=${encodeURIComponent(JSON.stringify({
+      visitor_id: 'attacker-visitor',
+      session_id: 'attacker-session',
+      session_number: '999',
+      marketing_trail: { site_id: 'attacker-site', workspace_id: 'attacker-workspace' },
+    }))}`;
+    await trackConversion(requestWithCookies(cookies), {
+      event: 'lead',
+      endpoint: ENDPOINT,
+      siteId: 'trusted-site',
+      workspaceId: 'trusted-workspace',
+      fetch: fetchImpl as unknown as typeof fetch,
+    });
+
+    const [, init] = fetchImpl.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['visitor_id']).toBeUndefined();
+    expect(event['session_id']).toBeUndefined();
+    expect(event['session_number']).toBeUndefined();
+    expect(event['marketing_trail']).toMatchObject({
+      site_id: 'trusted-site',
+      workspace_id: 'trusted-workspace',
+    });
+  });
+
   it('translates legacy purchase -> sale and carries money fields', async () => {
     const fetchImpl = okFetch();
     await trackConversion(requestWithCookies(null), {

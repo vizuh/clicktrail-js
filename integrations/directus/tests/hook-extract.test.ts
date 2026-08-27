@@ -87,6 +87,7 @@ describe('createClickTrailHook registration + forwarding', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://c.test/x');
+    expect(init.redirect).toBe('error');
     const body = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     expect(body.events[0]?.['event_name']).toBe('lead_created');
     expect(body.events[0]?.['lt_source']).toBe('newsletter');

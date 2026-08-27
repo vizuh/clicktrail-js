@@ -227,6 +227,48 @@ describe('createClickTrail storage wiring', () => {
     expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
   });
 
+  it('suppresses stale session identifiers immediately after consent revocation', () => {
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: {
+        primaryAdapter: fakeAdapter(),
+        mirrorAdapter: fakeAdapter(),
+        randomBytes: () => BYTES_VISITOR,
+        nowMs: () => 0,
+      },
+    });
+    ct.start();
+    expect(ct.getSession().visitorId).not.toBe('');
+
+    consent = false;
+    expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
+  });
+
+  it('rechecks consent after a destination start hook before hydration', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'stored' }));
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [{
+        name: 'revoking-destination',
+        start: () => { consent = false; },
+        deliver: () => undefined,
+        clear: () => undefined,
+      }],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+
+    ct.start();
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+  });
+
   it('without a storage config, behavior is unchanged (no identity generation)', () => {
     const ct = createClickTrail({ destinations: [] });
     ct.start();

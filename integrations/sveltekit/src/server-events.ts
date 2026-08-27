@@ -12,7 +12,11 @@
  * - send() resolves { ok, status } and NEVER throws into host request
  *   handling (an analytics outage must never break checkout).
  */
-import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail/browser';
+import {
+  buildEventPayload,
+  parseCookieMap,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail/browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail/browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
@@ -152,21 +156,27 @@ export async function trackConversion(
   const endpoint = requireSafeHttpUrl(options.endpoint, 'endpoint');
 
   const identity = parseIdentityFromCookies(request.headers.get('cookie'));
-
-  const built: ClickTrailEvent = buildEventPayload(identity.payload, eventName, {
+  const data = sanitizeServerEventInput({
     ...(options.leadId !== undefined ? { lead_id: options.leadId } : {}),
     ...(options.orderId !== undefined ? { order_id: options.orderId } : {}),
     ...(options.bookingId !== undefined ? { booking_id: options.bookingId } : {}),
     ...(hasValue ? { value: options.value } : {}),
     ...(options.currency !== undefined ? { currency: options.currency } : {}),
-    ...(options.siteId !== undefined ? { site_id: options.siteId } : {}),
-    ...(options.workspaceId !== undefined ? { workspace_id: options.workspaceId } : {}),
-    ...(identity.visitorId ? { visitor_id: identity.visitorId } : {}),
-    ...(identity.sessionId ? { session_id: identity.sessionId } : {}),
-    ...(identity.sessionNumber !== undefined
-      ? { session_number: String(identity.sessionNumber) }
-      : {}),
-  }, {
+  });
+
+  const built: ClickTrailEvent = buildEventPayload(
+    sanitizeServerEventInput(identity.payload),
+    eventName,
+    {
+      ...data,
+      ...(options.siteId !== undefined ? { site_id: options.siteId } : {}),
+      ...(options.workspaceId !== undefined ? { workspace_id: options.workspaceId } : {}),
+      ...(identity.visitorId ? { visitor_id: identity.visitorId } : {}),
+      ...(identity.sessionId ? { session_id: identity.sessionId } : {}),
+      ...(identity.sessionNumber !== undefined
+        ? { session_number: String(identity.sessionNumber) }
+        : {}),
+    }, {
     ...(options.siteId !== undefined ? { siteId: options.siteId } : {}),
     ...(options.workspaceId !== undefined ? { workspaceId: options.workspaceId } : {}),
     ...(identity.visitorId ? { identity: { visitorId: identity.visitorId } } : {}),

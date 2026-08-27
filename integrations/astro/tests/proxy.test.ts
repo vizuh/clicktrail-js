@@ -51,6 +51,7 @@ describe('createProxyHandler POST', () => {
     expect(headers.get('user-agent')).toBe('UA-1');
     expect(headers.get('referer')).toBeNull(); // not on this config's allowlist
     expect(headers.get('x-forwarded-for')).toBeNull(); // visitor IPs never forwarded
+    expect(init.redirect).toBe('error');
     expect(JSON.parse(String(init.body))).toEqual(validBatch);
   });
 

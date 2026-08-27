@@ -115,6 +115,7 @@ export function createSendEventHandler(
           ...(apiKey !== '' ? { 'x-clicktrail-key': apiKey } : {}),
         },
         body: JSON.stringify({ events: [event] }),
+        redirect: 'error',
       });
       return { ok: response.ok, status: response.status };
     } catch (error) {

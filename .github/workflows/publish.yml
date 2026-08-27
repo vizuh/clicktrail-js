@@ -121,10 +121,28 @@ jobs:
           node-version: '24.15.0'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify package-level npm trusted publishing attestation
+      - name: Verify package-level npm trusted publishing configuration
         env:
           CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION: ${{ secrets.CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION }}
-        run: node tools/release/verify-trusted-publishing-attestation.mjs
+          CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY: ${{ secrets.CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm_trust_dir="$(mktemp -d)"
+          packages=(
+            '@vizuh/clicktrail-core'
+            '@vizuh/clicktrail-browser'
+            '@vizuh/clicktrail'
+            '@vizuh/clicktrail-astro'
+            '@vizuh/clicktrail-nuxt'
+          )
+          for index in "${!packages[@]}"; do
+            npx --yes npm@11.19.0 trust list "${packages[$index]}" --json > "$npm_trust_dir/$index.json"
+          done
+          CLICKTRAIL_NPM_TRUST_DIRECTORY="$npm_trust_dir" \
+          CLICKTRAIL_RELEASE_SHA="$GITHUB_SHA" \
+          CLICKTRAIL_RELEASE_VERSION="${GITHUB_REF_NAME#v}" \
+          node tools/release/verify-trusted-publishing-attestation.mjs
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck

@@ -237,6 +237,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let started = false;
   let payload: AttributionPayload = emptyAttribution();
   let consentDeniedReported = false;
+  const consentIsGranted = (): boolean => !consentGate || consentGate();
 
   // Storage wiring is lazy: nothing here runs until start().
   const storageCfg = config.storage;
@@ -272,8 +273,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   };
 
   const persistPayload = (): void => {
-    if (!adapters) return;
+    if (!adapters || !consentIsGranted()) return;
     saveAttributionPayload(adapters.primary, payload);
+    if (!consentAllows()) return;
     saveAttributionPayload(adapters.mirror, payload);
   };
 
@@ -421,34 +423,44 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const instance: ClickTrailInstance = {
     start() {
       if (started) return;
-      const consentAllowed = !consentGate || consentGate();
       started = true;
       try {
         for (const dest of destinations) dest.start?.();
         if (storageCfg) {
           initStorage();
-          if (consentAllowed) {
+          if (consentAllows()) {
             // Hydrate persisted attribution: server-readable cookie first,
             // expiry-metadata mirror as fallback for cached/dynamic pages.
-            const stored = loadAttributionPayload(adapters!.primary);
-            payload =
-              Object.keys(stored).length > 0
+            const stored = consentIsGranted()
+              ? loadAttributionPayload(adapters!.primary)
+              : {};
+            const fallback = consentIsGranted()
+              ? loadAttributionPayload(adapters!.mirror)
+              : {};
+            if (consentAllows()) {
+              payload = Object.keys(stored).length > 0
                 ? { ...emptyAttribution(), ...stored }
-                : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
-            persistPayload();
+                : { ...emptyAttribution(), ...fallback };
+              if (consentAllows()) persistPayload();
+            }
+            if (!consentIsGranted()) {
+              payload = emptyAttribution();
+              clearAttributionStorage(adapters!.primary, adapters!.mirror);
+              identity?.clear();
+            }
           } else {
             payload = emptyAttribution();
             clearAttributionStorage(adapters!.primary, adapters!.mirror);
             identity?.clear();
           }
         }
-        if (!consentAllowed) {
+        if (!consentAllows()) {
           payload = emptyAttribution();
           clearDestinationQueues();
         } else {
           // Consent-gated cookie-derived browser IDs (RULING A part b).
           mergeCookieBrowserIds();
-          if (adapters) persistPayload();
+          if (adapters && consentAllows()) persistPayload();
         }
         if (config.forms) {
           const { fields, overwrite, observer } = config.forms;
@@ -584,7 +596,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     getSession(): SessionSnapshot {
       // Identifiers are created only while consent allows (DATA-MODEL.md:246);
       // a denied gate yields an empty snapshot instead of regenerating.
-      if (started && identity && (!consentGate || consentGate())) {
+      if (consentGate && !consentGate()) {
+        return { visitorId: '', sessionId: '', sessionNumber: '' };
+      }
+      if (started && identity) {
         return snapshotFromIdentity(identity.current());
       }
       return {

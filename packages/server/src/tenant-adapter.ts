@@ -1,4 +1,4 @@
-import { buildEventPayload } from '@vizuh/clicktrail-browser';
+import { buildEventPayload, sanitizeServerEventInput } from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import {
   deriveStableEventId,
@@ -85,7 +85,7 @@ export class TenantAdapter {
     delete data['session_id'];
     delete data['session_number'];
 
-    return buildEventPayload(input.identity.payload ?? {}, eventName, {
+    return buildEventPayload(sanitizeServerEventInput(input.identity.payload ?? {}), eventName, {
       ...data,
       site_id: this.config.siteId,
       ...(this.config.workspaceId !== undefined ? { workspace_id: this.config.workspaceId } : {}),

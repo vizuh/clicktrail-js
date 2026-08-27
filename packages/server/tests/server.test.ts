@@ -79,6 +79,27 @@ describe('ClickTrailServer', () => {
     expect(init.redirect).toBe('error');
   });
 
+  it('does not promote canonical fields from untrusted conversion data', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({
+      identity: { payload: {} },
+      data: {
+        visitor_id: 'attacker-visitor',
+        session_id: 'attacker-session',
+        session_number: '999',
+        marketing_trail: { site_id: 'attacker-site', workspace_id: 'attacker-workspace' },
+      },
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['visitor_id']).toBeUndefined();
+    expect(event['session_id']).toBeUndefined();
+    expect(event['session_number']).toBeUndefined();
+    expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
+  });
+
   it('trackPurchase validates transaction fields before sending', async () => {
     const server = makeServer(okFetch());
     await expect(

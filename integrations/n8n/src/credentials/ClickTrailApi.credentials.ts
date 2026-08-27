@@ -51,7 +51,7 @@ export class ClickTrailApi implements ICredentialType {
   displayName = 'ClickTrail API';
 
   documentationUrl =
-    'https://github.com/vizuh/clicktrail-js/tree/main/integrations/n8n#readme';
+    'https://github.com/vizuh/clicktrail-js/tree/master/integrations/n8n#readme';
 
   properties: INodeProperties[] = [
     {

@@ -123,6 +123,7 @@ export function createClickTrailHook(deps: HookDeps = {}) {
           method: 'POST',
           headers,
           body: JSON.stringify({ events: [event] }),
+          redirect: 'error',
         }).catch(() => undefined);
 
         if ((deps.env?.['CLICKTRAIL_STORE_LOCALLY'] ?? '').trim().toLowerCase() === 'true') {

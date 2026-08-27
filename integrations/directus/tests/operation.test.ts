@@ -29,6 +29,7 @@ describe('sendEventHandler (fake fetch matrix)', () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://collector.test/collect');
     expect(init.method).toBe('POST');
+    expect(init.redirect).toBe('error');
     const headers = init.headers as Record<string, string>;
     expect(headers['content-type']).toBe('application/json');
     expect(headers['x-clicktrail-key']).toBeUndefined();

@@ -7,7 +7,11 @@
  * reject as promises; send() resolves { ok, status } and NEVER throws into
  * host request handling (an analytics outage must never break checkout).
  */
-import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail-browser';
+import {
+  buildEventPayload,
+  parseCookieMap,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
 import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
@@ -158,8 +162,10 @@ export class ClickTrailServer {
   }
 
   private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
-    return buildEventPayload(input.identity.payload ?? {}, toCanonicalEventName(eventName), {
-      ...input.data,
+    const payload = sanitizeServerEventInput(input.identity.payload ?? {});
+    const data = sanitizeServerEventInput(input.data ?? {});
+    return buildEventPayload(payload, toCanonicalEventName(eventName), {
+      ...data,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),
