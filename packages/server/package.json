@@ -16,7 +16,11 @@
   "repository": { "type": "git", "url": "git+https://github.com/vizuh/clicktrail-js.git", "directory": "packages/server" },
   "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/packages/server#readme",
   "engines": { "node": ">=18" },
-  "scripts": { "build": "tsc -p tsconfig.build.json", "test": "vitest run" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "pretest": "pnpm --filter @vizuh/clicktrail-browser... build",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@vizuh/clicktrail-browser": "workspace:*",
     "@vizuh/clicktrail-core": "workspace:*"
