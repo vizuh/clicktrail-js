@@ -188,6 +188,7 @@ Consulte [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](do
 
 ## Documentação
 
+- [Registro de contribuições OSS](docs/oss-contributions/README.md): propostas enviadas, respostas verificadas e limites de integração
 - [Arquitetura](docs/ARCHITECTURE.md): regras de design, formatos congelados e decisões de paridade com WordPress
 - [Tutoriais](docs/TUTORIALS.md): replay determinístico, captura no navegador, formulários e `dataLayer`
 - [`README` do pacote @vizuh/clicktrail](packages/clicktrail/README.md): pontos de entrada, uso e convenções
