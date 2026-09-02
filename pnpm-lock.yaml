@@ -7,6 +7,7 @@ settings:
 overrides:
   form-data: 4.0.6
   sharp: ^0.35.3
+  '@sveltejs/kit>cookie': 0.7.2
 
 importers:
 
@@ -2304,8 +2305,8 @@ packages:
   cookie-es@3.1.1:
     resolution: {integrity: sha512-UaXxwISYJPTr9hwQxMFYZ7kNhSXboMXP+Z3TRX6f1/NyaGPfuNUZOWP1pUEb75B2HjfklIYLVRfWiFZJyC6Npg==}
 
-  cookie@0.6.0:
-    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+  cookie@0.7.2:
+    resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
 
   cookie@2.0.1:
@@ -6475,7 +6476,7 @@ snapshots:
       '@sveltejs/vite-plugin-svelte': 7.3.0(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
       acorn: 8.18.0
-      cookie: 0.6.0
+      cookie: 0.7.2
       devalue: 5.9.1
       esm-env: 1.2.2
       kleur: 4.1.5
@@ -7236,7 +7237,7 @@ snapshots:
 
   cookie-es@3.1.1: {}
 
-  cookie@0.6.0: {}
+  cookie@0.7.2: {}
 
   cookie@2.0.1: {}
 
