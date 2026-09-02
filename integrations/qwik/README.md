@@ -1,8 +1,16 @@
 # @vizuh/clicktrail-qwik
 
-First-party attribution and conversion tracking for [Qwik](https://qwik.dev) + Qwik City.
+**Carry observed acquisition context through Qwik City request handlers without
+an eager client script.**
 
-**Consent-aware attribution without destroying Qwik\'s performance advantage.** No inline analytics script dump. The Qwik City middleware captures initial attribution in ordinary SSR code (zero added client JS), identity lives in a request-local store plus a first-party cookie, conversions prefer SERVER-side senders from your existing route actions, and the browser module stays dormant until host code activates it — exactly the resumability model Qwik promises.
+The middleware parses the arrival URL in SSR code, keeps canonical attribution
+context in a request-local store, and writes a first-party cookie only when the
+configured consent path permits it. Server helpers build events from route
+actions. The browser module remains dormant until host code activates it.
+
+The API uses `identity` as a payload name. It is observed attribution context,
+not verified person identity. The package does not prove campaign causation or
+certify destination delivery.
 
 ## Install
 
@@ -17,10 +25,10 @@ npm run qwik add @vizuh/clicktrail-qwik   # ecosystem integration path (see belo
 | Requirement | How |
 |---|---|
 | Initial attribution capture | `createClickTrailMiddleware()` parses UTMs / click IDs / external referrer on the first HTML request and merges them into the canonical payload (`ft_*` write-once, `lt_*` refreshed). |
-| Request-local store | The merged identity lands in Qwik City\'s `sharedMap` per request; route loaders/actions read it via `identityFromSharedMap()`. |
+| Request-local store | The merged attribution context lands in Qwik City\'s `sharedMap` per request; route loaders/actions read it via `identityFromSharedMap()`. |
 | First-party cookie | With consent granted, the payload mirrors into the `attribution` cookie so later requests and the browser SDK keep history. Pre-consent: memory only, nothing persists. |
 | No duplicate page views | Client page views dedupe on pathname+search over an injectable navigation seam; fragment-only changes are ignored. |
-| Server-side conversions | `ClickTrailServer.trackLead/trackBooking/trackPurchase` send from route actions — `{ ok, status }`, never throws into host handling. |
+| Server-side conversions | `ClickTrailServer.trackLead/trackBooking/trackPurchase` send from route actions and return `{ ok, status }` without throwing into host handling. |
 | Resumability | No eager bundle. `bootClickTrailClient()` runs only where/when you call it (e.g. `useVisibleTask$` post-consent). |
 | Consent gating | Shared `ct_consent` cookie keeps SSR middleware, loaders, and browser code in agreement without hydration drift. |
 
@@ -98,13 +106,15 @@ Heavy third-party tags can move off the main thread with [Partytown](https://par
 npm run qwik add partytown
 ```
 
-ClickTrail itself needs no worker relay — its browser footprint is already small and on-demand — so Partytown stays an OPTIONAL host decision for your OTHER marketing tags. No hard dependency either way.
+ClickTrail itself needs no worker relay because its browser footprint is
+on-demand. Partytown remains an optional host decision for other marketing
+tags, with no hard dependency either way.
 
 ## Ecosystem path (`npm run qwik add`)
 
 The Qwik team routes new integrations through their ecosystem catalog ("Adding A New Integration" → issue first). We prepared the proposal text ready to file:
 
-- [`UPSTREAM-ISSUE-DRAFT.md`](./UPSTREAM-ISSUE-DRAFT.md) — copy-paste issue for qwik-modules/qwik or the ecosystem repo.
+- [`UPSTREAM-ISSUE-DRAFT.md`](./UPSTREAM-ISSUE-DRAFT.md): copy-paste issue for qwik-modules/qwik or the ecosystem repo.
 
 Until it is accepted upstream, install directly via npm as shown above.
 
@@ -118,7 +128,9 @@ Until it is accepted upstream, install directly via npm as shown above.
 | `./browser` | `bootClickTrailClient`, `attachQwikNavigationTracking`, `createHistoryNavigationSeam`, `pageKeyOf` |
 | `./consent` | `setConsent`, `readStoredConsent`, consent types + gates, `CONSENT_COOKIE` / `CONSENT_EVENT` |
 
-Dependencies: `@vizuh/clicktrail-core` and `@vizuh/clicktrail-browser` only. Peer deps on `@builder.io/qwik` / `@builder.io/qwik-city` are optional metadata — the runtime never imports them.
+Dependencies: `@vizuh/clicktrail-core` and `@vizuh/clicktrail-browser` only.
+Peer dependencies on `@builder.io/qwik` / `@builder.io/qwik-city` are optional
+metadata; the runtime never imports them.
 
 ## License
 

@@ -6,18 +6,34 @@
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-Motor determinístico de atribuição first-party. Captura a jornada desde o clique no anúncio até a conversão.
+**Leve o contexto de aquisição observado da chegada até o ponto de conversão.**
 
-Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da Vizuh. O FunnelSheet é a frente de consultoria da Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para WordPress; este repositório contém o motor compartilhado.
+O ClickTrail JS interpreta UTMs, referenciadores e IDs de clique, aplica regras
+determinísticas de primeiro e último toque e retorna um payload canônico plano.
+O adapter de navegador pode persistir esse payload em armazenamento first-party
+controlado pelo host e anexá-lo a formulários e eventos configurados, atrás do
+gate de consentimento do host.
 
-> **Status da versão:** `0.1.0-rc.3` é a versão candidata a lançamento atual. Os pacotes npm continuam não publicados até a conclusão das validações de proveniência e do trusted publisher. As verificações do repositório e do tarball estão prontas para revisão.
+O motor preserva o contexto de aquisição observado. Ele não prova qual clique
+causou uma venda, não resolve a identidade de uma pessoa entre dispositivos,
+não configura plataformas de anúncios e não certifica a entrega posterior.
+
+Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da
+Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para
+WordPress; este repositório contém o motor JavaScript compartilhado.
+
+> **Limite de versão:** consulte o [registro npm](https://www.npmjs.com/package/@vizuh/clicktrail)
+> para a versão publicada e o [GitHub Releases](https://github.com/vizuh/clicktrail-js/releases)
+> para as tags do código-fonte. Os pontos de entrada estáveis e em incubação
+> estão listados abaixo.
 
 ## Por que o ClickTrail
 
-A maioria das ferramentas de analytics responde "quantas conversões aconteceram?". O ClickTrail responde "qual clique gerou esta conversão?" e permite verificar o caminho até ela.
+Use o ClickTrail quando um formulário, pedido ou evento da aplicação precisar
+do contexto de aquisição observado na chegada.
 
-- **Determinístico e reproduzível.** O motor principal é puro: as mesmas entradas produzem a mesma saída. Tempo, IDs, armazenamento, consentimento e rede são injetados por quem chama o motor. Fixtures douradas capturadas do plugin WordPress funcionam como especificação executável e são reproduzidas no CI para confirmar a paridade.
-- **Cookies first-party sob seu controle.** O contexto de atribuição fica no armazenamento first-party do seu próprio domínio. Não há cookies de terceiros nem identificadores controlados por um fornecedor.
+- **Determinístico e reproduzível.** O motor principal é puro: as mesmas entradas produzem a mesma saída. Tempo, IDs, armazenamento, consentimento e rede são injetados por quem chama o motor. Fixtures douradas do contrato WordPress funcionam como especificação executável e são reproduzidas no CI para confirmar a paridade.
+- **Armazenamento first-party sob controle do host.** O adapter de navegador armazena o contexto observado no domínio do host. Os payloads podem incluir IDs de clique emitidos por plataformas e presentes na URL de chegada; o ClickTrail não transforma esses IDs em identidade entre dispositivos.
 - **Consentimento integrado ao fluxo.** Nada começa nem é persistido antes de o gate de consentimento do host permitir. O chamador fornece o estado de consentimento; quando o consentimento é negado ou retirado, os payloads armazenados são limpos.
 - **Payload canônico plano.** Cada evento é um registro plano com campos `ft_*` (primeiro toque) e `lt_*` (último toque), além de `schema_version` e `classifier_version`. Isso facilita salvar os dados no seu banco, mapeá-los para um CRM ou encaminhá-los pelo `dataLayer` do GTM.
 
@@ -106,7 +122,6 @@ Os pontos de entrada Incubating podem mudar entre versões menores. Mantenha-os 
 | [`n8n-nodes-clicktrail`](integrations/n8n/) | Node comunitário para n8n: operações de lead, conversão e consentimento; conversões offline; triggers de webhooks de saída ainda adiados |
 | [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Piece do Activepieces: oito ações, incluindo sale, refund e consent; triggers ainda adiados |
 | [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Lógica de bloco Typebot e rascunho de issue upstream: mapeamento de variáveis e garantia de envio sem exceções |
-| [`@vizuh/clicktrail-formbricks`](integrations/formbricks/) | Mapeamento de URLs de link-survey do Formbricks, allowlist de respostas e verificação de webhooks assinados |
 | [`directus-extension-clicktrail`](integrations/directus/) | Extensão Directus: operação de Flow, hook de atribuição, painel de funil e módulo de configurações |
 | [`@vizuh/clicktrail-core`](packages/core/) | Motor determinístico, contrato canônico de eventos e IDs idempotentes |
 | [`@vizuh/clicktrail-browser`](packages/browser/) | SDK de navegador com captura, armazenamento, formulários e destinos cientes de consentimento |
@@ -173,6 +188,7 @@ As superfícies core e browser estão em desenvolvimento público. As superfíci
 ## Documentação
 
 - [Registro de contribuições OSS](docs/oss-contributions/README.md): propostas enviadas, respostas verificadas e limites de integração
+- [Regras de mensagem e claims](https://github.com/vizuh/click-trail-handler/blob/main/docs/guides/COMPETITIVE-POSITIONING-AND-ACQUISITION-ROADMAP-2026-08-22.md#4-cross-repository-message-constitution): contrato compartilhado de categoria, vocabulário, evidências e tradução
 - [Arquitetura](docs/ARCHITECTURE.md): regras de design, formatos congelados e decisões de paridade com WordPress
 - [Tutoriais](docs/TUTORIALS.md): replay determinístico, captura no navegador, formulários e `dataLayer`
 - [`README` do pacote @vizuh/clicktrail](packages/clicktrail/README.md): pontos de entrada, uso e convenções

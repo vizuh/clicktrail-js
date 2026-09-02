@@ -1,7 +1,7 @@
 {
   "name": "@vizuh/clicktrail",
   "version": "0.1.0-rc.3",
-  "description": "Deterministic first-party attribution conventions and engine. Captures the trail from ad click to conversion.",
+  "description": "Deterministic engine for parsing and carrying observed acquisition context to configured application boundaries.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

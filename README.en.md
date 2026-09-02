@@ -6,36 +6,44 @@
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-Deterministic first-party attribution engine. Captures the trail from ad
-click to conversion.
+**Carry observed acquisition context from arrival to the conversion boundary.**
+
+ClickTrail JS parses UTMs, referrers, and ad click IDs, applies deterministic
+first-touch and last-touch rules, and returns a flat canonical payload. Its
+browser adapter can persist that payload in host-controlled first-party storage
+and attach it to configured forms and events behind the host's consent gate.
+
+The engine preserves observed acquisition context. It does not prove which
+click caused a sale, resolve a person's identity across devices, configure ad
+platforms, or certify downstream delivery.
 
 Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
-Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin
-(`click-trail-handler`) is the WordPress distribution; this repository is the
-shared engine beneath it.
+Vizuh. The WordPress plugin (`click-trail-handler`) is the WordPress
+distribution; this repository contains the shared JavaScript engine.
 
-> **Release status:** `0.1.0-rc.3` is the current release candidate. The npm
-> packages remain unpublished until the provenance and trusted-publisher gates
-> are complete. The repository and tarball checks are ready for review.
+> **Release boundary:** use the [npm registry](https://www.npmjs.com/package/@vizuh/clicktrail)
+> for the published package version and [GitHub Releases](https://github.com/vizuh/clicktrail-js/releases)
+> for source tags. Stable and incubating entry points are listed below.
 
 ## Why ClickTrail
 
-Most analytics tools answer "how many conversions?" ClickTrail answers
-"which click produced this conversion?" — and lets you prove it.
+Use ClickTrail when a later form, order, or application event needs the
+acquisition context observed on arrival.
 
 - **Deterministic and replayable.** The core engine is pure: same inputs ->
   same output. Time, IDs, storage, consent, and network are injected by
-  callers, never requested. Golden fixtures captured from the live WordPress
-  plugin are the executable spec — replay them in CI to verify parity.
-- **First-party cookies you own.** Attribution context persists in your own
-  first-party storage under your own domain. No third-party cookies, no
-  vendor-owned identifiers.
+  callers, never requested. Golden fixtures from the WordPress contract are
+  the executable spec; replay them in CI to verify parity.
+- **Host-controlled first-party storage.** The browser adapter stores observed
+  context under the host's domain. Payloads may include platform-issued click
+  IDs from the arrival URL; ClickTrail does not turn them into cross-device
+  identity.
 - **Consent-gated by design.** Nothing starts or persists until the host's
   consent gate allows it. Consent state is injected by the caller; denied or
   withdrawn consent clears stored payloads.
 - **Flat canonical payload.** Every event is a flat record of `ft_*`
   (first-touch) and `lt_*` (last-touch) fields, stamped with `schema_version`
-  and `classifier_version` — easy to store in your own database, map into a
+  and `classifier_version`. Store it in your own database, map it into a
   CRM, or forward through GTM's `dataLayer`.
 
 ## Quick start
@@ -127,7 +135,6 @@ host adapter until their contracts are stabilized.
 | [`n8n-nodes-clicktrail`](integrations/n8n/) | n8n community node: lead/conversion/consent operations, offline conversions; triggers deferred pending outbound webhooks |
 | [`@vizuh/clicktrail-piece`](integrations/activepieces/) | Activepieces piece: eight actions incl. sale/refund/consent; triggers deferred |
 | [`@vizuh/clicktrail-typebot`](integrations/typebot/) | Typebot block logic + upstream issue draft: variable mapping, never-throws send guarantee |
-| [`@vizuh/clicktrail-formbricks`](integrations/formbricks/) | Formbricks link-survey URL mapping, response allowlist, and signed webhook verification |
 | [`directus-extension-clicktrail`](integrations/directus/) | Directus extension: Flow operation, attribution hook, funnel panel, settings module |
 | [`@vizuh/clicktrail-core`](packages/core/) | Deterministic engine, canonical event contract, idempotent event ids |
 | [`@vizuh/clicktrail-browser`](packages/browser/) | Browser SDK (consent-aware capture, storage, forms, destinations) |
@@ -136,7 +143,7 @@ host adapter until their contracts are stabilized.
 | [`@vizuh/clicktrail-qwik`](integrations/qwik/) | Qwik/Qwik City integration: resumability-friendly middleware, zero eager client JS |
 | [`@vizuh/clicktrail-sveltekit`](integrations/sveltekit/) | SvelteKit handle + component: SSR attribution capture, nav dedupe, server conversions |
 | [`@vizuh/clicktrail-sv`](integrations/sv/) | Svelte CLI community add-on (experimental): one-command setup |
-| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters — canonical events, JS-bit-exact idempotency |
+| Python packages (`python/`) | `clicktrail` SDK + Django / Wagtail / ASGI / Jinja / Flask adapters; canonical events, JS-bit-exact idempotency |
 | [Examples](./examples) | Runnable integration examples |
 | [Site](./site) | Project site |
 
@@ -202,13 +209,14 @@ transcripts.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) — design rules, frozen formats, WP-parity rulings
-- [Tutorials](docs/TUTORIALS.md) — deterministic replay, browser capture, forms, `dataLayer`
-- [`@vizuh/clicktrail` package README](packages/clicktrail/README.md) — entry points, usage, conventions
-- [`@vizuh/clicktrail-astro` package README](integrations/astro/README.md) — Astro integration setup and options
+- [Message and claim rules](https://github.com/vizuh/click-trail-handler/blob/main/docs/guides/COMPETITIVE-POSITIONING-AND-ACQUISITION-ROADMAP-2026-08-22.md#4-cross-repository-message-constitution): shared category, vocabulary, evidence, and translation contract
+- [Architecture](docs/ARCHITECTURE.md): design rules, frozen formats, WP-parity rulings
+- [Tutorials](docs/TUTORIALS.md): deterministic replay, browser capture, forms, `dataLayer`
+- [`@vizuh/clicktrail` package README](packages/clicktrail/README.md): entry points, usage, conventions
+- [`@vizuh/clicktrail-astro` package README](integrations/astro/README.md): Astro integration setup and options
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The WordPress plugin remains GPL-2.0-or-later;
+MIT; see [LICENSE](LICENSE). The WordPress plugin remains GPL-2.0-or-later;
 MIT embeds cleanly into GPL.
