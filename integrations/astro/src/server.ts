@@ -10,6 +10,7 @@
  * Cookie header. Events are built with the SDK's canonical payload builder
  * (schema_version stamped) and delivered to a collector endpoint.
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import {
   buildEventPayload,
   parseCookieMap,
@@ -159,12 +160,13 @@ export class ClickTrailServer {
 
   async send(events: readonly ClickTrailEvent[]): Promise<SendResult> {
     try {
-      const response = await this.fetchImpl(this.endpoint, {
+      const response = await withDeliveryTimeout((signal) => this.fetchImpl(this.endpoint, {
+        signal,
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ events: [...events] }),
         redirect: 'error',
-      });
+      }));
       return { ok: response.ok, status: response.status };
     } catch {
       // At-most-once delivery contract mirrors httpDestination: never throw

@@ -10,6 +10,7 @@
  * Zero `astro` imports: the handler uses the Fetch API shape Astro
  * endpoints already expose.
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import { PROXY_CONFIG_GLOBAL, validateProxyConfig } from './config.js';
 import type { ClickTrailProxyConfig } from './config.js';
 
@@ -85,12 +86,13 @@ export function createProxyHandler(config: ClickTrailProxyConfig, fetchImpl: typ
       }
 
       try {
-        const upstreamResponse = await fetchImpl(safeConfig.upstream, {
+        const upstreamResponse = await withDeliveryTimeout((signal) => fetchImpl(safeConfig.upstream, {
+          signal,
           method: 'POST',
           headers: { 'content-type': 'application/json', ...forwardHeaders },
           body: JSON.stringify({ events }),
           redirect: 'error',
-        });
+        }));
         if (!upstreamResponse.ok) {
           return new Response(null, { status: 502 });
         }

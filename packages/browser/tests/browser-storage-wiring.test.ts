@@ -42,6 +42,26 @@ function uuid(bytes: Uint8Array): string {
 }
 
 describe('createClickTrail storage wiring', () => {
+  it('starts with cookie persistence when the optional mirror getter throws', () => {
+    const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() { throw new DOMException('Access denied', 'SecurityError'); },
+    });
+    const primary = fakeAdapter();
+    const instance = createClickTrail({ destinations: [], storage: { primaryAdapter: primary, randomBytes: (length) => new Uint8Array(length).fill(1) } });
+    try {
+      expect(() => instance.start()).not.toThrow();
+      instance.hydrateStoredPayload({ ft_source: 'google' });
+      expect(instance.getData().ft_source).toBe('google');
+      expect(primary.get(ATTRIBUTION_KEY)).toContain('google');
+    } finally {
+      instance.stop();
+      if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+      else Reflect.deleteProperty(globalThis, 'localStorage');
+    }
+  });
+
   it('zero side effects until start(): no adapter reads or writes happen', () => {
     const primary = fakeAdapter();
     const mirror = fakeAdapter();

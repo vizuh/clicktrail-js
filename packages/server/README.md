@@ -74,3 +74,11 @@ send customer content as attribution metadata.
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+Server delivery aborts after 3 seconds and resolves `{ ok: false, status: 0 }`.
+The deadline also bounds injected fetch functions that ignore the abort signal;
+such a function may continue its own work after the caller returns. Astro, Nuxt,
+Qwik, SvelteKit, their collector proxies, Typebot, and Directus use the same
+bounded transport. Proxy timeouts return 502; Typebot returns `TimeoutError`.
+Activepieces uses its native 3-second request timeout; n8n keeps its configurable
+10-second default. No automatic retries are added.

@@ -12,6 +12,7 @@
  * Like the operation, the hook never throws into the host: failures are
  * logged and swallowed so an analytics outage cannot break writes.
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import { buildOperationEvent } from '../lib/events.js';
 import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 import {
@@ -119,12 +120,13 @@ export function createClickTrailHook(deps: HookDeps = {}) {
         const headers: Record<string, string> = { 'content-type': 'application/json' };
         if (options.apiKey !== '') headers['x-clicktrail-key'] = options.apiKey;
 
-        await fetchImpl(options.endpoint, {
+        await withDeliveryTimeout((signal) => fetchImpl(options.endpoint, {
+          signal,
           method: 'POST',
           headers,
           body: JSON.stringify({ events: [event] }),
           redirect: 'error',
-        }).catch(() => undefined);
+        })).catch(() => undefined);
 
         if ((deps.env?.['CLICKTRAIL_STORE_LOCALLY'] ?? '').trim().toLowerCase() === 'true') {
           try {

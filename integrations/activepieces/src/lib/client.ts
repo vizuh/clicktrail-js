@@ -63,6 +63,7 @@ export function buildEventsRequest(
 ): HttpRequest {
   return {
     method: HttpMethod.POST,
+    timeout: 3000,
     url: baseUrl,
     headers: {
       [CLICKTRAIL_API_KEY_HEADER]: apiKey,

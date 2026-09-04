@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Report browser fetch HTTP failures through `onDropped`, preserving at-most-once delivery.
+- Tolerate blocked mirror storage access and prevent same-adapter revival after blocked deletion.
+- Bound server and proxy fetch delivery to 3 seconds across canonical/framework clients,
+  Typebot, and Directus; abort stalled requests while preserving host failure results.
+  Set Activepieces native request timeout to 3 seconds without enabling the excluded package.
+
 ## [0.1.0-rc.4] - 2026-08-25
 
 ### Added

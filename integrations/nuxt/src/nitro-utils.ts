@@ -11,6 +11,7 @@
  * - body size and batch size are bounded
  * - malformed payloads get 4xx, upstream failures get 502
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import { validateProxyConfig } from './config.js';
 import type { NitroEventHandler } from './types.js';
 import type { ClickTrailProxyConfig } from './config.js';
@@ -82,12 +83,13 @@ export function createEventHandler(
     }
 
     try {
-      const upstreamResponse = await fetchImpl(safeConfig.upstream, {
+      const upstreamResponse = await withDeliveryTimeout((signal) => fetchImpl(safeConfig.upstream, {
+        signal,
         method: 'POST',
         headers: { 'content-type': 'application/json', ...forwardHeaders },
         body: JSON.stringify({ events }),
         redirect: 'error',
-      });
+      }));
       if (!upstreamResponse.ok) {
         return new Response(null, { status: 502 });
       }

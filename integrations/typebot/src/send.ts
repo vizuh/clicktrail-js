@@ -5,6 +5,7 @@
  * host flow. A chatbot must never break because analytics is down — network
  * failures, bad responses, and encoding errors all collapse to { ok: false }.
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import type { ResolvedTypebotBlockConfig } from './config.js';
 import type { BlockEvent } from './events.js';
 
@@ -54,11 +55,12 @@ export async function sendEvents(
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (config.apiKey !== undefined) headers[CLICKTRAIL_KEY_HEADER] = config.apiKey;
 
-    const response = await doFetch(config.endpoint, {
+    const response = await withDeliveryTimeout((signal) => doFetch(config.endpoint, {
+      signal,
       method: 'POST',
       headers,
       body: JSON.stringify({ events }),
-    });
+    }));
     return response.ok
       ? { ok: true, status: response.status }
       : { ok: false, status: response.status };

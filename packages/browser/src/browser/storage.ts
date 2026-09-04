@@ -207,8 +207,11 @@ export interface MirrorStorageConfig {
 
 /** Default backend lookup; null when localStorage is unavailable (SSR). */
 export function defaultMirrorBackend(): MirrorBackend | null {
-  const ls = (globalThis as { localStorage?: MirrorBackend }).localStorage;
-  return ls ?? null;
+  try {
+    return (globalThis as { localStorage?: MirrorBackend }).localStorage ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function parseEnvelope(raw: string): MirrorEnvelope | null {
@@ -242,22 +245,24 @@ export function mirrorStorage(config: MirrorStorageConfig = {}): StorageAdapter 
     throw new RangeError(`clicktrail: retentionDays must be an integer from 1 through ${MAX_RETENTION_DAYS}.`);
   }
   const ttlMs = retentionDays * DAY_MS;
+  const deleted = new Set<string>();
   return {
     get(key) {
-      if (!backend) return null;
-      const raw = backend.getItem(key);
-      if (raw === null) return null;
-      const env = parseEnvelope(raw);
-      if (env === null) {
-        // Legacy copy without expiry metadata: discard, never revive.
-        backend.removeItem(key);
+      if (!backend || deleted.has(key)) return null;
+      try {
+        const raw = backend.getItem(key);
+        if (raw === null) return null;
+        const env = parseEnvelope(raw);
+        if (env === null || nowMs() >= env.expires_at) {
+          deleted.add(key);
+          backend.removeItem(key);
+          deleted.delete(key);
+          return null;
+        }
+        return env.data;
+      } catch {
         return null;
       }
-      if (nowMs() >= env.expires_at) {
-        backend.removeItem(key);
-        return null;
-      }
-      return env.data;
     },
     set(key, value) {
       if (!backend) return;
@@ -268,13 +273,19 @@ export function mirrorStorage(config: MirrorStorageConfig = {}): StorageAdapter 
       };
       try {
         backend.setItem(key, JSON.stringify(env));
+        deleted.delete(key);
       } catch {
         // Quota / private-mode failures are non-fatal for a mirror.
       }
     },
     delete(key) {
-      if (!backend) return;
-      backend.removeItem(key);
+      deleted.add(key);
+      try {
+        backend?.removeItem(key);
+        deleted.delete(key);
+      } catch {
+        // Never revive a withdrawn value when deletion is blocked.
+      }
     },
   };
 }

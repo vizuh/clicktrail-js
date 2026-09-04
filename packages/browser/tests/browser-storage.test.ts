@@ -104,6 +104,44 @@ describe('cookieStorage', () => {
 });
 
 describe('mirrorStorage', () => {
+  it('treats a denied localStorage getter as unavailable without hiding invalid config', () => {
+    const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() { throw new DOMException('Access denied', 'SecurityError'); },
+    });
+    try {
+      const store = mirrorStorage();
+      expect(store.get('attribution')).toBeNull();
+      expect(() => store.set('attribution', 'value')).not.toThrow();
+      expect(() => store.delete('attribution')).not.toThrow();
+      expect(() => mirrorStorage({ retentionDays: 0 })).toThrow(RangeError);
+    } finally {
+      if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+      else Reflect.deleteProperty(globalThis, 'localStorage');
+    }
+  });
+
+  it('survives read/delete failures and never revives a withdrawn value in this adapter', () => {
+    const backend = fakeBackend();
+    let failRead = true;
+    backend.getItem = (key) => {
+      if (failRead) throw new DOMException('Access denied', 'SecurityError');
+      return backend.map.get(key) ?? null;
+    };
+    backend.removeItem = () => { throw new DOMException('Access denied', 'SecurityError'); };
+    const store = mirrorStorage({ backend });
+    store.set('attribution', 'old');
+    expect(store.get('attribution')).toBeNull();
+    expect(() => clearAttributionStorage(store)).not.toThrow();
+    failRead = false;
+    expect(store.get('attribution')).toBeNull();
+    store.set('attribution', 'new');
+    expect(store.get('attribution')).toBe('new');
+    backend.map.set('legacy', '{}');
+    expect(store.get('legacy')).toBeNull();
+  });
+
   it('round-trips a value with an explicit expiry envelope', () => {
     const backend = fakeBackend();
     let now = 1_000_000;
