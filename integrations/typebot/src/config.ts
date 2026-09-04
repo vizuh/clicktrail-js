@@ -10,7 +10,7 @@ export interface TypebotBlockConfig {
   /**
    * First-party ClickTrail endpoint. Relative paths (default '/api/clicktrail')
    * are posted as-is from the browser (same-origin proxy); absolute
-   * http(s) URLs are allowed for direct-to-collector setups.
+   * HTTPS URLs are allowed for direct-to-collector setups.
    */
   endpoint?: string;
   /** ClickTrail site id this conversation belongs to. */
@@ -47,8 +47,16 @@ export function resolveTypebotBlockConfig(
   config: TypebotBlockConfig = {},
 ): ResolvedTypebotBlockConfig {
   const endpoint = cleanOptional(config.endpoint) ?? DEFAULT_ENDPOINT;
-  if (!/^(https?:\/\/|\/)/.test(endpoint)) {
-    throw new TypeError(`typebot-block.endpoint must be absolute http(s) or a root-relative path, got "${endpoint}"`);
+  const rootRelative = endpoint.startsWith('/') && !endpoint.startsWith('//');
+  let secureAbsolute = false;
+  try {
+    const parsed = new URL(endpoint);
+    secureAbsolute = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
+  } catch {
+    // Root-relative endpoints are validated without a base URL.
+  }
+  if (!rootRelative && !secureAbsolute) {
+    throw new TypeError('typebot-block.endpoint must be absolute https or a root-relative path');
   }
   return Object.freeze({
     endpoint,

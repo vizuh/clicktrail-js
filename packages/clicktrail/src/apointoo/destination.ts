@@ -34,6 +34,7 @@
  * `onDropped` — never silently discarded.
  */
 import type { Destination } from '@vizuh/clicktrail-browser';
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 import {
   buildOutcomeEvent,
   isOutcomeEvent,
@@ -125,6 +126,9 @@ export interface ApointooDestination extends Destination {
 export function createApointooDestination(
   config: ApointooDestinationConfig,
 ): ApointooDestination {
+  if (!isSafeHttpUrl(config.endpoint)) {
+    throw new TypeError('clicktrail/apointoo: endpoint must be a public absolute https URL.');
+  }
   const batchSize = Math.max(1, config.batchSize ?? DEFAULT_BATCH_SIZE);
   const maxRetries = Math.max(0, config.maxRetries ?? DEFAULT_MAX_RETRIES);
   const baseDelayMs = Math.max(0, config.baseDelayMs ?? DEFAULT_BASE_DELAY_MS);

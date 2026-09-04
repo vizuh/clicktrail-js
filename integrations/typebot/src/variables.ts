@@ -56,8 +56,7 @@ export function normalizeConsent(value: unknown): ConsentState | undefined {
   if (GRANTED.has(raw)) return 'granted';
   if (WITHDRAWN.has(raw)) return 'withdrawn';
   if (POLICY_UPDATED.has(raw)) return 'policy_updated';
-  // Any other truthy-ish value is treated as an explicit consent signal.
-  return raw ? 'granted' : undefined;
+  return undefined;
 }
 
 function coerceValue(raw: string): number | string {

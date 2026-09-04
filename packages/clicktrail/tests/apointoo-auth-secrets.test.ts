@@ -23,6 +23,15 @@ function captureFetch() {
 }
 
 describe('auth header handling', () => {
+  it('rejects cleartext and non-public outcome endpoints', () => {
+    for (const endpoint of [
+      'http://apointoo.example/outcomes',
+      'https://127.0.0.1/outcomes',
+    ]) {
+      expect(() => createApointooDestination({ endpoint })).toThrow(/public absolute https/);
+    }
+  });
+
   it('attaches Authorization: Bearer from the injected token provider', async () => {
     const fetchFn = captureFetch();
     let minted = 0;

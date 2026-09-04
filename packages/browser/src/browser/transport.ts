@@ -74,9 +74,9 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   const flushBatch = async (): Promise<void> => {
     if (batch.length === 0) return;
     const events = batch;
-    const body = JSON.stringify({ events });
     batch = [];
     try {
+      const body = JSON.stringify({ events });
       await send(config.endpoint, body);
     } catch (error) {
       // Do not let an optional host diagnostic callback create an unhandled

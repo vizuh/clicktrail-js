@@ -24,7 +24,7 @@ Mirrors `packages/typebot-block/src/config.ts` in [`vizuh/clicktrail-js`](https:
 | Option | Type | Required | Notes |
 |---|---|---|---|
 | Action | enum | yes | Identify Visitor · Form Started · Lead Submitted · Qualified Lead · Appointment Requested · Purchase · Update Consent · Attach Variables |
-| Endpoint | string | yes | default `/api/clicktrail`; relative or absolute http(s) |
+| Endpoint | string | yes | default `/api/clicktrail`; root-relative or absolute HTTPS |
 | Site ID | string | no | |
 | Workspace ID | string | no | |
 | API key | string | no | sent as `X-ClickTrail-Key` header |

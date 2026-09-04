@@ -58,6 +58,7 @@ const CLICK_ID_KEYS = [
 ] as const;
 
 const SERVER_RESERVED_KEYS = [
+  '__proto__',
   'event_id',
   'event_name',
   'marketing_trail',

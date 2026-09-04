@@ -69,7 +69,7 @@ export function transmissionAllowed(
 ): boolean {
   const record: ConsentRecord | null = snapshot();
   if (!record || !isGranted(record)) return false;
-  return record[purpose] !== false;
+  return record[purpose] === true;
 }
 
 // ---------------------------------------------------------------------------
