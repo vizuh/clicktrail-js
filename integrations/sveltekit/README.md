@@ -13,7 +13,7 @@ configure destinations, or certify delivery.
 
 ## Release and support status
 
-- Supported SvelteKit range: `>=2.0.0` (the declared peer dependency); this package targets SvelteKit only and does not provide standalone Vue support.
+- Supported SvelteKit range: `>=2.0.0` (the declared peer dependency); this package targets SvelteKit.
 - Maintainer: Vizuh OÜ. Support and issue tracker: [GitHub Issues](https://github.com/vizuh/clicktrail-js/issues).
 - Release policy: [repository release process](../../CONTRIBUTING.md#releases).
 - `0.1.0-rc.4` is a source release candidate, not a functional npm registry release. Directory eligibility requires a matching non-placeholder release, clean-room install, and representative runtime smoke; local source readiness does not establish those gates.

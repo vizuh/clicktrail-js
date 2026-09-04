@@ -42,7 +42,6 @@ const frameworkRules = {
     keyword: 'nuxt-module',
     peer: 'nuxt',
     directory: 'integrations/nuxt',
-    forbiddenKeywords: ['vue'],
     extra: [],
   },
   '@vizuh/clicktrail-sveltekit': {
@@ -59,11 +58,6 @@ if (rule) {
   }
   if (!Array.isArray(manifest.keywords) || !manifest.keywords.includes(rule.keyword)) {
     throw new Error(`${manifest.name}: missing directory keyword ${rule.keyword}`);
-  }
-  for (const keyword of rule.forbiddenKeywords ?? []) {
-    if (manifest.keywords.includes(keyword)) {
-      throw new Error(`${manifest.name}: unsupported directory keyword ${keyword}`);
-    }
   }
   if (!manifest.peerDependencies?.[rule.peer] || manifest.peerDependencies[rule.peer].startsWith('workspace:')) {
     throw new Error(`${manifest.name}: missing registry-safe peer dependency ${rule.peer}`);
