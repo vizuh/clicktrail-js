@@ -7,17 +7,99 @@ on:
 
 permissions:
   contents: read
+  checks: read
   id-token: write
+  pull-requests: read
+  statuses: read
 
 jobs:
   publish:
-    name: Publish ClickTrail wave (core, browser, umbrella, astro, nuxt)
+    name: Publish reviewed ClickTrail wave tarballs
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     environment: npm
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify tag commit is exact reviewed master merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin master
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
+            echo "::error::tag commit is not in origin/master history"; exit 1;
+          }
+          pull_requests="$(gh api --paginate --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls")"
+          merged_pr="$(jq -r --arg sha "$GITHUB_SHA" \
+            '[.[][] | select(.base.ref == "master" and .merged_at != null and .merge_commit_sha == $sha)] | if length == 1 then .[0].number else empty end' \
+            <<<"$pull_requests")"
+          test -n "$merged_pr" || {
+            echo "::error::tag commit is not exactly one merged master PR commit"; exit 1;
+          }
+          pr="$(gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/pulls/$merged_pr")"
+          jq -e --arg sha "$GITHUB_SHA" \
+            '.state == "closed" and .merged_at != null and .base.ref == "master" and .merge_commit_sha == $sha' \
+            <<<"$pr" >/dev/null || {
+            echo "::error::merged PR metadata does not match exact tag commit"; exit 1;
+          }
+          head_sha="$(jq -r '.head.sha' <<<"$pr")"
+          test -n "$head_sha" || {
+            echo "::error::merged PR has no source head SHA"; exit 1;
+          }
+          reviews="$(gh api --paginate --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/pulls/$merged_pr/reviews")"
+          approvals="$(jq --arg head_sha "$head_sha" '
+            [.[][] | select(.user.login != null and .submitted_at != null)]
+            | sort_by([.user.login, .submitted_at, (.id // 0)])
+            | group_by(.user.login)
+            | map(last)
+            | map(select(.state == "APPROVED" and .commit_id == $head_sha))
+            | length
+            <<<"$reviews")"
+          test "$approvals" -gt 0 || {
+            echo "::error::exact merged PR has no approving review"; exit 1;
+          }
+          if ! protection="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/branches/master/protection/required_status_checks")"; then
+            echo "::error::cannot read master required status checks; refusing publication"; exit 1;
+          fi
+          required="$(jq -c '[.contexts[]?, .checks[]?.context] | map(select(type == "string")) | unique' <<<"$protection")"
+          test "$(jq 'length' <<<"$required")" -gt 0 || {
+            echo "::error::master has no declared required status checks; refusing publication"; exit 1;
+          }
+          check_pages="$(gh api --paginate --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100")"
+          statuses="$(gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
+          CLICKTRAIL_RELEASE_SHA="$GITHUB_SHA" \
+          CLICKTRAIL_REQUIRED_CHECKS="$required" \
+          CLICKTRAIL_CHECK_RUN_PAGES="$check_pages" \
+          CLICKTRAIL_COMBINED_STATUS="$statuses" \
+          node tools/release/verify-remote-checks.mjs
+
+      - name: Verify owner release authorization
+        shell: bash
+        run: |
+          CLICKTRAIL_RELEASE_VERSION="${GITHUB_REF_NAME#v}" node tools/release/verify-release-authorization.mjs
+
+      - name: Checkout pinned WordPress parity source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: vizuh/click-trail-handler
+          ref: ead6682d6433c4f27309b7ee412e2dfc1fd50de4
+          path: click-trail-handler
+          fetch-depth: 1
           persist-credentials: false
 
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
@@ -28,19 +110,62 @@ jobs:
           node-version: '24.15.0'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify npm trusted-publishing runtime
-        run: npm --version
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm --filter @vizuh/clicktrail build:global
-      - run: pnpm -r test
-      - run: pnpm -r build
-
-      - name: Verify npm package bootstrap state
+      - name: Verify package-level npm trusted publishing configuration
+        env:
+          CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION: ${{ secrets.CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION }}
+          CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY: ${{ secrets.CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY }}
         shell: bash
         run: |
           set -euo pipefail
+          npm_trust_dir="$(mktemp -d)"
+          packages=(
+            '@vizuh/clicktrail-core'
+            '@vizuh/clicktrail-browser'
+            '@vizuh/clicktrail'
+            '@vizuh/clicktrail-astro'
+            '@vizuh/clicktrail-nuxt'
+          )
+          for index in "${!packages[@]}"; do
+            npx --yes npm@11.19.0 trust list "${packages[$index]}" --json > "$npm_trust_dir/$index.json"
+          done
+          CLICKTRAIL_NPM_TRUST_DIRECTORY="$npm_trust_dir" \
+          CLICKTRAIL_RELEASE_SHA="$GITHUB_SHA" \
+          CLICKTRAIL_RELEASE_VERSION="${GITHUB_REF_NAME#v}" \
+          node tools/release/verify-trusted-publishing-attestation.mjs
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+      - run: pnpm --filter @vizuh/clicktrail build:global
+      - run: pnpm audit --prod --audit-level high
+
+      - name: Install Chromium and run the golden probe
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          CLICKTRAIL_BROWSER=chromium pnpm probe
+
+      - name: Enforce pinned WordPress runtime parity
+        env:
+          CLICKTRAIL_WP_PLUGIN_ROOT: ${{ github.workspace }}/click-trail-handler
+        run: pnpm parity
+
+      - name: Verify package bootstrap and immutable version state
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm_view_field() {
+            local output
+            if output="$(npm view "$1" "$2" 2>&1)"; then
+              return 0
+            fi
+            if grep -Eq '(^|[[:space:]])E404([[:space:]]|$)' <<<"$output"; then
+              return 1
+            fi
+            echo "::error::npm registry lookup failed for $1" >&2
+            return 2
+          }
+          tag_version="${GITHUB_REF_NAME#v}"
           for package_json in \
             packages/core/package.json \
             packages/browser/package.json \
@@ -48,27 +173,82 @@ jobs:
             integrations/astro/package.json \
             integrations/nuxt/package.json; do
             package_name="$(node -p "require('./$package_json').name")"
-            if ! npm view "$package_name" version >/dev/null 2>&1; then
-              echo "::error::$package_name does not exist on npm. Complete Hugo's one-time 2FA bootstrap and configure its trusted publisher before retrying this release."
+            package_version="$(node -p "require('./$package_json').version")"
+            test "$tag_version" = "$package_version" || {
+              echo "::error::version mismatch in $package_json: $package_version != $tag_version"; exit 1;
+            }
+            if npm_view_field "$package_name" versions; then
+              :
+            else
+              lookup_status=$?
+              if [ "$lookup_status" -eq 1 ]; then
+                echo "::error::$package_name does not exist. Complete the one-time 2FA bootstrap and trusted-publisher setup first."
+              fi
               exit 1
+            fi
+            if npm_view_field "$package_name@$package_version" version; then
+              echo "::error::$package_name@$package_version already exists and is immutable"; exit 1;
+            else
+              lookup_status=$?
+              test "$lookup_status" -eq 1 || exit 1
             fi
           done
 
-      - name: Verify tag matches every published package version
+      - name: Pack the release artifacts once
         shell: bash
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
-          for package_json in \
-            packages/clicktrail/package.json \
-            packages/core/package.json \
-            packages/browser/package.json \
-            integrations/astro/package.json \
-            integrations/nuxt/package.json; do
-            package_version="$(node -p "require('./$package_json').version")"
-            test "$tag_version" = "$package_version" || {
-              echo "version mismatch in $package_json: $package_version != $tag_version"; exit 1;
-            }
+          set -euo pipefail
+          rm -rf /tmp/clicktrail-release-packs
+          mkdir -p /tmp/clicktrail-release-packs
+          pnpm --filter @vizuh/clicktrail-core pack --pack-destination /tmp/clicktrail-release-packs
+          pnpm --filter @vizuh/clicktrail-browser pack --pack-destination /tmp/clicktrail-release-packs
+          pnpm --filter @vizuh/clicktrail pack --pack-destination /tmp/clicktrail-release-packs
+          pnpm --filter @vizuh/clicktrail-astro pack --pack-destination /tmp/clicktrail-release-packs
+          pnpm --filter @vizuh/clicktrail-nuxt pack --pack-destination /tmp/clicktrail-release-packs
+          test "$(find /tmp/clicktrail-release-packs -maxdepth 1 -name '*.tgz' | wc -l)" -eq 5
+          tools/release/verify-packed-internal-versions.sh /tmp/clicktrail-release-packs
+          sha256sum /tmp/clicktrail-release-packs/*.tgz | tee /tmp/clicktrail-release-packs/SHA256SUMS
+
+      - name: Inspect and secret-scan packed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          scan_root="$(mktemp -d)"
+          for tarball in /tmp/clicktrail-release-packs/*.tgz; do
+            if tar -tzf "$tarball" | grep -E '(^|/)(\.env($|\.)|\.npmrc$|id_(rsa|ed25519)$|secrets?/|specs?/|docs/internal/)'; then
+              echo "::error::forbidden release path in $tarball"; exit 1
+            fi
+            dest="$scan_root/$(basename "$tarball" .tgz)"
+            mkdir -p "$dest"
+            tar -xzf "$tarball" -C "$dest"
           done
+          if grep -RIE --binary-files=without-match \
+            -- '-----BEGIN ([A-Z ]+ )?PRIVATE KEY-----|npm_[A-Za-z0-9]{20,}|//registry\.npmjs\.org/:_authToken=' \
+            "$scan_root"; then
+            echo "::error::credential-shaped content found in packed artifacts"; exit 1
+          fi
+
+      - name: Clean-room install and import the exact release artifacts
+        shell: bash
+        run: | # zizmor: ignore[adhoc-packages] -- reviewed local tarballs are the release subjects
+          set -euo pipefail
+          core_tar="$(find /tmp/clicktrail-release-packs -name 'vizuh-clicktrail-core-*.tgz')"
+          browser_tar="$(find /tmp/clicktrail-release-packs -name 'vizuh-clicktrail-browser-*.tgz')"
+          umbrella_tar="$(find /tmp/clicktrail-release-packs -name 'vizuh-clicktrail-[0-9]*.tgz')"
+          astro_tar="$(find /tmp/clicktrail-release-packs -name 'vizuh-clicktrail-astro-*.tgz')"
+          nuxt_tar="$(find /tmp/clicktrail-release-packs -name 'vizuh-clicktrail-nuxt-*.tgz')"
+          smoke="$(mktemp -d)"
+          cd "$smoke"
+          echo '{"name":"clicktrail-release-smoke","private":true,"type":"module"}' > package.json
+          npm install --ignore-scripts "$core_tar" "$browser_tar" "$umbrella_tar" "$astro_tar" "$nuxt_tar" --silent
+          node --input-type=module <<'NODE'
+          const root = await import('@vizuh/clicktrail');
+          const browser = await import('@vizuh/clicktrail/browser');
+          const astro = await import('@vizuh/clicktrail-astro');
+          const nuxt = await import('@vizuh/clicktrail-nuxt');
+          const checks = [root.parseAttributionUrl, browser.createClickTrail, astro.clicktrailAstro, nuxt.defineClicktrailModule];
+          if (checks.some((value) => value === undefined)) throw new Error('missing packed export');
+          NODE
 
       - name: Select npm dist-tag
         id: npm-dist-tag
@@ -78,21 +258,21 @@ jobs:
           if [[ "$package_version" == *-* ]]; then
             echo "tag=next" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "::error::stable package versions are not authorized by this RC workflow" >&2
+            exit 1
           fi
 
-      - name: Publish wave to npm with trusted publishing
+      - name: Publish the exact reviewed tarballs with provenance
         env:
           NPM_DIST_TAG: ${{ steps.npm-dist-tag.outputs.tag }}
         shell: bash
         run: |
           set -euo pipefail
-          for dir in \
-            packages/core \
-            packages/browser \
-            packages/clicktrail \
-            integrations/astro \
-            integrations/nuxt; do
-            echo "Publishing from $dir"
-            (cd "$dir" && npm publish --access public --provenance --tag "$NPM_DIST_TAG")
+          for tarball in \
+            /tmp/clicktrail-release-packs/vizuh-clicktrail-core-*.tgz \
+            /tmp/clicktrail-release-packs/vizuh-clicktrail-browser-*.tgz \
+            /tmp/clicktrail-release-packs/vizuh-clicktrail-[0-9]*.tgz \
+            /tmp/clicktrail-release-packs/vizuh-clicktrail-astro-*.tgz \
+            /tmp/clicktrail-release-packs/vizuh-clicktrail-nuxt-*.tgz; do
+            npm publish "$tarball" --access public --provenance --tag "$NPM_DIST_TAG"
           done

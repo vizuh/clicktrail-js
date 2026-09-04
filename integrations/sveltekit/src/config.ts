@@ -7,6 +7,7 @@
  */
 
 import { FORBIDDEN_FORWARD_HEADERS } from './forward-headers.js';
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 
 /** Default first-party proxy pattern when the proxy is enabled. */
 export const DEFAULT_PROXY_PATTERN = '/api/clicktrail';
@@ -27,8 +28,8 @@ export interface ClickTrailProxyConfig {
 
 /** Validate proxy settings before they reach a request handler. */
 export function validateProxyConfig(config: ClickTrailProxyConfig): ClickTrailProxyConfig {
-  if (!config.upstream || !/^https?:\/\//i.test(config.upstream)) {
-    throw new Error('clicktrail proxy: upstream must be an absolute http(s) URL.');
+  if (!config.upstream || !isSafeHttpUrl(config.upstream)) {
+    throw new Error('clicktrail proxy: upstream must be a public absolute https URL.');
   }
   if (!Number.isSafeInteger(config.maxBodyBytes) || config.maxBodyBytes < 1) {
     throw new Error('clicktrail proxy: maxBodyBytes must be a positive safe integer.');

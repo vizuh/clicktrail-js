@@ -1,11 +1,11 @@
 /**
- * @clicktrail/sv — EXPERIMENTAL Svelte CLI community add-on.
+ * @vizuh/clicktrail-sv — EXPERIMENTAL Svelte CLI community add-on.
  */
 export {
   clicktrailAddon,
   default,
 } from './addon.js';
-export const SVELTEKIT_PACKAGE = '@clicktrail/sveltekit';
+export const SVELTEKIT_PACKAGE = '@vizuh/clicktrail-sveltekit';
 export {
   DEFAULT_SITE_ID_PLACEHOLDER,
   generateConversionEndpoint,

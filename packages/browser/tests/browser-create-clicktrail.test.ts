@@ -14,6 +14,7 @@ function recordingDestination(name = 'rec'): Destination & { events: Record<stri
     events: [] as Record<string, unknown>[],
     start() { dest.started = true; },
     deliver(event: Record<string, unknown>) { dest.events.push(event); },
+    clear() { dest.events.length = 0; },
   };
   return dest;
 }
@@ -74,6 +75,123 @@ describe('createClickTrail', () => {
     expect(reported).toEqual(['consent_denied_capture_attempted']);
   });
 
+  it('consent withdrawal clears buffered HTTP events before the next flush', () => {
+    let consent = true;
+    const send = vi.fn();
+    const http = httpDestination({ endpoint: 'https://t.example', batchSize: 100, send });
+    const ct = createClickTrail({ destinations: [http], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+    consent = false;
+    ct.stop();
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when a destination cannot clear buffered events', () => {
+    let consent = true;
+    let retained = 0;
+    let flushed = 0;
+    const destination: Destination = {
+      name: 'unclearable',
+      deliver() { retained += 1; },
+      clear() { throw new Error('clear failed'); },
+      flush() { flushed += retained; },
+    };
+    const ct = createClickTrail({ destinations: [destination], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+    consent = false;
+    ct.track('page_view');
+    consent = true;
+    ct.stop();
+
+    expect(retained).toBe(1);
+    expect(flushed).toBe(0);
+  });
+
+  it('rechecks consent before delivering to each destination', () => {
+    let consent = true;
+    const delivered: string[] = [];
+    const first: Destination = {
+      name: 'first',
+      deliver() {
+        delivered.push('first');
+        consent = false;
+      },
+      clear() {},
+    };
+    const second: Destination = {
+      name: 'second',
+      deliver() { delivered.push('second'); },
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [first, second], consentGate: () => consent });
+    ct.start();
+
+    ct.track('page_view');
+
+    expect(delivered).toEqual(['first']);
+  });
+
+  it('rejects destinations that cannot clear queued events', () => {
+    expect(() => createClickTrail({
+      destinations: [{ name: 'unclearable', deliver: () => {} } as never],
+    })).toThrow(/implement clear/);
+  });
+
+  it('rolls back started state when destination startup fails', () => {
+    let fail = true;
+    const dest: Destination = {
+      name: 'retryable',
+      start() {
+        if (fail) {
+          fail = false;
+          throw new Error('startup failed');
+        }
+      },
+      deliver() {},
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [dest] });
+
+    expect(() => ct.start()).toThrow('startup failed');
+    expect(ct.isStarted()).toBe(false);
+    expect(() => ct.start()).not.toThrow();
+    expect(ct.isStarted()).toBe(true);
+  });
+
+  it('rolls back every destination started before a later startup failure', () => {
+    let fail = true;
+    const stopped: string[] = [];
+    const first: Destination = {
+      name: 'first',
+      start() {},
+      stop() { stopped.push('first'); },
+      deliver() {},
+      clear() {},
+    };
+    const second: Destination = {
+      name: 'second',
+      start() {
+        if (fail) {
+          fail = false;
+          throw new Error('later startup failed');
+        }
+      },
+      stop() { stopped.push('second'); },
+      deliver() {},
+      clear() {},
+    };
+    const ct = createClickTrail({ destinations: [first, second] });
+
+    expect(() => ct.start()).toThrow('later startup failed');
+    expect(stopped).toEqual(['second', 'first']);
+    expect(() => ct.start()).not.toThrow();
+  });
+
   it('mergeParsedTouch feeds the payload that later events carry', () => {
     const rec = recordingDestination();
     const ct = createClickTrail({ destinations: [rec], now: () => '2026-08-23T10:00:00Z' });
@@ -121,6 +239,31 @@ describe('createClickTrail', () => {
 
     ct.track('lead.submitted'); // stopped: no-op
     expect(calls).toHaveLength(1);
+  });
+
+  it('stop() completes cleanup when a destination flush throws', () => {
+    const ct = createClickTrail({
+      destinations: [{ name: 'broken', deliver: () => {}, clear: () => {}, flush: () => { throw new Error('boom'); } }],
+    });
+    ct.start();
+
+    expect(() => ct.stop()).not.toThrow();
+    expect(ct.isStarted()).toBe(false);
+  });
+
+  it('handles an asynchronous destination flush rejection', async () => {
+    const reported: string[] = [];
+    const ct = createClickTrail({
+      destinations: [{ name: 'broken', deliver: () => {}, clear: () => {}, flush: async () => { throw new Error('boom'); } }],
+      diagnosticsLevel: 'warn',
+      diagnosticSink: { report: (d) => reported.push(d.code) },
+    });
+    ct.start();
+    ct.stop();
+    await Promise.resolve();
+
+    expect(ct.isStarted()).toBe(false);
+    expect(reported).toEqual(['destination_flush_failed']);
   });
 
   it('silent diagnostics (default) report nothing on pre-start track', () => {

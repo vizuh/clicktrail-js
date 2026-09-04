@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-astro",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "First-party attribution and conversion tracking for Astro. Injects the ClickTrail browser SDK, tracks page views across Astro view transitions without duplicates, gates on consent, adds an optional first-party proxy endpoint, and ships server-side helpers for leads, bookings, and purchases.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -54,7 +55,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/astro"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/astro#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/astro#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -66,8 +67,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vizuh/clicktrail": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   },
   "peerDependencies": {
     "astro": ">=4.0.0"

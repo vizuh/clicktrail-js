@@ -23,7 +23,9 @@ distribution; this repository contains the shared JavaScript engine.
 
 > **Release boundary:** use the [npm registry](https://www.npmjs.com/package/@vizuh/clicktrail)
 > for the published package version and [GitHub Releases](https://github.com/vizuh/clicktrail-js/releases)
-> for source tags. Stable and incubating entry points are listed below.
+> for source tags. The `0.1.0-rc.4` source is promoted to `master`, but npm
+> publication still depends on the documented provenance, namespace-bootstrap,
+> and trusted-publisher gates. Stable and incubating entry points are listed below.
 
 ## Why ClickTrail
 
@@ -53,6 +55,12 @@ Install the engine:
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
+```
+
+To test the release candidate after publication, use the RC dist-tag:
+
+```bash
+npm install @vizuh/clicktrail@next
 ```
 
 Parse an ad-click landing URL deterministically in Node, a worker, or a test:
@@ -206,6 +214,16 @@ The core and browser surfaces are public development work. The `/conversation`
 and `/agent` surfaces must remain metadata-only and require their documented
 privacy gates before use with real conversations, prompts, completions, or
 transcripts.
+
+## Release process
+
+1. Package versions and the Git tag must match.
+2. The release branch passes CI, typecheck, tests, build, probe, and clean-room tarball smoke checks.
+3. Before creating any tag, complete the one-time namespace bootstrap in `tools/release/bootstrap-new-packages.sh` and configure trusted publishers on npmjs.com.
+4. With those prerequisites, the reviewed PR complete, and the `master` SHA verified, create `v<version>`; this triggers `.github/workflows/publish.yml`.
+5. The workflow repeats the gates and publishes the first wave to npm with OIDC provenance and the `next` dist-tag for RC versions.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md), and [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Never put npm tokens in the repository or workflows.
 
 ## Documentation
 

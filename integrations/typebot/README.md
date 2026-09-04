@@ -102,7 +102,7 @@ When the block is accepted upstream, the only changes are mechanical: swap the p
 
 ```ts
 interface TypebotBlockConfig {
-  endpoint?: string;     // default '/api/clicktrail' (relative or absolute http(s))
+  endpoint?: string;     // default '/api/clicktrail' (root-relative or absolute HTTPS)
   siteId?: string;
   workspaceId?: string;
   apiKey?: string;       // X-ClickTrail-Key header

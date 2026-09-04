@@ -216,6 +216,7 @@ export function bootClickTrailClient(
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
+    consentGate: () => !config.consentRequired || readStoredConsent(jar) === true,
     storage: {},
   });
 
@@ -235,14 +236,16 @@ export function bootClickTrailClient(
   };
 
   if (config.consentRequired) {
-    if (readStoredConsent(jar) === true) {
-      startNow();
-    } else {
-      const target = seams.eventTarget ?? tryDefaultEventTarget();
-      target?.addEventListener(CONSENT_EVENT, () => {
-        if (readStoredConsent(jar) === true) startNow();
-      });
-    }
+    const target = seams.eventTarget ?? tryDefaultEventTarget();
+    target?.addEventListener(CONSENT_EVENT, () => {
+      const state = readStoredConsent(jar);
+      if (state === true) startNow();
+      else if (state === false) {
+        instance.clearData();
+        if (instance.isStarted()) instance.stop();
+      }
+    });
+    if (readStoredConsent(jar) === true) startNow();
   } else {
     startNow();
   }

@@ -115,6 +115,9 @@ export function otelDestination(config: OtelDestinationConfig = {}): OtelDestina
       }
       span.end?.();
     },
+    clear() {
+      events.length = 0;
+    },
     getEvents() {
       return events;
     },

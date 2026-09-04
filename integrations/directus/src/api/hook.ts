@@ -13,6 +13,7 @@
  * logged and swallowed so an analytics outage cannot break writes.
  */
 import { buildOperationEvent } from '../lib/events.js';
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 import {
   DEFAULT_COLLECTIONS,
   buildCanonicalPayload,
@@ -56,7 +57,7 @@ interface CollectorOptions {
 
 function collectorOptions(env: Record<string, string | undefined>): CollectorOptions | null {
   const endpoint = (env['CLICKTRAIL_ENDPOINT'] ?? '').trim();
-  if (endpoint === '') return null;
+  if (endpoint === '' || !isSafeHttpUrl(endpoint)) return null;
   return {
     endpoint,
     ...(env['CLICKTRAIL_SITE_ID'] ? { siteId: (env['CLICKTRAIL_SITE_ID'] ?? '').trim() } : {}),
@@ -122,6 +123,7 @@ export function createClickTrailHook(deps: HookDeps = {}) {
           method: 'POST',
           headers,
           body: JSON.stringify({ events: [event] }),
+          redirect: 'error',
         }).catch(() => undefined);
 
         if ((deps.env?.['CLICKTRAIL_STORE_LOCALLY'] ?? '').trim().toLowerCase() === 'true') {

@@ -32,6 +32,7 @@ import type { AttributionPayload } from '@vizuh/clicktrail-core';
 export interface CtAttrNode {
   getAttribute(name: string): string | null;
   setAttribute(name: string, value: string): void;
+  removeAttribute?(name: string): void;
 }
 
 /** Element the injector creates (hidden input). */
@@ -41,6 +42,7 @@ export interface CtInputElement extends CtAttrNode {}
 export interface CtFormElement extends CtAttrNode {
   querySelectorAll(selector: string): CtAttrNode[];
   appendChild(node: CtInputElement): void;
+  removeChild?(node: CtInputElement): void;
 }
 
 /**
@@ -184,6 +186,7 @@ export interface FormInjector {
   start(): void;
   /** Disconnect the observer. Idempotent. */
   stop(): void;
+  clear(): void;
 }
 
 /**
@@ -250,6 +253,13 @@ export function createFormInjector(config: FormInjectionConfig): FormInjector {
   const fields = config.fields ?? DEFAULT_FORM_FIELDS;
   const overwrite = config.overwrite ?? false;
 
+  const owned = new Map<CtAttrNode, {
+    form: CtFormElement;
+    originalValue: string | null;
+    appliedValue: string;
+    created: boolean;
+  }>();
+
   const injectOnce = (): void => {
     if (!config.consentAllowed()) return;
     const doc = config.doc;
@@ -262,9 +272,48 @@ export function createFormInjector(config: FormInjectionConfig): FormInjector {
     const forms = doc.querySelectorAll(FORM_SELECTOR);
     for (const form of forms) {
       for (const [name, value] of entries) {
-        applyEntryToForm(form, doc, name, value, overwrite);
+        const before = form.querySelectorAll(HIDDEN_INPUT_SELECTOR);
+        const existing = before.find((node) => node.getAttribute('name') === name);
+        const originalValue = existing?.getAttribute('value') ?? null;
+        if (!applyEntryToForm(form, doc, name, value, overwrite)) continue;
+        const node = existing ?? form.querySelectorAll(HIDDEN_INPUT_SELECTOR)
+          .find((candidate) => !before.includes(candidate) && candidate.getAttribute('name') === name);
+        if (!node) continue;
+        const prior = owned.get(node);
+        if (prior) {
+          prior.appliedValue = node.getAttribute('value') ?? value;
+        } else {
+          owned.set(node, {
+            form,
+            originalValue,
+            appliedValue: node.getAttribute('value') ?? value,
+            created: existing === undefined,
+          });
+        }
       }
     }
+  };
+
+  const clearOwned = (): void => {
+    for (const [node, mutation] of owned) {
+      if (node.getAttribute('value') !== mutation.appliedValue) continue;
+      if (mutation.created) {
+        const isChild = mutation.form.querySelectorAll(HIDDEN_INPUT_SELECTOR).includes(node);
+        if (isChild && mutation.form.removeChild) {
+          mutation.form.removeChild(node as CtInputElement);
+        } else if (isChild) {
+          node.setAttribute('value', '');
+        }
+        continue;
+      }
+      if (mutation.originalValue === null) {
+        node.removeAttribute?.('value');
+        if (node.getAttribute('value') !== null) node.setAttribute('value', '');
+      } else {
+        node.setAttribute('value', mutation.originalValue);
+      }
+    }
+    owned.clear();
   };
 
   let observer: DomMutationObserverLike | null = null;
@@ -281,6 +330,10 @@ export function createFormInjector(config: FormInjectionConfig): FormInjector {
     stop() {
       observer?.disconnect();
       observer = null;
+      clearOwned();
+    },
+    clear() {
+      clearOwned();
     },
   };
 }

@@ -78,6 +78,7 @@ describe('clicktrailProxyHandler', () => {
       const headers = new Headers(init.headers);
       expect(headers.get('content-type')).toContain('application/json');
       expect(headers.get('x-forwarded-for')).toBeNull();
+      expect(init.redirect).toBe('error');
     } finally {
       globalThis.fetch = originalFetch;
     }

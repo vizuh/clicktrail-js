@@ -13,9 +13,12 @@ export interface Destination {
    * dataLayer array reference) HERE, never at factory/import time.
    */
   start?(): void;
+  stop?(): void;
   deliver(event: StampedClickTrailEvent): void;
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;
+  /** Discard buffered events without delivering them. */
+  clear(): void;
 }
 
 /** Injected side-effect boundary: transmits a pre-encoded JSON body. */
@@ -71,9 +74,9 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   const flushBatch = async (): Promise<void> => {
     if (batch.length === 0) return;
     const events = batch;
-    const body = JSON.stringify({ events });
     batch = [];
     try {
+      const body = JSON.stringify({ events });
       await send(config.endpoint, body);
     } catch (error) {
       // Do not let an optional host diagnostic callback create an unhandled
@@ -93,6 +96,9 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
       if (batch.length >= batchSize) void flushBatch();
     },
     flush: flushBatch,
+    clear() {
+      batch = [];
+    },
   };
 }
 
@@ -120,6 +126,7 @@ export function dataLayerDestination(
     deliver(event) {
       (arr ??= []).push({ ...event, event: event.event_name });
     },
+    clear() {},
     getArray() {
       return arr ??= [];
     },

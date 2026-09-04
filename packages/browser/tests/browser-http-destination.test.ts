@@ -65,6 +65,17 @@ describe('httpDestination', () => {
     expect(send.calls).toHaveLength(0);
   });
 
+  it('clear() discards a buffered batch without sending it', async () => {
+    const send = fakeSend();
+    const dest = httpDestination({ endpoint: 'https://t.example/collect', batchSize: 5, send });
+
+    dest.deliver(event(1));
+    dest.clear?.();
+    await dest.flush?.();
+
+    expect(send.calls).toHaveLength(0);
+  });
+
   it('reports a dropped batch when the sender rejects', async () => {
     const dropped: { events: readonly Record<string, unknown>[]; error: unknown }[] = [];
     const send: SendFn = async () => {
@@ -82,5 +93,26 @@ describe('httpDestination', () => {
     expect(dropped).toHaveLength(1);
     expect(dropped[0]!.events).toHaveLength(1);
     expect(dropped[0]!.error).toEqual(new Error('network down'));
+  });
+
+  it('drops an unserializable batch without poisoning the next flush', async () => {
+    const send = fakeSend();
+    const dropped: (readonly Record<string, unknown>[])[] = [];
+    const dest = httpDestination({
+      endpoint: 'https://t.example/collect',
+      send,
+      onDropped: (events) => dropped.push(events),
+    });
+    const cyclic = event(1);
+    cyclic['self'] = cyclic;
+
+    dest.deliver(cyclic);
+    await expect(dest.flush?.()).resolves.toBeUndefined();
+    expect(dropped).toHaveLength(1);
+    expect(send.calls).toHaveLength(0);
+
+    dest.deliver(event(2));
+    await dest.flush?.();
+    expect(send.calls).toHaveLength(1);
   });
 });

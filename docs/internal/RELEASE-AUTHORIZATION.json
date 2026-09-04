@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "release": "0.1.0-rc.4",
+  "decisionStatus": "approved",
+  "copyrightHolder": "Vizuh OÜ",
+  "publisher": "npm user atroci on behalf of Vizuh OÜ",
+  "firstWave": [
+    "@vizuh/clicktrail-core",
+    "@vizuh/clicktrail-browser",
+    "@vizuh/clicktrail",
+    "@vizuh/clicktrail-astro",
+    "@vizuh/clicktrail-nuxt"
+  ],
+  "attestations": {
+    "B1": "approved",
+    "B2": "approved",
+    "B3": "approved",
+    "B4": "resolved",
+    "GOV-001": "resolved"
+  },
+  "approvedBy": "Hugo Carvalho",
+  "approvedAt": "2026-08-25T23:00:29Z",
+  "evidence": [
+    "owner release instruction and copyright-holder decision recorded 2026-08-25",
+    "docs/internal/OWNER-NAMESPACE-DECISION.md",
+    "docs/internal/PROVENANCE-AUDIT.md",
+    "specs/001-rc4-release-audit/checklists/package-artifact-audit.json",
+    "npm verification 2026-08-25: atroci is vizuh org owner and existing package collaborator with read-write access"
+  ]
+}

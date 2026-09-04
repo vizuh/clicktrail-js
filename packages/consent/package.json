@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-consent",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Consent state types, gates, listeners, and withdrawal handling for ClickTrail integrations.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,9 +14,10 @@
   "files": ["dist", "README.md", "LICENSE"],
   "keywords": ["consent","gdpr","privacy","analytics","attribution"],
   "repository": { "type": "git", "url": "git+https://github.com/vizuh/clicktrail-js.git", "directory": "packages/consent" },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/packages/consent#readme",
   "engines": { "node": ">=18" },
   "scripts": { "build": "tsc -p tsconfig.build.json", "test": "vitest run" },
-  "dependencies": { "@vizuh/clicktrail-core": "workspace:^" },
+  "dependencies": { "@vizuh/clicktrail-core": "workspace:*" },
   "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0", "vitest": "^3.2.6" },
   "sideEffects": false,
   "publishConfig": { "access": "public" }

@@ -1,6 +1,5 @@
 # @vizuh/clicktrail
 
-[![Socket Badge](https://badge.socket.dev/npm/package/@vizuh/clicktrail/0.1.0)](https://socket.dev/npm/package/@vizuh/clicktrail/overview/0.1.0)
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
@@ -18,8 +17,9 @@ Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
 Vizuh. FunnelSheet is Vizuh's consulting branch. The WordPress plugin is the
 WordPress distribution; this package is the shared engine beneath it.
 
-> Release candidate: `0.1.0-rc.3`. GitHub release assets are prepared; npm
-> publication remains separately gated by trusted-publisher configuration.
+> Release candidate: `0.1.0-rc.4`. A matching GitHub tag triggers the npm
+> publish workflow; publication remains gated by provenance, bootstrap, and
+> trusted-publisher configuration.
 
 ## Install
 

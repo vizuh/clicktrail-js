@@ -1,8 +1,9 @@
 {
-  "name": "@clicktrail/sv",
-  "version": "0.1.0-rc.3",
+  "name": "@vizuh/clicktrail-sv",
+  "version": "0.1.0-rc.4",
   "description": "Experimental Svelte CLI add-on that scaffolds the ClickTrail SvelteKit hook, layout, environment placeholder, and example event endpoint.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,7 +35,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/sv"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/integrations/sv#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/sv#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -46,7 +47,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clicktrail/sveltekit": "workspace:^"
+    "@vizuh/clicktrail-sveltekit": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

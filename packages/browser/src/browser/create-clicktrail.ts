@@ -113,7 +113,7 @@ export interface ClickTrailConfig {
 }
 
 export interface ClickTrailStorageConfig {
-  /** Retention days; ties the localStorage mirror expiry to retention. */
+  /** localStorage mirror retention in whole days (1-400). Default: 90. */
   retentionDays?: number;
   /** Attributes injected into every attribution cookie write. */
   cookieAttrs?: CookieAttributes;
@@ -222,14 +222,33 @@ const defaultRandomBytes: RandomBytesFn = (byteLength) => {
 
 export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const destinations = [...config.destinations];
+  if (destinations.some((destination) => !destination || typeof destination.clear !== 'function')) {
+    throw new TypeError('clicktrail: every destination must implement clear() for consent-safe withdrawal.');
+  }
   const now = config.now;
   const consentGate = config.consentGate;
   const sink = resolveSink(config);
   let eventSequence = 0;
 
+  let destinationCleanupFailed = false;
+  const clearDestinationQueues = (): boolean => {
+    let cleared = true;
+    for (const dest of destinations) {
+      try {
+        dest.clear();
+      } catch (error) {
+        void error;
+        cleared = false;
+      }
+    }
+    destinationCleanupFailed = !cleared;
+    return cleared;
+  };
+
   let started = false;
   let payload: AttributionPayload = emptyAttribution();
   let consentDeniedReported = false;
+  const consentIsGranted = (): boolean => !consentGate || consentGate();
 
   // Storage wiring is lazy: nothing here runs until start().
   const storageCfg = config.storage;
@@ -237,6 +256,19 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   let identity: IdentityStore | null = null;
   let formInjector: FormInjector | null = null;
   let linkDecorator: LinkDecorator | null = null;
+
+  const clearBrowserAttributionDom = (): void => {
+    try {
+      formInjector?.clear();
+    } catch (error) {
+      void error;
+    }
+    try {
+      linkDecorator?.clear();
+    } catch (error) {
+      void error;
+    }
+  };
 
   const initStorage = (): void => {
     if (!storageCfg || adapters !== null) return;
@@ -265,8 +297,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   };
 
   const persistPayload = (): void => {
-    if (!adapters) return;
+    if (!adapters || !consentIsGranted()) return;
     saveAttributionPayload(adapters.primary, payload);
+    if (!consentAllows()) return;
     saveAttributionPayload(adapters.mirror, payload);
   };
 
@@ -302,25 +335,36 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const consentAllows = (): boolean => {
     if (!consentGate || consentGate()) {
       consentDeniedReported = false;
+      if (destinationCleanupFailed && !clearDestinationQueues()) return false;
       return true;
     }
     if (!consentDeniedReported) {
       consentDeniedReported = true;
-      sink.report({
-        code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
-        level: 'warn',
-        message: 'Capture attempted while consent denied; event dropped.',
-      });
-      // Contract: consent denied clears ALL attribution storage — the
-      // in-memory payload plus every cookie/mirror/identity key, including
-      // legacy-named surfaces (portable prompt "Storage rules";
-      // DATA-MODEL.md:122, :246).
-      payload = emptyAttribution();
-      if (adapters) {
-        clearAttributionStorage(adapters.primary, adapters.mirror);
-        identity?.clear();
+      try {
+        sink.report({
+          code: DIAGNOSTIC_CODES.CONSENT_DENIED_CAPTURE_ATTEMPTED,
+          level: 'warn',
+          message: 'Capture attempted while consent denied; event dropped.',
+        });
+      } catch (error) {
+        void error;
       }
     }
+    payload = emptyAttribution();
+    if (adapters) {
+      try {
+        clearAttributionStorage(adapters.primary, adapters.mirror);
+      } catch (error) {
+        void error;
+      }
+      try {
+        identity?.clear();
+      } catch (error) {
+        void error;
+      }
+    }
+    clearDestinationQueues();
+    clearBrowserAttributionDom();
     return false;
   };
 
@@ -414,41 +458,110 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     start() {
       if (started) return;
       started = true;
-      for (const dest of destinations) dest.start?.();
-      if (storageCfg) {
-        initStorage();
-        // Hydrate persisted attribution: server-readable cookie first,
-        // expiry-metadata mirror as fallback for cached/dynamic pages.
-        const stored = loadAttributionPayload(adapters!.primary);
-        payload =
-          Object.keys(stored).length > 0
-            ? { ...emptyAttribution(), ...stored }
-            : { ...emptyAttribution(), ...loadAttributionPayload(adapters!.mirror) };
-        persistPayload();
-      }
-      // Consent-gated cookie-derived browser IDs (RULING A part b).
-      mergeCookieBrowserIds();
-      if (config.forms) {
-        const { fields, overwrite, observer } = config.forms;
-        formInjector = createFormInjector({
-          fields,
-          overwrite,
-          observer,
-          consentAllowed: () => !consentGate || consentGate(),
-          getPayload: () => payload,
-          getIdentity: () => instance.getSession(),
-          doc: config.forms.doc ?? defaultFormDocument() ?? undefined,
-        });
-        formInjector.start();
-      }
-      if (config.crossDomain) {
-        wireCrossDomain(instance);
+      const startedDestinations: Destination[] = [];
+      try {
+        for (const dest of destinations) {
+          startedDestinations.push(dest);
+          dest.start?.();
+        }
+        if (storageCfg) {
+          initStorage();
+          if (consentAllows()) {
+            // Hydrate persisted attribution: server-readable cookie first,
+            // expiry-metadata mirror as fallback for cached/dynamic pages.
+            const stored = consentIsGranted()
+              ? loadAttributionPayload(adapters!.primary)
+              : {};
+            const fallback = consentIsGranted()
+              ? loadAttributionPayload(adapters!.mirror)
+              : {};
+            if (consentAllows()) {
+              payload = Object.keys(stored).length > 0
+                ? { ...emptyAttribution(), ...stored }
+                : { ...emptyAttribution(), ...fallback };
+              if (consentAllows()) persistPayload();
+            }
+            if (!consentIsGranted()) {
+              payload = emptyAttribution();
+              clearAttributionStorage(adapters!.primary, adapters!.mirror);
+              identity?.clear();
+            }
+          } else {
+            payload = emptyAttribution();
+            clearAttributionStorage(adapters!.primary, adapters!.mirror);
+            identity?.clear();
+          }
+        }
+        if (!consentAllows()) {
+          payload = emptyAttribution();
+          clearDestinationQueues();
+        } else {
+          // Consent-gated cookie-derived browser IDs (RULING A part b).
+          mergeCookieBrowserIds();
+          if (adapters && consentAllows()) persistPayload();
+        }
+        if (config.forms) {
+          const { fields, overwrite, observer } = config.forms;
+          formInjector = createFormInjector({
+            fields,
+            overwrite,
+            observer,
+            consentAllowed: () => !consentGate || consentGate(),
+            getPayload: () => payload,
+            getIdentity: () => instance.getSession(),
+            doc: config.forms.doc ?? defaultFormDocument() ?? undefined,
+          });
+          formInjector.start();
+        }
+        if (config.crossDomain) {
+          wireCrossDomain(instance);
+        }
+      } catch (error) {
+        formInjector?.stop();
+        formInjector = null;
+        linkDecorator?.stop();
+        linkDecorator = null;
+        for (const dest of [...startedDestinations].reverse()) {
+          try {
+            dest.stop?.();
+          } catch (rollbackError) {
+            void rollbackError;
+          }
+        }
+        started = false;
+        throw error;
       }
     },
 
     stop() {
       if (!started) return;
-      for (const dest of destinations) void Promise.resolve(dest.flush?.());
+      if (consentAllows()) {
+        for (const dest of destinations) {
+          try {
+            void Promise.resolve(dest.flush?.()).catch(() => {
+              try {
+                sink.report({
+                  code: 'destination_flush_failed',
+                  level: 'warn',
+                  message: `Destination '${dest.name}' failed to flush during stop().`,
+                });
+              } catch {
+                // Host diagnostics are best effort and must not break cleanup.
+              }
+            });
+          } catch {
+            try {
+              sink.report({
+                code: 'destination_flush_failed',
+                level: 'warn',
+                message: `Destination '${dest.name}' failed to flush during stop().`,
+              });
+            } catch {
+              // Host diagnostics are best effort and must not break cleanup.
+            }
+          }
+        }
+      }
       formInjector?.stop();
       formInjector = null;
       linkDecorator?.stop();
@@ -482,10 +595,14 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       const consentState = config.consentState?.();
       if (consentState !== undefined) envelopeContext.consent = consentState;
       const event: ClickTrailEvent = buildEventPayload(payload, eventName, eventData, envelopeContext);
-      for (const dest of destinations) dest.deliver(event);
+      for (const dest of destinations) {
+        if (!consentAllows()) return;
+        dest.deliver(event);
+      }
     },
 
     mergeParsedTouch(touch) {
+      if (!consentAllows()) return;
       // Capture path: refresh cookie-derived browser IDs first so a fresh
       // _fbp/_ga* value lands top-level on the same write (RULING A part b).
       mergeCookieBrowserIds();
@@ -496,6 +613,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     },
 
     hydrateStoredPayload(incoming) {
+      if (!consentAllows()) return;
       // Migration path (WP swap / legacy imports): adopt canonical non-empty
       // keys only. Unknown keys are dropped here rather than at the store so
       // hydration works identically with or without storage adapters.
@@ -508,15 +626,20 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       if (started && adapters) persistPayload();
     },
 
-    getData: () => ({ ...payload }),
+    getData: () => (consentAllows() ? { ...payload } : emptyAttribution()),
 
     getField(key) {
-      return payload[key] ?? '';
+      return consentAllows() ? payload[key] ?? '' : '';
     },
 
     clearData() {
       payload = emptyAttribution();
-      if (started && adapters) {
+      clearDestinationQueues();
+      clearBrowserAttributionDom();
+      if (storageCfg) {
+        initStorage();
+      }
+      if (adapters) {
         clearAttributionStorage(adapters.primary, adapters.mirror);
         identity?.clear();
       }
@@ -525,7 +648,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     getSession(): SessionSnapshot {
       // Identifiers are created only while consent allows (DATA-MODEL.md:246);
       // a denied gate yields an empty snapshot instead of regenerating.
-      if (started && identity && (!consentGate || consentGate())) {
+      if (!consentAllows()) {
+        return { visitorId: '', sessionId: '', sessionNumber: '' };
+      }
+      if (started && identity) {
         return snapshotFromIdentity(identity.current());
       }
       return {

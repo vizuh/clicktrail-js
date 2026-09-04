@@ -34,6 +34,7 @@
  * `onDropped` — never silently discarded.
  */
 import type { Destination } from '@vizuh/clicktrail-browser';
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 import {
   buildOutcomeEvent,
   isOutcomeEvent,
@@ -125,6 +126,9 @@ export interface ApointooDestination extends Destination {
 export function createApointooDestination(
   config: ApointooDestinationConfig,
 ): ApointooDestination {
+  if (!isSafeHttpUrl(config.endpoint)) {
+    throw new TypeError('clicktrail/apointoo: endpoint must be a public absolute https URL.');
+  }
   const batchSize = Math.max(1, config.batchSize ?? DEFAULT_BATCH_SIZE);
   const maxRetries = Math.max(0, config.maxRetries ?? DEFAULT_MAX_RETRIES);
   const baseDelayMs = Math.max(0, config.baseDelayMs ?? DEFAULT_BASE_DELAY_MS);
@@ -134,6 +138,7 @@ export function createApointooDestination(
   let fetchFn: ApointooFetchFn | undefined = config.fetch;
   let batch: Record<string, unknown>[] = [];
   const pending: Promise<void>[] = [];
+  let deliveryGeneration = 0;
 
   /** Enrichment + minimization happen HERE, at the browser boundary. */
   const minimize = (
@@ -175,6 +180,7 @@ export function createApointooDestination(
   };
 
   const deliverBatch = async (events: Record<string, unknown>[]): Promise<void> => {
+    const generation = deliveryGeneration;
     const f = fetchFn ?? (fetchFn = defaultFetchFn());
     const body = JSON.stringify({ events });
     const headers: Record<string, string> = { 'content-type': 'application/json' };
@@ -186,6 +192,7 @@ export function createApointooDestination(
 
     let lastStatus: number | undefined;
     for (let attempt = 0; ; attempt++) {
+      if (generation !== deliveryGeneration) return;
       try {
         const res = await f(config.endpoint, { method: 'POST', headers, body });
         if (res.ok) return;
@@ -196,6 +203,7 @@ export function createApointooDestination(
       if (attempt >= maxRetries) break;
       const delay = baseDelayMs * 2 ** attempt * (1 + jitter());
       await sleep(delay);
+      if (generation !== deliveryGeneration) return;
     }
     // DROPPED-BATCH LAW: never silently lost.
     config.onDropped?.({ events, attempts: maxRetries + 1, reason: 'delivery_failed', ...(lastStatus !== undefined ? { lastStatus } : {}) });
@@ -225,6 +233,10 @@ export function createApointooDestination(
     async flush() {
       await sendWithRetries();
       await Promise.all([...pending]);
+    },
+    clear() {
+      batch = [];
+      deliveryGeneration += 1;
     },
   };
 }

@@ -98,6 +98,46 @@ describe('createClickTrail storage wiring', () => {
     expect(ct.getField('ft_medium')).toBe('cpc');
   });
 
+  it('does not hydrate or persist attribution when consent is denied at start', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'stored' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'mirror' }));
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => false,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.mergeParsedTouch({ source: 'pre-start' } as never);
+
+    ct.start();
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+  });
+
+  it('clearData() removes stored attribution before a denied instance starts', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'stale' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'stale' }));
+    let consent = false;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+
+    ct.clearData();
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+
+    consent = true;
+    ct.start();
+    expect(ct.getField('gclid')).toBe('');
+  });
+
   it('getSession() returns real browser-owned identity after start()', () => {
     let now = 5_000;
     const BYTES_SESSION_2 = new Uint8Array(16).fill(0x03);
@@ -152,6 +192,28 @@ describe('createClickTrail storage wiring', () => {
     expect(mirrored['gclid']).toBe('xyz');
   });
 
+  it('blocks public attribution mutators after consent is withdrawn', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.start();
+    ct.hydrateStoredPayload({ ft_source: 'trusted' });
+    expect(ct.getField('ft_source')).toBe('trusted');
+
+    consent = false;
+    ct.mergeParsedTouch({ source: 'attacker' } as never);
+    ct.hydrateStoredPayload({ ft_source: 'attacker' });
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+  });
+
   it('consent denial clears ALL attribution storage across both adapters', () => {
     const primary = fakeAdapter();
     const mirror = fakeAdapter();
@@ -184,6 +246,77 @@ describe('createClickTrail storage wiring', () => {
       expect(mirror.map.has(key)).toBe(false);
     }
     expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
+  });
+
+  it('continues consent cleanup when diagnostics or one destination clear fails', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'old' }));
+    mirror.set(ATTRIBUTION_KEY, JSON.stringify({ gclid: 'old' }));
+    let consent = true;
+    let survivingDestinationClears = 0;
+    const ct = createClickTrail({
+      destinations: [
+        { name: 'broken', deliver: () => {}, clear: () => { throw new Error('clear failed'); } },
+        { name: 'survives', deliver: () => {}, clear: () => { survivingDestinationClears += 1; } },
+      ],
+      consentGate: () => consent,
+      diagnosticSink: { report: () => { throw new Error('diagnostic failed'); } },
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+    ct.start();
+    consent = false;
+
+    expect(() => ct.track('page_view')).not.toThrow();
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(survivingDestinationClears).toBe(1);
+  });
+
+  it('suppresses stale session identifiers immediately after consent revocation', () => {
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: {
+        primaryAdapter: fakeAdapter(),
+        mirrorAdapter: fakeAdapter(),
+        randomBytes: () => BYTES_VISITOR,
+        nowMs: () => 0,
+      },
+    });
+    ct.start();
+    expect(ct.getSession().visitorId).not.toBe('');
+    ct.hydrateStoredPayload({ gclid: 'click-id' });
+    expect(ct.getField('gclid')).toBe('click-id');
+
+    consent = false;
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(ct.getField('gclid')).toBe('');
+    expect(ct.getSession()).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
+  });
+
+  it('rechecks consent after a destination start hook before hydration', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    primary.set(ATTRIBUTION_KEY, JSON.stringify({ ft_source: 'stored' }));
+    let consent = true;
+    const ct = createClickTrail({
+      destinations: [{
+        name: 'revoking-destination',
+        start: () => { consent = false; },
+        deliver: () => undefined,
+        clear: () => undefined,
+      }],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror },
+    });
+
+    ct.start();
+
+    expect(ct.getData()).toEqual(emptyAttribution());
+    expect(primary.map.has(ATTRIBUTION_KEY)).toBe(false);
+    expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
   });
 
   it('without a storage config, behavior is unchanged (no identity generation)', () => {

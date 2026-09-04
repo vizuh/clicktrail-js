@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit/client — browser boot module.
+ * @vizuh/clicktrail-sveltekit/client — browser boot module.
  *
  * Boots the SDK with an HTTP destination over injected seams (cookie jar,
  * event target, afterNavigate-style navigation seam), wires URL-keyed
@@ -52,6 +52,8 @@ export interface BootedClient {
   /** Resolves when the instance has started (immediately without gating). */
   whenStarted(): Promise<ClickTrailInstance>;
   detachNavigation(): void;
+  /** Stop this client and detach navigation plus consent listeners. */
+  dispose(): void;
   /** Merge canonical flat identity fields (e.g. contact_id) into the payload. */
   identify(fields: Record<string, string>): void;
   /** Track an event by any historical or free-form name (translated to canonical). */
@@ -64,6 +66,23 @@ export interface BootedClient {
    */
   conversion(input: ConversionInput): void;
 }
+
+type FallbackWindow = {
+  location?: Location;
+  document?: Document;
+  history?: History;
+  addEventListener?: typeof window.addEventListener;
+  removeEventListener?: typeof window.removeEventListener;
+};
+
+type FallbackNavigationState = {
+  listeners: Map<() => void, number>;
+  notify: () => void;
+  patchedPush: History['pushState'] | null;
+  originalPush: History['pushState'] | null;
+};
+
+const fallbackNavigationStates = new WeakMap<object, FallbackNavigationState>();
 
 export interface ConversionInput {
   /** Canonical or legacy event name ('sale', 'lead', 'booking', ...). */
@@ -87,44 +106,62 @@ function defaultCookieJar(): CookieJar {
   };
 }
 
-function defaultNavigationSeam(): NavigationSeam {
-  const w = globalThis as unknown as {
-    location?: Location;
-    document?: Document;
-    history?: History;
-    addEventListener?: typeof window.addEventListener;
-    removeEventListener?: typeof window.removeEventListener;
-  };
+export function defaultNavigationSeam(): NavigationSeam {
+  const w = globalThis as unknown as FallbackWindow;
   const loc = (): Location => {
     if (!w.location) throw new Error('clicktrail client: navigation seam requires a browser environment.');
     return w.location;
   };
-  const listeners = new Set<() => void>();
-  const notify = (): void => {
-    for (const cb of listeners) cb();
-  };
-  let patchedPush: ((data: unknown, unused: string, url?: string | URL | null) => void) | null = null;
-  let originalPush: History['pushState'] | null = null;
 
   return {
     href: () => loc().href,
     referrer: () => (typeof w.document?.referrer === 'string' ? w.document.referrer : ''),
     host: () => loc().host,
     afterNavigate(callback) {
-      listeners.add(callback);
-      // popstate covers back/forward. pushState is patched once so SPA
-      // navigations without SvelteKit's afterNavigate still fire.
-      if (!patchedPush && w.history) {
-        originalPush = w.history.pushState.bind(w.history);
-        patchedPush = (...args: Parameters<History['pushState']>) => {
-          originalPush?.(...args);
-          notify();
+      let state = fallbackNavigationStates.get(w);
+      if (!state) {
+        state = {
+          listeners: new Map(),
+          notify: () => {
+            for (const cb of state!.listeners.keys()) cb();
+          },
+          patchedPush: null,
+          originalPush: null,
         };
-        w.history.pushState = patchedPush as History['pushState'];
+        fallbackNavigationStates.set(w, state);
       }
-      w.addEventListener?.('popstate', notify);
+      const wasEmpty = state.listeners.size === 0;
+      state.listeners.set(callback, (state.listeners.get(callback) ?? 0) + 1);
+      if (wasEmpty) {
+        if (w.history) {
+          state.originalPush = w.history.pushState;
+          const patchedPush: History['pushState'] = (...args: Parameters<History['pushState']>) => {
+            state?.originalPush?.apply(w.history, args);
+            state?.notify();
+          };
+          state.patchedPush = patchedPush;
+          w.history.pushState = patchedPush;
+        }
+        w.addEventListener?.('popstate', state.notify);
+      }
+      let active = true;
       return () => {
-        listeners.delete(callback);
+        if (!active) return;
+        active = false;
+        const count = state!.listeners.get(callback) ?? 0;
+        if (count > 1) {
+          state!.listeners.set(callback, count - 1);
+          return;
+        }
+        state!.listeners.delete(callback);
+        if (state!.listeners.size !== 0) return;
+        w.removeEventListener?.('popstate', state!.notify);
+        if (w.history && state!.patchedPush && state!.originalPush && w.history.pushState === state!.patchedPush) {
+          w.history.pushState = state!.originalPush;
+        }
+        state!.patchedPush = null;
+        state!.originalPush = null;
+        fallbackNavigationStates.delete(w);
       };
     },
   };
@@ -175,6 +212,7 @@ export function bootClickTrailClient(
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
+    consentGate: () => !config.consentRequired || readStoredConsent(resolved.cookieJar) === true,
     storage: {},
   });
 
@@ -197,15 +235,19 @@ export function bootClickTrailClient(
     resolveStart();
   };
 
+  let detachConsent = (): void => {};
   if (config.consentRequired) {
-    const granted = readStoredConsent(resolved.cookieJar);
-    if (granted === true) {
-      startNow();
-    } else {
-      resolved.eventTarget.addEventListener(CONSENT_EVENT, () => {
-        if (readStoredConsent(resolved.cookieJar) === true) startNow();
-      });
-    }
+    const handleConsent = (): void => {
+      const state = readStoredConsent(resolved.cookieJar);
+      if (state === true) startNow();
+      else if (state === false) {
+        instance.clearData();
+        if (instance.isStarted()) instance.stop();
+      }
+    };
+    resolved.eventTarget.addEventListener(CONSENT_EVENT, handleConsent);
+    detachConsent = () => resolved.eventTarget.removeEventListener(CONSENT_EVENT, handleConsent);
+    if (readStoredConsent(resolved.cookieJar) === true) startNow();
   } else {
     startNow();
   }
@@ -218,6 +260,11 @@ export function bootClickTrailClient(
     instance,
     whenStarted: () => whenStarted,
     detachNavigation,
+    dispose(): void {
+      detachConsent();
+      detachNavigation();
+      if (instance.isStarted()) instance.stop();
+    },
 
     identify(fields: Record<string, string>): void {
       // hydrateStoredPayload adopts canonical non-empty keys only, which is

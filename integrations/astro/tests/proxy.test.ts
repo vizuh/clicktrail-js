@@ -18,8 +18,10 @@ function jsonRequest(body: string | unknown, headers: Record<string, string> = {
 const validBatch = { events: [{ event_name: 'page_view' }] };
 
 describe('resolveProxyConfig', () => {
-  it('requires an absolute http(s) upstream', () => {
-    expect(() => resolveProxyConfig(JSON.stringify(defaultProxyConfig()))).toThrow(/absolute http\(s\)/);
+  it('requires a public absolute https upstream', () => {
+    expect(() => resolveProxyConfig(JSON.stringify(defaultProxyConfig()))).toThrow(/public absolute https/);
+    expect(() => resolveProxyConfig(JSON.stringify(makeConfig({ upstream: 'https://' })))).toThrow(/public absolute https/);
+    expect(() => resolveProxyConfig(JSON.stringify(makeConfig({ upstream: 'https://user:pass@up.example.com' })))).toThrow(/public absolute https/);
     expect(() =>
       resolveProxyConfig(JSON.stringify(makeConfig())),
     ).not.toThrow();
@@ -49,6 +51,7 @@ describe('createProxyHandler POST', () => {
     expect(headers.get('user-agent')).toBe('UA-1');
     expect(headers.get('referer')).toBeNull(); // not on this config's allowlist
     expect(headers.get('x-forwarded-for')).toBeNull(); // visitor IPs never forwarded
+    expect(init.redirect).toBe('error');
     expect(JSON.parse(String(init.body))).toEqual(validBatch);
   });
 

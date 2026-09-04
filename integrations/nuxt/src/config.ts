@@ -7,6 +7,8 @@
  * everything here is plain runtime data validated at registration time.
  */
 
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
+
 /** Module identity used by Nuxt's module catalog and configKey merging. */
 export const MODULE_NAME = '@vizuh/clicktrail-nuxt';
 
@@ -14,7 +16,7 @@ export const MODULE_NAME = '@vizuh/clicktrail-nuxt';
 export const CONFIG_KEY = 'clicktrail';
 
 /** Package version stamped onto the module object. */
-export const MODULE_VERSION = '0.1.0-rc.2';
+export const MODULE_VERSION = '0.1.0-rc.4';
 
 /** Default first-party proxy pattern when the proxy is enabled. */
 export const DEFAULT_PROXY_PATTERN = '/api/clicktrail';
@@ -50,8 +52,8 @@ const FORBIDDEN_FORWARD_HEADERS = new Set([
 
 /** Validate proxy settings before they reach a request handler. */
 export function validateProxyConfig(config: ClickTrailProxyConfig): ClickTrailProxyConfig {
-  if (!config.upstream || !/^https?:\/\//i.test(config.upstream)) {
-    throw new Error('clicktrail proxy: upstream must be an absolute http(s) URL.');
+  if (!config.upstream || !isSafeHttpUrl(config.upstream)) {
+    throw new Error('clicktrail proxy: upstream must be a public absolute https URL.');
   }
   if (!Number.isSafeInteger(config.maxBodyBytes) || config.maxBodyBytes < 1) {
     throw new Error('clicktrail proxy: maxBodyBytes must be a positive safe integer.');

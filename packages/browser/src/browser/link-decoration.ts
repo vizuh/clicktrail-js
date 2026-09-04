@@ -452,6 +452,7 @@ export interface LinkDecoratorConfig {
 export interface LinkDecorator {
   start(): void;
   stop(): void;
+  clear(): void;
 }
 
 /** Default document root for anchors; null in SSR. */
@@ -487,9 +488,12 @@ export function createLinkDecorator(config: LinkDecoratorConfig): LinkDecorator 
   const skipSignedUrls = config.skipSignedUrls ?? true;
 
   let token = '';
+  let active = false;
+  let generation = 0;
+  const owned = new Map<AnchorNode, { originalHref: string; decoratedHref: string }>();
 
   const decorateOnce = (): void => {
-    if (!token || !config.consentAllowed()) return;
+    if (!active || !token || !config.consentAllowed()) return;
     const doc = config.doc;
     if (!doc) return;
     const base = config.getBaseUrl();
@@ -509,14 +513,33 @@ export function createLinkDecorator(config: LinkDecoratorConfig): LinkDecorator 
         tokenParam,
         skipSignedUrls,
       });
-      if (next !== null && next !== href) anchor.setAttribute('href', next);
+      if (next !== null && next !== href) {
+        const prior = owned.get(anchor);
+        if (prior && prior.decoratedHref !== href) prior.originalHref = href;
+        owned.set(anchor, prior ?? { originalHref: href, decoratedHref: next });
+        const mutation = owned.get(anchor)!;
+        mutation.decoratedHref = next;
+        anchor.setAttribute('href', next);
+      }
     }
+  };
+
+  const clearOwned = (): void => {
+    for (const [anchor, mutation] of owned) {
+      if (anchor.getAttribute('href') === mutation.decoratedHref) {
+        anchor.setAttribute('href', mutation.originalHref);
+      }
+    }
+    owned.clear();
+    token = '';
   };
 
   let observer: ReturnType<ObserverFactory> | null = null;
 
   return {
     start() {
+      active = true;
+      const startGeneration = ++generation;
       if (config.observer !== undefined && config.observer === null) {
         // Observation explicitly disabled.
       } else if (observer === null) {
@@ -528,6 +551,7 @@ export function createLinkDecorator(config: LinkDecoratorConfig): LinkDecorator 
       }
       void config.getToken()
         .then((t) => {
+          if (!active || startGeneration !== generation) return;
           token = t;
           decorateOnce();
         })
@@ -537,8 +561,15 @@ export function createLinkDecorator(config: LinkDecoratorConfig): LinkDecorator 
         });
     },
     stop() {
+      active = false;
+      generation += 1;
       observer?.disconnect();
       observer = null;
+      clearOwned();
+    },
+    clear() {
+      generation += 1;
+      clearOwned();
     },
   };
 }

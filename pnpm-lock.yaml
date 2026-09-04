@@ -23,10 +23,10 @@ importers:
   integrations/astro:
     dependencies:
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
       astro:
         specifier: '>=4.0.0'
@@ -48,10 +48,10 @@ importers:
   integrations/directus:
     dependencies:
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
       vue:
         specifier: ^3.4.0
@@ -70,13 +70,29 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  integrations/formbricks:
+    dependencies:
+      '@vizuh/clicktrail-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.6
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+
   integrations/n8n:
     dependencies:
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
       '@types/node':
@@ -95,10 +111,10 @@ importers:
   integrations/nuxt:
     dependencies:
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
       nuxt:
         specifier: '>=3.0.0'
@@ -118,15 +134,15 @@ importers:
     dependencies:
       '@builder.io/qwik':
         specifier: '>=1.0.0'
-        version: 1.20.0(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 1.20.0(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
       '@builder.io/qwik-city':
         specifier: '>=1.0.0'
         version: 1.20.0(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.5)(terser@5.50.0)(typescript@5.9.3)(yaml@2.9.0)
       '@vizuh/clicktrail-browser':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/browser
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
       '@types/node':
@@ -135,14 +151,17 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vite:
+        specifier: ^6.4.3
+        version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
   integrations/sv:
     dependencies:
-      '@clicktrail/sveltekit':
-        specifier: workspace:^
+      '@vizuh/clicktrail-sveltekit':
+        specifier: workspace:*
         version: link:../sveltekit
     devDependencies:
       '@types/node':
@@ -160,19 +179,25 @@ importers:
 
   integrations/sveltekit:
     dependencies:
-      '@sveltejs/kit':
-        specifier: '>=2.0.0'
-        version: 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
+      '@sveltejs/kit':
+        specifier: ^2.70.3
+        version: 2.70.3(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^5.1.1
+        version: 5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
+      svelte:
+        specifier: ^5.56.10
+        version: 5.56.10
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -186,10 +211,10 @@ importers:
   integrations/typebot:
     dependencies:
       '@vizuh/clicktrail':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/clicktrail
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
       '@types/node':
@@ -205,7 +230,7 @@ importers:
   packages/browser:
     dependencies:
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/node':
@@ -224,10 +249,10 @@ importers:
   packages/clicktrail:
     dependencies:
       '@vizuh/clicktrail-browser':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../browser
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/node':
@@ -252,7 +277,7 @@ importers:
   packages/consent:
     dependencies:
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/node':
@@ -266,6 +291,10 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
   packages/core:
+    dependencies:
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -283,10 +312,10 @@ importers:
   packages/server:
     dependencies:
       '@vizuh/clicktrail-browser':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../browser
       '@vizuh/clicktrail-core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
     devDependencies:
       '@types/node':
@@ -1171,6 +1200,10 @@ packages:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
 
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
+    engines: {node: ^14.21.3 || >=16}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -1675,12 +1708,20 @@ packages:
       typescript:
         optional: true
 
-  '@sveltejs/vite-plugin-svelte@7.3.0':
-    resolution: {integrity: sha512-QbRoJyD92e9R0ufeQIWRHrCC0ObcqSv/aBDdrQMoU+sypav3cDx5wytdQ6GLdXjEMO6xjrXGzfkUygng8JMv0A==}
-    engines: {node: ^20.19 || ^22.12 || >=24}
+  '@sveltejs/vite-plugin-svelte-inspector@4.0.1':
+    resolution: {integrity: sha512-J/Nmb2Q2y7mck2hyCX4ckVHcR5tu2J+MtBEQqpDrrgELZ2uvraQcK/ioCV61AqkdXFgriksOKIceDcQmqnGhVw==}
+    engines: {node: ^18.0.0 || ^20.0.0 || >=22}
     peerDependencies:
-      svelte: ^5.46.4
-      vite: ^8.0.0-beta.7 || ^8.0.0
+      '@sveltejs/vite-plugin-svelte': ^5.0.0
+      svelte: ^5.0.0
+      vite: ^6.0.0
+
+  '@sveltejs/vite-plugin-svelte@5.1.1':
+    resolution: {integrity: sha512-Y1Cs7hhTc+a5E9Va/xwKlAJoariQyHY+5zBgCZg4PFWNYQ1nMN9sjK1zhw1gK69DuqVP++sht/1GZg1aRwmAXQ==}
+    engines: {node: ^18.0.0 || ^20.0.0 || >=22}
+    peerDependencies:
+      svelte: ^5.0.0
+      vite: ^6.0.0
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -5394,12 +5435,12 @@ snapshots:
       - typescript
       - yaml
 
-  '@builder.io/qwik@1.20.0(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))':
+  '@builder.io/qwik@1.20.0(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       csstype: 3.2.3
       launch-editor: 2.14.1
       rollup: 4.62.5
-      vite: 8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
   '@capsizecss/unpack@4.0.1':
     dependencies:
@@ -5861,6 +5902,8 @@ snapshots:
       '@emnapi/runtime': 1.11.3
       '@tybys/wasm-util': 0.10.3
     optional: true
+
+  '@noble/hashes@1.8.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -6469,11 +6512,11 @@ snapshots:
     dependencies:
       acorn: 8.18.0
 
-  '@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(typescript@5.9.3)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
-      '@sveltejs/vite-plugin-svelte': 7.3.0(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
+      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
       acorn: 8.18.0
       cookie: 0.7.2
@@ -6489,14 +6532,27 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  '@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
+  '@sveltejs/vite-plugin-svelte-inspector@4.0.1(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
+      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
+      debug: 4.4.3
+      svelte: 5.56.10
+      vite: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))':
+    dependencies:
+      '@sveltejs/vite-plugin-svelte-inspector': 4.0.1(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)))(svelte@5.56.10)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
+      debug: 4.4.3
       deepmerge: 4.3.1
-      magic-string: 1.2.2
-      obug: 2.1.4
+      kleur: 4.1.5
+      magic-string: 0.30.21
       svelte: 5.56.10
       vite: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
       vitefu: 1.1.3(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0))
+    transitivePeerDependencies:
+      - supports-color
 
   '@tybys/wasm-util@0.10.3':
     dependencies:

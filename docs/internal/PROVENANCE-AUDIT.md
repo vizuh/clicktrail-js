@@ -1,6 +1,6 @@
 # Provenance Audit — clicktrail-js release candidate
 
-Status: COMPLETE, 2026-08-24. Scope: every source file under
+Status: COMPLETE; B1-B4 RESOLVED FOR RC4, 2026-08-25. Scope: every source file under
 `packages/clicktrail/src/` and `tools/`. Plugin evidence repo:
 `../click-trail-handler` (READ-ONLY; v1.9.0, GPL-2.0-or-later).
 Method: `git log --diff-filter=A` per file for introduction commits, then
@@ -213,10 +213,17 @@ Assessment per category-2 item, ASSUMING sole ownership holds:
   the published package and not referenced by it. Re-run the pack inspection on
   every release candidate regardless.
 
-## 6. Bottom line
+## 6. RC4 resolution addendum
 
-39 source/harness files audited: ~24 wholly authored here, ~15 contain
-plugin-derived logic with cited evidence, 0 contain copied third-party
-library code, 1 standard public-domain algorithm (FNV-1a). The MIT
-publication is clean CONDITIONAL on resolving blockers B1-B4. Nothing in
-this audit authorizes publication.
+On 2026-08-25 the accountable owner instructed publication and selected Vizuh
+OÜ as copyright holder. B1-B3 were approved for this release scope. B4 was
+resolved by verifying that authenticated npm user `atroci` is an owner of the
+`vizuh` organization with read-write access to the existing package, plus the
+14-package artifact audit. The exact authorization is machine-enforced in
+`RELEASE-AUTHORIZATION.json`.
+
+39 source/harness files were audited: ~24 wholly authored here and ~15 contain
+plugin-derived logic with cited evidence. No copied third-party library code
+was found. This resolution authorizes only the five-package `0.1.0-rc.4`
+publication wave under npm dist-tag `next`; it does not authorize `latest`, the
+Activepieces package, or later package waves.

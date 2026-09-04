@@ -9,7 +9,11 @@
  * Events are built with the SDK's canonical payload builder (schema_version
  * stamped) and delivered to a collector endpoint.
  */
-import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail/browser';
+import {
+  buildEventPayload,
+  parseCookieMap,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail/browser';
 import type { AttributionPayload } from '@vizuh/clicktrail';
 import type { ClickTrailEvent } from '@vizuh/clicktrail/browser';
 import {
@@ -19,7 +23,7 @@ import {
   SESSION_STATE_KEY,
   VISITOR_ID_FALLBACK_KEY,
 } from '@vizuh/clicktrail/browser';
-import { toCanonicalEventName } from '@vizuh/clicktrail-core';
+import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
 
 export interface ServerIdentity {
   /** Canonical flat attribution payload from the `attribution` cookie. */
@@ -124,6 +128,14 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function requireSafeHttpUrl(value: unknown, field: string): string {
+  const endpoint = requireNonEmptyString(value, field);
+  if (!isSafeHttpUrl(endpoint)) {
+    throw new TypeError(`clicktrail server: ${field} must be a public absolute https URL.`);
+  }
+  return endpoint;
+}
+
 function requirePositiveNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
     throw new TypeError(`clicktrail server: ${field} must be a positive finite number.`);
@@ -138,7 +150,7 @@ export class ClickTrailServer {
   private readonly fetchImpl: typeof fetch;
 
   constructor(config: ClickTrailServerConfig) {
-    this.endpoint = requireNonEmptyString(config.endpoint, 'endpoint');
+    this.endpoint = requireSafeHttpUrl(config.endpoint, 'endpoint');
     this.fetchImpl = config.fetch ?? fetch;
     if (config.siteId !== undefined) this.siteId = config.siteId;
     if (config.workspaceId !== undefined) this.workspaceId = config.workspaceId;
@@ -150,6 +162,7 @@ export class ClickTrailServer {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ events: [...events] }),
+        redirect: 'error',
       });
       return { ok: response.ok, status: response.status };
     } catch {
@@ -163,8 +176,10 @@ export class ClickTrailServer {
     eventName: string,
     input: ConversionInput<Record<string, unknown>>,
   ): ClickTrailEvent {
-    return buildEventPayload(input.identity.payload ?? {}, toCanonicalEventName(eventName), {
-      ...input.data,
+    const payload = sanitizeServerEventInput(input.identity.payload ?? {});
+    const data = sanitizeServerEventInput(input.data ?? {});
+    return buildEventPayload(payload, toCanonicalEventName(eventName), {
+      ...data,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),
@@ -173,6 +188,10 @@ export class ClickTrailServer {
       ...(input.identity.sessionNumber !== undefined
         ? { session_number: String(input.identity.sessionNumber) }
         : {}),
+    }, {
+      ...(this.siteId !== undefined ? { siteId: this.siteId } : {}),
+      ...(this.workspaceId !== undefined ? { workspaceId: this.workspaceId } : {}),
+      ...(input.identity.visitorId ? { identity: { visitorId: input.identity.visitorId } } : {}),
     });
   }
 

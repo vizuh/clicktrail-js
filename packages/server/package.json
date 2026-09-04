@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-server",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Server-side ingestion client for ClickTrail: batched delivery, lead/contact identification, booking/revenue/offline-conversion/refund events, idempotency keys.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,11 +14,16 @@
   "files": ["dist", "README.md", "LICENSE"],
   "keywords": ["attribution","server-side","ingestion","offline-conversions","idempotency","analytics"],
   "repository": { "type": "git", "url": "git+https://github.com/vizuh/clicktrail-js.git", "directory": "packages/server" },
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/packages/server#readme",
   "engines": { "node": ">=18" },
-  "scripts": { "build": "tsc -p tsconfig.build.json", "test": "vitest run" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "pretest": "pnpm --filter @vizuh/clicktrail-browser... build",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@vizuh/clicktrail-browser": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail-browser": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   },
   "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0", "vitest": "^3.2.6" },
   "sideEffects": false,

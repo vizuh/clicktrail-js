@@ -2,52 +2,56 @@
 
 Gate order matters. Do not skip ahead. Every box needs its evidence linked.
 
-## Current RC3 state
+## Current RC4 state
 
-Tag `v0.1.0-rc.3` exists, but publish run
+The `release/0.1.0-rc.4` branch contains the current release candidate. No RC4
+tag or GitHub release exists yet. The historical RC3 publish run
 [32788003812](https://github.com/vizuh/clicktrail-js/actions/runs/32788003812)
-stopped at `@vizuh/clicktrail-core`: npm returned `E404` because the new package
-does not exist yet. No new ClickTrail package was published and no GitHub
-release was created. Do not rerun the tag until each first-wave package exists
-and has its own npm trusted-publisher configuration.
+stopped at `@vizuh/clicktrail-core` because the new package did not exist on
+npm. The registry currently contains the older `@vizuh/clicktrail@0.1.0`; the
+other first-wave names still need one-time authenticated bootstrap and
+package-level trusted-publisher configuration.
 
 ## 0. Governance (blocking everything)
-- [ ] Copyright holder decided (Hugo Carvalho personally vs Vizuh OÜ) -> LICENSE + package metadata updated
-- [ ] Namespace decided (@apointoo vs @vizuh vs personal) -> see OWNER-NAMESPACE-DECISION.md change matrix applied
-- [ ] B1 attestation approved by Hugo verbatim (historical contributors)
-- [ ] B2 attestation approved by Hugo verbatim (Apointoo channel-classify.ts) OR implementation independently rewritten
-- [ ] B3 attestation approved by Hugo verbatim (AI-assisted commits)
+- [x] Copyright holder decided: Vizuh OÜ; LICENSE and package metadata match
+- [x] Namespace decided (`@vizuh`) and applied to current package manifests -> see OWNER-NAMESPACE-DECISION.md
+- [x] B1 approved by Hugo for RC4 (historical contributors)
+- [x] B2 approved by Hugo for RC4 (Apointoo channel-classify.ts)
+- [x] B3 approved by Hugo for RC4 (AI-assisted commits)
+- [x] B4 resolved: authenticated org ownership/read-write package access and artifact audit verified
+- [x] `RELEASE-AUTHORIZATION.json` completed by the accountable owner and
+  `CLICKTRAIL_RELEASE_VERSION=0.1.0-rc.4 node tools/release/verify-release-authorization.mjs` passes
 
 ## 1. Repository
 - [x] Public remote: `https://github.com/vizuh/clicktrail-js`
 - [x] Namespace decision recorded: `@vizuh/clicktrail`
-- [ ] License/provenance approved (required before npm publication)
+- [x] License/provenance approved for the five-package RC4 wave
 
 ## 2. Remote CI green
 - [ ] verify job green on Node 18, 20, and 22
 - [ ] integration job green: Chromium, Firefox, and WebKit probes 12/12 on clean runners
 - [ ] parity harness: either ran with sibling checkout, OR skipped WITH visible step-summary warning; require_parity dispatch exercised once successfully
-- [ ] pack smoke job green (clean-room install of `@vizuh/clicktrail`; Astro package deferred)
+- [ ] pack smoke job green for core, browser, umbrella, Astro, and Nuxt exact tarballs
 - [ ] build reproducible on clean runner (no local filesystem assumptions)
 
 ## 3. Package
-- [ ] `@vizuh/clicktrail` version set to `0.1.0-rc.3` after CI and governance gates pass
-- [ ] Commit package version and create matching Git tag `v0.1.0-rc.3`
-- [ ] `pnpm pack --dry-run` tarballs reviewed file-by-file: only dist/, README.md, package.json, LICENSE
-- [ ] leak scan re-run: no .env / credentials / private fixtures / internal docs
-- [ ] clean-room consumer project installs tarball; ALL subpath exports import (., /browser, /conversation, /agent, /otel, /apointoo, /incubating)
+- [x] `@vizuh/clicktrail` version set to `0.1.0-rc.4` after governance gates passed
+- [ ] Commit package version and create matching Git tag `v0.1.0-rc.4`
+- [x] Exact local `pnpm pack` tarballs reviewed and scanned for forbidden paths and credentials
+- [x] Local leak scan: no .env / credentials / private fixtures / internal docs
+- [x] Local clean-room project installs the five first-wave tarballs; nine public surfaces import
 - [ ] stamps report expected schema_version/classifier_version
 
 ## 4. npm identity
 - [ ] `npm login` done; 2FA enabled on the account
-- [ ] `npm whoami` returns expected user
-- [ ] `npm org ls <scope>` confirms ownership of the chosen org/scope
+- [x] Secret-store token `npm whoami` returns expected user `atroci`
+- [x] `npm org ls vizuh` confirms `atroci` is an owner
 - [ ] Each first-wave package exists on npm: core, browser, umbrella, Astro, Nuxt
-- [ ] Each first-wave package has trusted publisher configured for `vizuh/clicktrail-js`, `publish.yml`, environment `npm`, and `npm publish`
+- [ ] Each first-wave package has trusted publisher configured for `vizuh/clicktrail-js`, `publish.yml`, environment `npm`, and `npm publish`; workflow requires the external `CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION` secret
 
 ## 5. First publish
-- [ ] Complete one-time Hugo-authenticated npm 2FA bootstrap for any new package, then configure trusted publishing before CI retry
-- [ ] Retry the existing RC3 workflow only after the bootstrap checks pass; publish wave uses npm dist-tag `next`
+- [ ] After owner authorization passes, publish only the distinct `0.0.0-bootstrap.0` placeholders for missing names with Hugo-authenticated 2FA, then configure trusted publishing
+- [ ] Push the RC4 tag only after the bootstrap checks pass; publish wave uses npm dist-tag `next`
 - [ ] Verify npmjs.com page: description, repository link, README rendering
 - [ ] Install fresh from registry in a clean project; smoke again
 

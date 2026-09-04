@@ -110,6 +110,7 @@ export function bootClickTrailClient(
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
+    consentGate: () => !config.consentRequired || readStoredConsent(resolved.storageLike) === true,
     storage: {},
   });
 
@@ -131,14 +132,16 @@ export function bootClickTrailClient(
   };
 
   if (config.consentRequired) {
-    const granted = readStoredConsent(resolved.storageLike);
-    if (granted === true) {
-      startNow();
-    } else {
-      resolved.eventTarget.addEventListener(CONSENT_EVENT, () => {
-        if (readStoredConsent(resolved.storageLike) === true) startNow();
-      });
-    }
+    const handleConsent = (): void => {
+      const state = readStoredConsent(resolved.storageLike);
+      if (state === true) startNow();
+      else if (state === false) {
+        instance.clearData();
+        if (instance.isStarted()) instance.stop();
+      }
+    };
+    resolved.eventTarget.addEventListener(CONSENT_EVENT, handleConsent);
+    if (readStoredConsent(resolved.storageLike) === true) startNow();
   } else {
     startNow();
   }

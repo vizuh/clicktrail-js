@@ -23,7 +23,7 @@ describe('gates', () => {
     const marketingOnly: ConsentRecord = { state: 'granted', analytics: false, marketing: true };
     expect(transmissionAllowed(() => marketingOnly, 'marketing')).toBe(true);
     expect(transmissionAllowed(() => marketingOnly, 'analytics')).toBe(false);
-    expect(transmissionAllowed(() => granted, 'advertising')).toBe(true); // absent != denied
+    expect(transmissionAllowed(() => granted, 'advertising')).toBe(false);
   });
 
   it('isGranted treats unknown shapes as denied', () => {

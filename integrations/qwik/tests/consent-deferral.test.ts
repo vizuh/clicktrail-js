@@ -95,7 +95,7 @@ describe('consent gates (port of packages/consent)', () => {
   });
 
   it('transmissionAllowed honors purpose flags with analytics default', () => {
-    expect(transmissionAllowed(() => ({ state: 'granted' }))).toBe(true);
+    expect(transmissionAllowed(() => ({ state: 'granted' }))).toBe(false);
     expect(transmissionAllowed(() => ({ state: 'granted', advertising: false }), 'advertising')).toBe(false);
     expect(transmissionAllowed(() => ({ state: 'granted', marketing: true }), 'marketing')).toBe(true);
     expect(transmissionAllowed(() => null)).toBe(false);
@@ -137,6 +137,27 @@ describe('bootClickTrailClient consent deferral', () => {
     await client.whenStarted();
     expect(started).toBe(true);
     expect(client.instance.isStarted()).toBe(true);
+    client.instance.hydrateStoredPayload({ gclid: 'test-click' });
+
+    jar.write('ct_consent=denied');
+    target.dispatchEvent({ type: CONSENT_EVENT });
+    expect(client.instance.isStarted()).toBe(false);
+    expect(client.instance.getField('gclid')).toBe('');
+  });
+
+  it('does not merge initial attribution before consent', () => {
+    const { jar } = jarFrom();
+    const booted = bootClickTrailClient(config, {
+      cookieJar: jar,
+      navigationSeam: {
+        href: () => 'https://example.com/?utm_source=google',
+        referrer: () => '',
+        host: () => 'example.com',
+        onNavigate: () => () => undefined,
+      },
+    });
+
+    expect(booted.instance.getField('ft_source')).toBe('');
   });
 
   it('stays dormant forever on explicit denial until re-consented', async () => {

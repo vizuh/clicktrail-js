@@ -7,6 +7,8 @@
  * runtime fetch or filesystem lookup.
  */
 
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
+
 /** Vite define key holding the serialized client boot config. */
 export const CLIENT_CONFIG_GLOBAL = '__CLICKTRAIL_CLIENT_CONFIG__';
 
@@ -50,8 +52,8 @@ const FORBIDDEN_FORWARD_HEADERS = new Set([
 
 /** Validate build-time proxy settings before they reach a request handler. */
 export function validateProxyConfig(config: ClickTrailProxyConfig): ClickTrailProxyConfig {
-  if (!config.upstream || !/^https?:\/\//i.test(config.upstream)) {
-    throw new Error('clicktrail proxy: upstream must be an absolute http(s) URL.');
+  if (!config.upstream || !isSafeHttpUrl(config.upstream)) {
+    throw new Error('clicktrail proxy: upstream must be a public absolute https URL.');
   }
   if (!Number.isSafeInteger(config.maxBodyBytes) || config.maxBodyBytes < 1) {
     throw new Error('clicktrail proxy: maxBodyBytes must be a positive safe integer.');

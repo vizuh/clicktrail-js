@@ -89,10 +89,10 @@ export const integrations: Integration[] = [
     slug: 'sveltekit',
     name: 'SvelteKit',
     category: 'Frameworks',
-    npmName: '@clicktrail/sveltekit',
+    npmName: '@vizuh/clicktrail-sveltekit',
     repoUrl: `${MONO}/tree/master/integrations/sveltekit`,
     monorepoPath: 'integrations/sveltekit',
-    installCommand: 'npm install @clicktrail/sveltekit',
+    installCommand: 'npm install @vizuh/clicktrail-sveltekit',
     summary:
       'SvelteKit handle hook and layout component: landing UTMs and click IDs captured server-side, page views deduped across client navigations, conversions sent from form actions.',
     features: [
@@ -108,14 +108,14 @@ export const integrations: Integration[] = [
     slug: 'sv',
     name: 'Svelte CLI add-on',
     category: 'Frameworks',
-    npmName: '@clicktrail/sv',
+    npmName: '@vizuh/clicktrail-sv',
     repoUrl: `${MONO}/tree/master/integrations/sv`,
     monorepoPath: 'integrations/sv',
-    installCommand: 'npx sv add @clicktrail/sv',
+    installCommand: 'npx sv add @vizuh/clicktrail-sv',
     summary:
       'Experimental Svelte CLI add-on that scaffolds the SvelteKit hook, root layout, environment placeholder, and a server-side conversion example.',
     features: [
-      'Scaffolds the @clicktrail/sveltekit server hook and root layout component',
+      'Scaffolds the @vizuh/clicktrail-sveltekit server hook and root layout component',
       'Adds a .env placeholder for the site ID and optional first-party proxy',
       'Includes an example server-side conversion endpoint',
       'Applies only to SvelteKit projects and avoids unstable sv runtime imports',
@@ -279,7 +279,7 @@ export const integrations: Integration[] = [
     features: [
       'Senders: track, lead, conversion, booking, refund, consent — all return ClickTrailResult(ok, status, event_id)',
       'Never raises for network failures; validation errors raise TypeError before sending',
-      'Deterministic event ids via derive_stable_event_id (fnv1a32 pair mirroring the JS core) when external_key is given',
+      'Deterministic event ids via derive_stable_event_id (sha256-128-v1, matching the JS core) when external_key is given',
       'Injectable http_post transport for tests; default uses urllib.request',
       'Helpers: ids, events, retry, landing.parse_landing / classify_referrer',
     ],

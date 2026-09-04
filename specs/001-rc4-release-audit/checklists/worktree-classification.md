@@ -1,0 +1,204 @@
+# RC4 Worktree Classification
+
+Generated from `git status --short --untracked-files=all` before any staging.
+Refresh this file after the diff changes. No file is staged by this classification.
+
+## Rules
+
+- Release candidate paths may enter the RC4 implementation PR after review.
+- Audit/governance paths may enter the review PR, but package allowlists must keep them out of tarballs.
+- OSS outreach paths belong in a separate commit or PR and must not be staged with RC4.
+- No unrelated path was detected. Activepieces metadata is present, but the package remains explicitly deferred from packing and publication.
+
+## Counts
+
+- Release candidate — runtime, package, docs, workflow, or site scope: **106** paths
+- Audit/governance evidence — intentional RC4 review scope, never npm artifact: **50** paths
+- OSS outreach — separate commit/PR; exclude from RC4 release staging: **22** paths
+
+## Release candidate — runtime, package, docs, workflow, or site scope
+
+- ` M` `.github/workflows/ci.yml`
+- ` M` `.github/workflows/publish.yml`
+- ` M` `CHANGELOG.md`
+- ` M` `CONTRIBUTING.md`
+- ` M` `README.en.md`
+- ` M` `README.md`
+- ` M` `docs/EVENT-CONTRACT.md`
+- ` M` `docs/RESTRUCTURE-PLAN.md`
+- ` M` `docs/TUTORIALS.md`
+- ` M` `docs/internal/FIRST-PUBLICATION-CHECKLIST.md`
+- ` M` `docs/internal/OWNER-NAMESPACE-DECISION.md`
+- ` M` `docs/internal/PROVENANCE-AUDIT.md`
+- ` M` `docs/internal/RELEASE-READINESS-REVIEW.md`
+- ` M` `docs/internal/WORK-QUEUE.md`
+- ` M` `integrations/activepieces/package.json`
+- ` M` `integrations/astro/README.md`
+- ` M` `integrations/astro/package.json`
+- ` M` `integrations/astro/src/client.ts`
+- ` M` `integrations/astro/src/config.ts`
+- ` M` `integrations/astro/tests/client-boot.test.ts`
+- ` M` `integrations/astro/tests/proxy.test.ts`
+- ` M` `integrations/directus/README.md`
+- ` M` `integrations/directus/package.json`
+- ` M` `integrations/directus/src/TRUST-MODEL.md`
+- ` M` `integrations/directus/src/api/hook.ts`
+- ` M` `integrations/directus/src/api/operation.ts`
+- ` M` `integrations/directus/src/lib/settings.ts`
+- ` M` `integrations/directus/tests/operation.test.ts`
+- ` M` `integrations/directus/tests/settings.test.ts`
+- ` M` `integrations/n8n/package.json`
+- ` M` `integrations/n8n/src/credentials/ClickTrailApi.credentials.ts`
+- ` M` `integrations/nuxt/README.md`
+- ` M` `integrations/nuxt/package.json`
+- ` M` `integrations/nuxt/src/client.ts`
+- ` M` `integrations/nuxt/src/config.ts`
+- ` M` `integrations/nuxt/tests/consent.test.ts`
+- ` M` `integrations/nuxt/tests/nitro-handler.test.ts`
+- ` M` `integrations/qwik/package.json`
+- ` M` `integrations/qwik/src/browser.ts`
+- ` M` `integrations/qwik/tests/consent-deferral.test.ts`
+- ` M` `integrations/sv/README.md`
+- ` M` `integrations/sv/package.json`
+- ` M` `integrations/sv/src/addon.ts`
+- ` M` `integrations/sv/src/generate.ts`
+- ` M` `integrations/sv/src/index.ts`
+- ` M` `integrations/sv/tests/addon.test.ts`
+- ` M` `integrations/sveltekit/README.md`
+- ` M` `integrations/sveltekit/package.json`
+- ` M` `integrations/sveltekit/src/ClickTrail.svelte`
+- ` M` `integrations/sveltekit/src/client.ts`
+- ` M` `integrations/sveltekit/src/config.ts`
+- ` M` `integrations/sveltekit/src/handle.ts`
+- ` M` `integrations/sveltekit/src/index.ts`
+- ` M` `integrations/sveltekit/src/proxy.ts`
+- ` M` `integrations/sveltekit/src/server-events.ts`
+- ` M` `integrations/sveltekit/tests/handle.test.ts`
+- ` M` `integrations/sveltekit/tests/proxy.test.ts`
+- ` M` `integrations/typebot/package.json`
+- ` M` `package.json`
+- ` M` `packages/browser/package.json`
+- ` M` `packages/browser/src/browser/create-clicktrail.ts`
+- ` M` `packages/browser/src/browser/storage.ts`
+- ` M` `packages/browser/src/browser/transport.ts`
+- ` M` `packages/browser/tests/browser-create-clicktrail.test.ts`
+- ` M` `packages/browser/tests/browser-http-destination.test.ts`
+- ` M` `packages/browser/tests/browser-storage.test.ts`
+- ` M` `packages/clicktrail/README.md`
+- ` M` `packages/clicktrail/package.json`
+- ` M` `packages/consent/package.json`
+- ` M` `packages/core/package.json`
+- ` M` `packages/core/src/core/index.ts`
+- ` M` `packages/core/src/ids.ts`
+- ` M` `packages/server/package.json`
+- ` M` `packages/server/src/index.ts`
+- ` M` `packages/server/src/server.ts`
+- ` M` `packages/server/tests/server.test.ts`
+- ` M` `pnpm-lock.yaml`
+- ` M` `python/clicktrail/README.md`
+- ` M` `python/clicktrail/clicktrail/ids.py`
+- ` M` `python/clicktrail/tests/test_ids.py`
+- ` M` `site/src/data/integrations.ts`
+- `??` `docs/internal/RELEASE-AUTHORIZATION.json`
+- `??` `fixtures/stable-event-id-v1.json`
+- `??` `integrations/formbricks/LICENSE`
+- `??` `integrations/formbricks/README.md`
+- `??` `integrations/formbricks/package.json`
+- `??` `integrations/formbricks/src/index.ts`
+- `??` `integrations/formbricks/src/webhook.ts`
+- `??` `integrations/formbricks/tests/index.test.ts`
+- `??` `integrations/formbricks/tests/webhook.test.ts`
+- `??` `integrations/formbricks/tsconfig.build.json`
+- `??` `integrations/formbricks/tsconfig.json`
+- `??` `integrations/sveltekit/scripts/check-component.mjs`
+- `??` `integrations/sveltekit/tests/client-consent.test.ts`
+- `??` `packages/browser/README.md`
+- `??` `packages/consent/README.md`
+- `??` `packages/core/README.md`
+- `??` `packages/core/src/core/url.ts`
+- `??` `packages/core/tests/ids.test.ts`
+- `??` `packages/core/tests/url.test.ts`
+- `??` `packages/server/README.md`
+- `??` `packages/server/src/tenant-adapter.ts`
+- `??` `packages/server/tests/tenant-adapter.test.ts`
+- `??` `tools/release/bootstrap-new-packages.sh`
+- `??` `tools/release/verify-packed-internal-versions.sh`
+- `??` `tools/release/verify-release-authorization.mjs`
+
+## Audit/governance evidence — intentional RC4 review scope, never npm artifact
+
+- `??` `.agents/skills/speckit-agent-context-update/SKILL.md`
+- `??` `.agents/skills/speckit-analyze/SKILL.md`
+- `??` `.agents/skills/speckit-checklist/SKILL.md`
+- `??` `.agents/skills/speckit-clarify/SKILL.md`
+- `??` `.agents/skills/speckit-constitution/SKILL.md`
+- `??` `.agents/skills/speckit-implement/SKILL.md`
+- `??` `.agents/skills/speckit-plan/SKILL.md`
+- `??` `.agents/skills/speckit-specify/SKILL.md`
+- `??` `.agents/skills/speckit-tasks/SKILL.md`
+- `??` `.agents/skills/speckit-taskstoissues/SKILL.md`
+- `??` `.specify/extensions.yml`
+- `??` `.specify/extensions/.registry`
+- `??` `.specify/extensions/agent-context/README.md`
+- `??` `.specify/extensions/agent-context/agent-context-config.yml`
+- `??` `.specify/extensions/agent-context/commands/speckit.agent-context.update.md`
+- `??` `.specify/extensions/agent-context/extension.yml`
+- `??` `.specify/extensions/agent-context/scripts/bash/update-agent-context.sh`
+- `??` `.specify/extensions/agent-context/scripts/powershell/update-agent-context.ps1`
+- `??` `.specify/init-options.json`
+- `??` `.specify/integration.json`
+- `??` `.specify/integrations/codex.manifest.json`
+- `??` `.specify/integrations/speckit.manifest.json`
+- `??` `.specify/memory/constitution.md`
+- `??` `.specify/scripts/bash/check-prerequisites.sh`
+- `??` `.specify/scripts/bash/common.sh`
+- `??` `.specify/scripts/bash/create-new-feature.sh`
+- `??` `.specify/scripts/bash/setup-plan.sh`
+- `??` `.specify/scripts/bash/setup-tasks.sh`
+- `??` `.specify/templates/checklist-template.md`
+- `??` `.specify/templates/constitution-template.md`
+- `??` `.specify/templates/plan-template.md`
+- `??` `.specify/templates/spec-template.md`
+- `??` `.specify/templates/tasks-template.md`
+- `??` `.specify/workflows/speckit/workflow.yml`
+- `??` `.specify/workflows/workflow-registry.json`
+- `??` `AGENTS.md`
+- `??` `specs/001-rc4-release-audit/checklists/audit-results.json`
+- `??` `specs/001-rc4-release-audit/checklists/final-audit-verdict.md`
+- `??` `specs/001-rc4-release-audit/checklists/package-artifact-audit.json`
+- `??` `specs/001-rc4-release-audit/checklists/prompt-audit.md`
+- `??` `specs/001-rc4-release-audit/checklists/prompt-catalog.json`
+- `??` `specs/001-rc4-release-audit/checklists/requirements.md`
+- `??` `specs/001-rc4-release-audit/checklists/worktree-classification.md`
+- `??` `specs/001-rc4-release-audit/contracts/audit-result.schema.json`
+- `??` `specs/001-rc4-release-audit/data-model.md`
+- `??` `specs/001-rc4-release-audit/plan.md`
+- `??` `specs/001-rc4-release-audit/quickstart.md`
+- `??` `specs/001-rc4-release-audit/research.md`
+- `??` `specs/001-rc4-release-audit/spec.md`
+- `??` `specs/001-rc4-release-audit/tasks.md`
+
+## OSS outreach — separate commit/PR; exclude from RC4 release staging
+
+- ` M` `integrations/sv/UPSTREAM-ISSUE-DRAFT.md`
+- ` M` `integrations/typebot/UPSTREAM-ISSUE-DRAFT.md`
+- `??` `docs/OSS-CONTRIBUTION-PLAN.md`
+- `??` `docs/oss-contributions/aire-attribution-recipe-issue.md`
+- `??` `docs/oss-contributions/atomic-crm-provenance-issue.md`
+- `??` `docs/oss-contributions/bagisto-cart-order-context-issue.md`
+- `??` `docs/oss-contributions/comp-ai-provenance-short-note.md`
+- `??` `docs/oss-contributions/craue-formflow-attribution-issue.md`
+- `??` `docs/oss-contributions/django-appointment-booking-metadata-issue.md`
+- `??` `docs/oss-contributions/django-crm-attribution-issue.md`
+- `??` `docs/oss-contributions/easyappointments-acquisition-context-issue.md`
+- `??` `docs/oss-contributions/formeo-attribution-example-issue.md`
+- `??` `docs/oss-contributions/formsnap-attribution-example-issue.md`
+- `??` `docs/oss-contributions/frappe-appointment-extension-issue.md`
+- `??` `docs/oss-contributions/librebooking-attribution-issue.md`
+- `??` `docs/oss-contributions/nextcrm-attribution-issue.md`
+- `??` `docs/oss-contributions/nextjs-woocommerce-attribution-issue.md`
+- `??` `docs/oss-contributions/nimara-checkout-context-issue.md`
+- `??` `docs/oss-contributions/opensalon-attribution-metadata-issue.md`
+- `??` `docs/oss-contributions/phplist-php-attribution-issue.md`
+- `??` `docs/oss-contributions/relaticle-provenance-discussion.md`
+- `??` `docs/oss-contributions/relaticle-provenance-issue.md`

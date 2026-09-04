@@ -36,8 +36,10 @@ and inherits the app's own authentication.**
 
 - Scope env vars to exactly the four above; no shared credentials.
 - The collector API key lives only in env (`CLICKTRAIL_API_KEY`) or per-flow
-  operation config — never in dashboard state. The settings module stores a
-  **masked** display value (`ab…yz`) only.
+  operation config — never in dashboard state. The env key is used only with
+  the env-configured endpoint; a per-flow endpoint must provide its own key or
+  sends without one. The settings module stores a **masked** display value
+  (`ab…yz`) only.
 - Prefer `CLICKTRAIL_STORE_LOCALLY=true` when possible: the panel then reads
   locally and no dashboard surface needs external network at all.
 - Restrict read access to `clicktrail_events` to roles that may see lead

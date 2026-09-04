@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-nuxt",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "First-party attribution and conversion tracking for Nuxt. Boots the ClickTrail browser SDK SSR-safely, tracks page views across router navigations without duplicates, gates on consent via a shared cookie, adds an optional first-party Nitro proxy route, and ships server-side helpers for leads, bookings, and purchases.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -62,7 +63,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/nuxt"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/packages/nuxt#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/nuxt#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -74,8 +75,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vizuh/clicktrail": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   },
   "peerDependencies": {
     "@vizuh/clicktrail": "workspace:^",

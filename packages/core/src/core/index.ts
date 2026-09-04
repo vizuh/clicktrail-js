@@ -1,4 +1,5 @@
 export { parseAttributionUrl, readQuery, referrerHostOf } from './parse.js';
+export { isSafeHttpUrl } from './url.js';
 export { mergeAttributionTouch, extractClickIds, emptyAttribution, stampVersions } from './merge.js';
 export { sanitizeField, normalizeHost, hostMatches, areRelatedHosts } from './sanitize.js';
 export { resolveChannelLabel, CHANNEL_LABELS, CHANNEL_LABELS_VERSION } from './knowledge.js';

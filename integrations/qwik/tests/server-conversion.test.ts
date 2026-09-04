@@ -21,6 +21,7 @@ describe('ClickTrailServer conversion matrix', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://collector.test/collect');
+    expect(init.redirect).toBe('error');
     const body = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     expect(body.events).toHaveLength(1);
     const event = body.events[0]!;
@@ -77,6 +78,7 @@ describe('ClickTrailServer conversion matrix', () => {
   it('constructor requires a non-empty endpoint', () => {
     expect(() => new ClickTrailServer({ endpoint: '' })).toThrow(TypeError);
     expect(() => new ClickTrailServer({ endpoint: '   ' })).toThrow(TypeError);
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
   });
 
   it('network failure degrades to {ok:false,status:0} — never throws', async () => {

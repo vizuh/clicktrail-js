@@ -1,6 +1,5 @@
 # @vizuh/clicktrail-astro
 
-[![Socket Badge](https://badge.socket.dev/npm/package/%40clicktrail%2Fastro)](https://socket.dev/npm/package/%40clicktrail%2Fastro)
 
 First-party attribution and conversion tracking for [Astro](https://astro.build).
 

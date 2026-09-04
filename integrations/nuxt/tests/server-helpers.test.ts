@@ -75,6 +75,7 @@ describe('ClickTrailServer', () => {
       now: '2026-01-01T00:00:00.000Z',
     });
     const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    expect(init.redirect).toBe('error');
     const body = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     expect(body.events).toHaveLength(1);
     const event = body.events[0]!;
@@ -123,5 +124,6 @@ describe('ClickTrailServer', () => {
 
   it('requires a non-empty endpoint at construction', () => {
     expect(() => new ClickTrailServer({ endpoint: ' ' })).toThrow(/endpoint/);
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
   });
 });

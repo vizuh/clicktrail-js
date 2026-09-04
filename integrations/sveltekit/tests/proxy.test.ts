@@ -30,6 +30,7 @@ describe('createProxyHandler status matrix', () => {
     const headers = new Headers(init.headers);
     expect(headers.get('user-agent')).toBe('UA-1');
     expect(headers.get('x-forwarded-for')).toBeNull();
+    expect(init.redirect).toBe('error');
   });
 
   it('returns 405 for GET and non-POST methods', async () => {
@@ -74,7 +75,9 @@ describe('createProxyHandler status matrix', () => {
   });
 
   it('rejects unsafe configs before any request handling', () => {
-    expect(() => createProxyHandler(defaultProxyConfig(), fetch)).toThrow(/absolute http\(s\)/);
+    expect(() => createProxyHandler(defaultProxyConfig(), fetch)).toThrow(/public absolute https/);
+    expect(() => createProxyHandler(makeConfig({ upstream: 'https://' }), fetch)).toThrow(/public absolute https/);
+    expect(() => createProxyHandler(makeConfig({ upstream: 'https://user:pass@up.example.com' }), fetch)).toThrow(/public absolute https/);
     expect(() => createProxyHandler(makeConfig({ forwardHeaders: ['cookie'] }), fetch)).toThrow(/unsafe header/);
   });
 

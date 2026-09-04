@@ -46,7 +46,7 @@ describe('validateSettings', () => {
     expect(validateSettings({ siteId: 's', endpoint: 'notaurl' }).errors.join(' ')).toContain('endpoint');
     expect(
       validateSettings({ siteId: 's', endpoint: 'ftp://x.test' }).errors.join(' '),
-    ).toContain('http(s)');
+    ).toContain('public absolute https');
     const badMappings = validateSettings({ siteId: 's', fieldMappings: { a: 1 } });
     expect(badMappings.valid).toBe(false);
     expect(badMappings.errors.join(' ')).toContain('fieldMappings');

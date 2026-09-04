@@ -1,6 +1,5 @@
 # @vizuh/clicktrail-nuxt
 
-[![Socket Badge](https://badge.socket.dev/npm/package/%40clicktrail%2Fnuxt)](https://socket.dev/npm/package/%40clicktrail%2Fnuxt)
 
 First-party attribution and conversion tracking for [Nuxt](https://nuxt.com).
 
@@ -45,7 +44,7 @@ Alternatively pass it inline at build time with `firstPartyProxy: { upstream: 'h
 | Browser SDK injection | The module registers `@vizuh/clicktrail-nuxt/plugin` as a client plugin; SSR renders stay side-effect free. |
 | Route-change tracking | Page views hook into `router.afterEach`; a URL-keyed dedupe (pathname + search) prevents duplicates for the same document. Query changes track; fragment changes don't. Real reloads count again. |
 | First/last-touch attribution | Every URL change re-parses the landing URL and merges touches through the SDK's canonical payload store (`ft_*` preserved, `lt_*` updated) when `captureClickIds` is enabled. |
-| Consent | With `consentRequired: true`, nothing starts or persists until consent lands in the shared `ct_consent` cookie. Denying later calls `stop()` on the running instance. |
+| Consent | With `consentRequired: true`, nothing starts or persists until consent lands in the shared `ct_consent` cookie. Denying later clears attribution and buffered events, then stops the running instance. |
 | First-party proxy | Registers `POST /api/clicktrail` on Nitro, forwards bounded batches upstream, strips visitor IPs, allowlists forwarded headers. |
 | Server-side conversions | `@vizuh/clicktrail-nuxt/server` exports `ClickTrailServer` with `trackLead`, `trackBooking`, `trackPurchase`. |
 
@@ -90,7 +89,7 @@ function onAccept() {
 </script>
 ```
 
-Granting starts a deferred instance immediately. Denying (`setConsent(false)`) stops a started instance and persists the denial. Pre-consent navigations merge touches in memory only — no cookies or storage writes.
+Granting starts a deferred instance immediately. Denying (`setConsent(false)`) clears attribution, stops a started instance, and persists the denial. Pre-consent navigations merge touches in memory only — no cookies or storage writes.
 
 ## useClicktrail()
 

@@ -46,6 +46,8 @@ describe('mapVariables', () => {
     expect(normalizeConsent('no')).toBe('withdrawn');
     expect(normalizeConsent('policy_updated')).toBe('policy_updated');
     expect(normalizeConsent('policy updated')).toBe('policy_updated');
+    expect(normalizeConsent('pending')).toBeUndefined();
+    expect(normalizeConsent('declined')).toBeUndefined();
     expect(normalizeConsent('')).toBeUndefined();
   });
 

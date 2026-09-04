@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Deterministic engine for parsing and carrying observed acquisition context to configured application boundaries.",
   "license": "MIT",
   "type": "module",
@@ -87,13 +87,13 @@
   "directories": {
     "test": "tests"
   },
-  "author": "",
+  "author": "Vizuh OÜ",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
   "homepage": "https://github.com/vizuh/clicktrail-js#readme",
   "dependencies": {
-    "@vizuh/clicktrail-browser": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail-browser": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   }
 }

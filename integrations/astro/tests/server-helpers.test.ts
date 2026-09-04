@@ -63,6 +63,7 @@ describe('ClickTrailServer', () => {
     expect(result).toEqual({ ok: true, status: 204 });
 
     const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    expect(init.redirect).toBe('error');
     const sent = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     const event = sent.events[0]!;
     expect(event['event_name']).toBe('lead_created');
@@ -105,5 +106,9 @@ describe('ClickTrailServer', () => {
       }),
     );
     await expect(server.trackLead({ identity: { payload: {} } })).resolves.toEqual({ ok: false, status: 0 });
+  });
+
+  it('rejects non-public collector destinations at construction', () => {
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
   });
 });

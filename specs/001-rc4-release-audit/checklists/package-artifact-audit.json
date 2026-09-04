@@ -1,0 +1,243 @@
+{
+  "scope": "RC4 working tree; not a reviewed commit",
+  "firstWave": [
+    "@vizuh/clicktrail-core",
+    "@vizuh/clicktrail-browser",
+    "@vizuh/clicktrail",
+    "@vizuh/clicktrail-astro",
+    "@vizuh/clicktrail-nuxt"
+  ],
+  "packages": [
+    {
+      "name": "directus-extension-clicktrail",
+      "version": "0.1.0-rc.4",
+      "tarball": "directus-extension-clicktrail-0.1.0-rc.4.tgz",
+      "sha256": "9fb2a369da3ef48b703779ba622aa5aa01a5be3fe5cdd0ba882b0082dc7d0053",
+      "fileCount": 41,
+      "internalDependencies": {
+        "@vizuh/clicktrail-core": "0.1.0-rc.4",
+        "@vizuh/clicktrail": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "n8n-nodes-clicktrail",
+      "version": "0.1.0-rc.4",
+      "tarball": "n8n-nodes-clicktrail-0.1.0-rc.4.tgz",
+      "sha256": "e988403544287d5e62d5a09a86d6232f2731eba9c6c5fae78c2e3a9cb82bf7bd",
+      "fileCount": 20,
+      "internalDependencies": {
+        "@vizuh/clicktrail": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-0.1.0-rc.4.tgz",
+      "sha256": "42c23399f5ea5e288820e445962f02e4ed4731f470d83774b80a81286addf81e",
+      "fileCount": 152,
+      "internalDependencies": {
+        "@vizuh/clicktrail-core": "0.1.0-rc.4",
+        "@vizuh/clicktrail-browser": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-astro",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-astro-0.1.0-rc.4.tgz",
+      "sha256": "6d1b9e2ad3642e31521b0c1854142f00fb1976b1f0f9fd48c643a924fefd4466",
+      "fileCount": 31,
+      "internalDependencies": {
+        "@vizuh/clicktrail": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-browser",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-browser-0.1.0-rc.4.tgz",
+      "sha256": "c35addaa52184592182c9cf9f53c7578d290654738f5d193a6d1b4fa058576f4",
+      "fileCount": 51,
+      "internalDependencies": {
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-consent",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-consent-0.1.0-rc.4.tgz",
+      "sha256": "609cdd7a4f7414fd9b39fae1979acf62070c83d9de4cc08d4dff921dddc01d40",
+      "fileCount": 19,
+      "internalDependencies": {
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-core",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-core-0.1.0-rc.4.tgz",
+      "sha256": "78456fa200ddfdd4eacf74768ae5252a04a064a24cbc81b4cc12cfd26e32214e",
+      "fileCount": 63,
+      "internalDependencies": {},
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-formbricks",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-formbricks-0.1.0-rc.4.tgz",
+      "sha256": "c0844801db0783b903e581967f7215944d85319f64bfeba64097a4504d5d7157",
+      "fileCount": 11,
+      "internalDependencies": {
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-nuxt",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-nuxt-0.1.0-rc.4.tgz",
+      "sha256": "83595387122705763cb11a29433f9b386ee25b442e83a420f00bb34c415baa6b",
+      "fileCount": 56,
+      "internalDependencies": {
+        "@vizuh/clicktrail": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-qwik",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-qwik-0.1.0-rc.4.tgz",
+      "sha256": "fb567f9d1c634d26f6132c281542a7248304309ae8965252b4f18456331fb019",
+      "fileCount": 24,
+      "internalDependencies": {
+        "@vizuh/clicktrail-browser": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-server",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-server-0.1.0-rc.4.tgz",
+      "sha256": "ba6cbdcd7d15b9423f03769791c042471631ca59cec16beb390b14d728516eb8",
+      "fileCount": 15,
+      "internalDependencies": {
+        "@vizuh/clicktrail-browser": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-sv",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-sv-0.1.0-rc.4.tgz",
+      "sha256": "0614953a288ea9b7beed25507693f03bf5e48fed1a01e131e2c9faaf69911683",
+      "fileCount": 20,
+      "internalDependencies": {
+        "@vizuh/clicktrail-sveltekit": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-sveltekit",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-sveltekit-0.1.0-rc.4.tgz",
+      "sha256": "14fa4bf690d1ad07aa2f5752992b7737a0aebe8a074fd903a1f9fd88aa6cc816",
+      "fileCount": 52,
+      "internalDependencies": {
+        "@vizuh/clicktrail": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-typebot",
+      "version": "0.1.0-rc.4",
+      "tarball": "vizuh-clicktrail-typebot-0.1.0-rc.4.tgz",
+      "sha256": "9ac77b0eeb8bcfee0d49c10c3298a3f3c7e5de547c86330d6483aa07ea129623",
+      "fileCount": 23,
+      "internalDependencies": {
+        "@vizuh/clicktrail": "0.1.0-rc.4",
+        "@vizuh/clicktrail-core": "0.1.0-rc.4"
+      },
+      "forbiddenPathsFound": false,
+      "credentialPatternsFound": false,
+      "status": "PASS",
+      "licenseManifest": "MIT",
+      "licenseFilePresent": true
+    },
+    {
+      "name": "@vizuh/clicktrail-piece",
+      "version": "0.1.0-rc.4",
+      "status": "DEFERRED",
+      "reason": "Excluded from pnpm-workspace.yaml and RC4 publication because the Activepieces SDK pulls unpatched expr-eval. Not packed, tested, or publishable in this wave."
+    }
+  ],
+  "checks": {
+    "exactInternalVersions": "PASS (14 packed packages)",
+    "forbiddenPathScan": "PASS",
+    "credentialPatternScan": "PASS",
+    "firstWaveCleanRoomImport": "PASS (9 public import surfaces)",
+    "licenseMetadataAndFile": "PASS (14 packed packages)"
+  },
+  "publicationAuthorized": false
+}

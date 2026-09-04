@@ -1,8 +1,9 @@
 {
   "name": "@vizuh/clicktrail-qwik",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Carry observed acquisition context through Qwik City request handlers, consent-aware first-party storage, and explicit server event helpers.",
   "license": "MIT",
+  "author": "Vizuh OÜ",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -58,7 +59,7 @@
     "url": "git+https://github.com/vizuh/clicktrail-js.git",
     "directory": "integrations/qwik"
   },
-  "homepage": "https://github.com/vizuh/clicktrail-js/tree/main/integrations/qwik#readme",
+  "homepage": "https://github.com/vizuh/clicktrail-js/tree/master/integrations/qwik#readme",
   "bugs": {
     "url": "https://github.com/vizuh/clicktrail-js/issues"
   },
@@ -70,8 +71,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vizuh/clicktrail-browser": "workspace:^",
-    "@vizuh/clicktrail-core": "workspace:^"
+    "@vizuh/clicktrail-browser": "workspace:*",
+    "@vizuh/clicktrail-core": "workspace:*"
   },
   "peerDependencies": {
     "@builder.io/qwik": ">=1.0.0",
@@ -88,6 +89,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.6.0",
+    "vite": "^6.4.3",
     "vitest": "^3.2.6"
   },
   "sideEffects": false,

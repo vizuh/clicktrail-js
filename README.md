@@ -24,8 +24,10 @@ WordPress; este repositório contém o motor JavaScript compartilhado.
 
 > **Limite de versão:** consulte o [registro npm](https://www.npmjs.com/package/@vizuh/clicktrail)
 > para a versão publicada e o [GitHub Releases](https://github.com/vizuh/clicktrail-js/releases)
-> para as tags do código-fonte. Os pontos de entrada estáveis e em incubação
-> estão listados abaixo.
+> para as tags do código-fonte. O código-fonte de `0.1.0-rc.4` foi promovido para
+> `master`, mas a publicação no npm ainda depende dos gates documentados de
+> proveniência, bootstrap dos nomes e trusted publishers. Os pontos de entrada
+> estáveis e em incubação estão listados abaixo.
 
 ## Por que o ClickTrail
 
@@ -44,6 +46,12 @@ Instale o motor:
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
+```
+
+Para testar a candidata depois da publicação, use o dist-tag RC:
+
+```bash
+npm install @vizuh/clicktrail@next
 ```
 
 Faça o parsing determinístico de uma URL de chegada com clique de anúncio em Node, em um worker ou em um teste:
@@ -184,6 +192,16 @@ Comece pelos [tutoriais](docs/TUTORIALS.md). Os pacotes não configuram contas d
 ## Limites da versão
 
 As superfícies core e browser estão em desenvolvimento público. As superfícies `/conversation` e `/agent` devem permanecer limitadas a metadados e exigem os gates de privacidade documentados antes do uso com conversas, prompts, conclusões ou transcrições reais.
+
+## Processo de release
+
+1. As versões dos pacotes e o tag do GitHub devem ser iguais.
+2. O branch de release passa por CI, typecheck, testes, build, probe e smoke de tarball em clean room.
+3. Antes de criar qualquer tag, conclua o bootstrap único dos novos nomes em `tools/release/bootstrap-new-packages.sh` e configure os trusted publishers no npmjs.com.
+4. Com esses pré-requisitos, a revisão do PR concluída e o SHA do `master` verificado, crie o tag `v<versão>`; isso dispara `.github/workflows/publish.yml`.
+5. O workflow repete os gates e publica o primeiro wave no npm com provenance OIDC e o dist-tag `next` para versões RC.
+
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md), [FIRST-PUBLICATION-CHECKLIST.md](docs/internal/FIRST-PUBLICATION-CHECKLIST.md) e [RELEASE-READINESS-REVIEW.md](docs/internal/RELEASE-READINESS-REVIEW.md). Não coloque tokens npm no repositório ou nos workflows.
 
 ## Documentação
 

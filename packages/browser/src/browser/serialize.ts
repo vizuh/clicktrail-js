@@ -57,6 +57,26 @@ const CLICK_ID_KEYS = [
   'li_fat_id', 'sccid', 'epik',
 ] as const;
 
+const SERVER_RESERVED_KEYS = [
+  '__proto__',
+  'event_id',
+  'event_name',
+  'marketing_trail',
+  'site_id',
+  'workspace_id',
+  'visitor_id',
+  'session_id',
+  'session_number',
+  'trail_id',
+  'anonymous_id',
+] as const;
+
+export function sanitizeServerEventInput<T extends Record<string, unknown>>(input: T): T {
+  const sanitized: Record<string, unknown> = { ...input };
+  for (const key of SERVER_RESERVED_KEYS) delete sanitized[key];
+  return sanitized as T;
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value : value == null ? '' : String(value);
 }
@@ -130,8 +150,8 @@ export function buildMarketingTrailEnvelope(
     trail_id: prefixed(firstText(supplied['trail_id'], data['trail_id'], payload['trail_id'], visitorId), 'trl_'),
     anonymous_id: anonymousId,
     lead_id: leadId,
-    workspace_id: firstText(supplied['workspace_id'], data['workspace_id'], context.workspaceId),
-    site_id: firstText(supplied['site_id'], data['site_id'], context.siteId),
+    workspace_id: firstText(context.workspaceId, supplied['workspace_id'], data['workspace_id']),
+    site_id: firstText(context.siteId, supplied['site_id'], data['site_id']),
     event_name: firstText(supplied['event_name'], canonicalEventName(eventName)),
     occurred_at: firstText(supplied['occurred_at'], data['occurred_at'], data['event_time']),
     landing_page: firstText(supplied['landing_page'], touchValue(payload, 'landing_page', data)),

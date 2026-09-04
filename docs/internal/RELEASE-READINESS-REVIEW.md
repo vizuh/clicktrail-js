@@ -2,7 +2,11 @@
 
 Date: 2026-08-25
 Reviewed baseline: current release-candidate worktree; follow-up fixes applied after review
-Packages: first wave is versioned `0.1.0-rc.3`; new packages remain unpublished
+Packages: first wave is versioned `0.1.0-rc.4`; new packages remain unpublished
+First wave only: core, browser, umbrella, Astro, and Nuxt. Activepieces is
+explicitly deferred and excluded from `pnpm-workspace.yaml` because its SDK
+pulls unpatched `expr-eval`; it is not covered by RC4 aggregate validation and
+must not be packed or published in this wave.
 Scope: clean installation, package exports, runtime compatibility, browser and
 Node behavior, CI/release workflow, supply-chain checks, privacy boundaries,
 enterprise integration, and AI workflow safety.
@@ -20,6 +24,17 @@ GitHub release was created. Trusted-publisher configuration is package-specific;
 the one-time npm 2FA bootstrap must happen before CI can publish new package
 names.
 
+Current RC4 follow-up: the release branch and package metadata are prepared, but
+there is no RC4 tag or GitHub release yet. `RELEASE-AUTHORIZATION.json` is
+approved for this five-package scope; namespace bootstrap and the tag workflow
+still fail closed until their separate identity, trusted-publisher, review, and
+remote-check gates pass. Public npm inspection shows the older
+`@vizuh/clicktrail@0.1.0`; the other first-wave package names are absent. The
+canonical `NPM_TOKEN` authenticates as npm user `atroci`, an owner of the
+`vizuh` organization with read-write account access to the existing package.
+Its publish scope is not proven without an irreversible registry write, so the
+one-time bootstrap has not been run.
+
 The original release blockers were:
 
 1. `/agent` and `/conversation` claim metadata-only/content-safe behavior, but
@@ -29,13 +44,12 @@ The original release blockers were:
    provision shared signing state or inject matching `sign`/`verify` functions.
 3. The WP parity enforcement path is documented but cannot be dispatched from
    the current CI workflow.
-4. The provenance audit still records unresolved MIT publication conditions
-   B1-B4.
+4. The provenance audit required an accountable owner decision on B1-B4.
 
-`AI-001`, `XDOM-001`, and `REL-001` are resolved in the follow-up patch.
-`GOV-001` remains a publication governance risk. The package may be published
-only under the owner's explicit decision to accept that unresolved provenance
-gate; this report does not invent the missing attestations.
+`AI-001`, `XDOM-001`, and `REL-001` are resolved in the follow-up patch. On
+2026-08-25 the owner selected Vizuh OÜ, approved B1-B3, and resolved B4 plus
+`GOV-001` for the five-package RC4 wave. Later waves and stable publication
+remain outside that authorization.
 
 ## Gate matrix
 
@@ -51,18 +65,20 @@ decisions.
 | `PRIV-001` | Closed in follow-up | Codex | Cookie defaults and HTTPS `Secure` behavior verified at host edge | Technical readiness only |
 | `API-001` | Closed in documentation | Codex | Node 18/20/22 import matrix and explicit ESM-only contract | JS release candidate |
 | `DOC-001` | Closed | Codex | README, subpath, version-stamp, and workflow claims match shipped behavior | JS release candidate |
-| `GOV-001` | Open | Hugo | Owner attestations close provenance audit items B1-B4 | No npm publication or `latest` tag |
+| `GOV-001` | Closed for RC4 | Hugo | `RELEASE-AUTHORIZATION.json` and owner decision close B1-B4 | Five-package `next` wave only; stable publication excluded |
 | WP parity | Open: 10 approved ruled deviations, 0 unruled findings | Codex | Keep approved deviations explicit before claiming field parity or swapping runtimes | No full field-parity claim; SVN submission remains separately gated |
 
 Publication targets remain conditional: plugin GitHub release, JS
-`0.1.0-rc.3` GitHub release, npm `next`, and WordPress.org SVN submission each
+`0.1.0-rc.4` GitHub release, npm `next`, and WordPress.org SVN submission each
 require their own reviewed evidence. A GitHub release does not prove npm
 publication or WordPress.org indexing.
 
 ## Verified passes
 
-- Local `pnpm test`: 39 files, 351 tests passed across core and Astro.
-- Local `pnpm build`: passed.
+- Local `pnpm test`: 692 tests passed across all 14 workspace projects.
+- Python `clicktrail`: 71 tests passed.
+- Local `pnpm build`: all 14 workspace projects passed, including an explicit
+  Svelte component compilation check.
 - Local browser probe: 12/12 fixtures passed.
 - GitHub CI run [32757188605](https://github.com/vizuh/clicktrail-js/actions/runs/32757188605): Node 20 and 22 verification passed; browser probe and pack smoke passed. WP parity was skipped because the sibling checkout was absent.
 - Clean tarball install: `npm install` succeeded from `vizuh-clicktrail-0.1.0.tgz`.
@@ -76,19 +92,21 @@ publication or WordPress.org indexing.
   [32788003812](https://github.com/vizuh/clicktrail-js/actions/runs/32788003812)
   failed only at npm package bootstrap after typecheck, tests, build, and
   version checks passed.
-- Release-candidate `pnpm test`: 39 files, 351 tests passed; strict typecheck,
-  build, Chromium and Firefox probes (12/12 each), production audit, and
-  clean-room pack smoke for both packages passed.
+- Current RC4 local gate passed: frozen install, typecheck, 692 JS tests,
+  71 Python tests, all builds, 12/12 probe, pinned parity, and production audit.
+  Fourteen non-Activepieces tarballs passed exact internal-version, license,
+  unexpected-path, and credential scans; the five first-wave exact tarballs
+  passed clean-room imports across nine public surfaces.
 - Follow-up local WP parity run: 0 harness errors, 15 matches, 10 approved
   ruled deviations, and 0 unruled findings in `tools/wp-runtime/PARITY-RUN.md`;
   this is not a claim of field-for-field plugin parity.
-- Tarball dry-run: 152 files, limited to `LICENSE`, `README.md`,
-  `package.json`, and `dist/` contents. No source, fixtures, tools, or
-  credentials were included.
+- RC4 tarball audit: 14 workspace packages contained only manifest-allowed
+  package files; no internal docs, specs, environment files, credentials, or
+  credential-shaped content were found.
 - Static scan found no `innerHTML`, `document.write`, `eval`, `new Function`,
   or string event-handler sinks in package source.
-- The package has no runtime dependencies, uses strict TypeScript settings,
-  and exposes declaration files for every exported subpath.
+- Core runtime uses `@noble/hashes`; packages use strict TypeScript settings and
+  expose declaration files for every exported subpath.
 
 ## Findings
 
@@ -288,18 +306,18 @@ stability, version stamps, browser transport behavior, and AI workflow rules.
 
 ### Technical status
 
-**Technically installable, testable, and ready for an explicit first-publication
-decision.** The AI metadata boundary, cross-domain failure mode, HTTP failure
+**Technically installable, testable, and owner-authorized for the controlled
+five-package RC4 publication process.** The AI metadata boundary, cross-domain failure mode, HTTP failure
 visibility, cookie defaults, CI parity dispatch, and public API documentation
 now match their stated contracts. WP parity retains 10 approved ruled
-deviations, and the provenance audit is not closed.
+deviations, and the provenance audit is closed only for this RC4 scope.
 
 ### Required next slice
 
-1. Decide whether to accept unresolved `GOV-001` before publication.
+1. Commit the classified release and audit scopes without OSS outreach, open a
+   reviewed PR, and require green remote checks on the exact candidate SHA.
 2. Preserve the 10 approved WP parity deviations before claiming plugin
    field parity or starting the WordPress runtime swap.
-3. Re-run tarball install, subpath imports, Node 18/20/22 checks, CI, and
-   `npm publish --dry-run` before each publication.
-4. Bootstrap each new npm package with Hugo's 2FA, configure its trusted
-   publisher, then rerun the RC3 publish workflow; do not use a token fallback.
+3. Only after remote review passes, bootstrap missing names with the distinct
+   placeholder version, configure package-specific trusted publishers, and
+   let the tag workflow repack, scan, test, and publish the same tarballs.

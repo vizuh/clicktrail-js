@@ -1,5 +1,5 @@
 /**
- * @clicktrail/sveltekit/server — server-side conversion sender.
+ * @vizuh/clicktrail-sveltekit/server — server-side conversion sender.
  *
  * For use in +page.server.ts load functions and form actions:
  * `trackConversion(request, { event: 'lead', leadId })` reads the visitor
@@ -12,10 +12,14 @@
  * - send() resolves { ok, status } and NEVER throws into host request
  *   handling (an analytics outage must never break checkout).
  */
-import { buildEventPayload, parseCookieMap } from '@vizuh/clicktrail/browser';
+import {
+  buildEventPayload,
+  parseCookieMap,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail/browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail/browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { toCanonicalEventName } from '@vizuh/clicktrail-core';
+import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -104,6 +108,14 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function requireSafeHttpUrl(value: unknown, field: string): string {
+  const endpoint = requireNonEmptyString(value, field);
+  if (!isSafeHttpUrl(endpoint)) {
+    throw new TypeError(`clicktrail server: ${field} must be a public absolute https URL.`);
+  }
+  return endpoint;
+}
+
 function requirePositiveNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
     throw new TypeError(`clicktrail server: ${field} must be a positive finite number.`);
@@ -141,31 +153,42 @@ export async function trackConversion(
     requireNonEmptyString(options.currency, 'currency');
   }
 
-  requireNonEmptyString(options.endpoint, 'endpoint');
+  const endpoint = requireSafeHttpUrl(options.endpoint, 'endpoint');
 
   const identity = parseIdentityFromCookies(request.headers.get('cookie'));
-
-  const built: ClickTrailEvent = buildEventPayload(identity.payload, eventName, {
+  const data = sanitizeServerEventInput({
     ...(options.leadId !== undefined ? { lead_id: options.leadId } : {}),
     ...(options.orderId !== undefined ? { order_id: options.orderId } : {}),
     ...(options.bookingId !== undefined ? { booking_id: options.bookingId } : {}),
     ...(hasValue ? { value: options.value } : {}),
     ...(options.currency !== undefined ? { currency: options.currency } : {}),
-    ...(options.siteId !== undefined ? { site_id: options.siteId } : {}),
-    ...(options.workspaceId !== undefined ? { workspace_id: options.workspaceId } : {}),
-    ...(identity.visitorId ? { visitor_id: identity.visitorId } : {}),
-    ...(identity.sessionId ? { session_id: identity.sessionId } : {}),
-    ...(identity.sessionNumber !== undefined
-      ? { session_number: String(identity.sessionNumber) }
-      : {}),
+  });
+
+  const built: ClickTrailEvent = buildEventPayload(
+    sanitizeServerEventInput(identity.payload),
+    eventName,
+    {
+      ...data,
+      ...(options.siteId !== undefined ? { site_id: options.siteId } : {}),
+      ...(options.workspaceId !== undefined ? { workspace_id: options.workspaceId } : {}),
+      ...(identity.visitorId ? { visitor_id: identity.visitorId } : {}),
+      ...(identity.sessionId ? { session_id: identity.sessionId } : {}),
+      ...(identity.sessionNumber !== undefined
+        ? { session_number: String(identity.sessionNumber) }
+        : {}),
+    }, {
+    ...(options.siteId !== undefined ? { siteId: options.siteId } : {}),
+    ...(options.workspaceId !== undefined ? { workspaceId: options.workspaceId } : {}),
+    ...(identity.visitorId ? { identity: { visitorId: identity.visitorId } } : {}),
   });
 
   const fetchImpl = options.fetch ?? fetch;
   try {
-    const response = await fetchImpl(options.endpoint, {
+    const response = await fetchImpl(endpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ events: [built] }),
+      redirect: 'error',
     });
     return { ok: response.ok, status: response.status };
   } catch {

@@ -113,6 +113,7 @@ export function bootClickTrailClient(
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
+    consentGate: () => !config.consentRequired || readStoredConsent(resolved.cookieJar) === true,
     storage: {},
   });
 
@@ -138,16 +139,16 @@ export function bootClickTrailClient(
   };
 
   if (config.consentRequired) {
-    const granted = readStoredConsent(resolved.cookieJar);
-    if (granted === true) {
-      startNow();
-    } else {
-      resolved.eventTarget.addEventListener(CONSENT_EVENT, () => {
-        const state = readStoredConsent(resolved.cookieJar);
-        if (state === true) startNow();
-        else if (state === false && instance.isStarted()) instance.stop();
-      });
-    }
+    const handleConsent = (): void => {
+      const state = readStoredConsent(resolved.cookieJar);
+      if (state === true) startNow();
+      else if (state === false) {
+        instance.clearData();
+        if (instance.isStarted()) instance.stop();
+      }
+    };
+    resolved.eventTarget.addEventListener(CONSENT_EVENT, handleConsent);
+    if (readStoredConsent(resolved.cookieJar) === true) startNow();
   } else {
     startNow();
   }

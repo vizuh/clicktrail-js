@@ -9,6 +9,7 @@
  */
 import { buildOperationEvent, parseConsent, safeParseJsonObject } from '../lib/events.js';
 import type { AttributionPayload } from '@vizuh/clicktrail';
+import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
 import type { ApiExtensionContext, Logger, OperationConfig } from '../types.js';
 
 export const OPERATION_ID = 'clicktrail-send-event';
@@ -27,19 +28,31 @@ export interface OperationDeps {
   log?: Partial<Logger> | undefined;
 }
 
-function resolveEndpoint(deps: OperationDeps, config: OperationConfig): string {
-  if (typeof config['endpoint'] === 'string' && config['endpoint'].trim() !== '') {
-    return config['endpoint'].trim();
-  }
-  const envEndpoint = deps.env?.['CLICKTRAIL_ENDPOINT'];
-  if (typeof envEndpoint === 'string' && envEndpoint.trim() !== '') return envEndpoint.trim();
-  return '';
+type EndpointResolution =
+  | { value: string; fromConfig: boolean }
+  | { error: 'missing' | 'invalid' };
+
+function resolveEndpoint(deps: OperationDeps, config: OperationConfig): EndpointResolution {
+  const configEndpoint =
+    typeof config['endpoint'] === 'string' && config['endpoint'].trim() !== ''
+      ? config['endpoint'].trim()
+      : '';
+  const envEndpoint =
+    typeof deps.env?.['CLICKTRAIL_ENDPOINT'] === 'string'
+      ? (deps.env['CLICKTRAIL_ENDPOINT'] ?? '').trim()
+      : '';
+  const value = configEndpoint || envEndpoint;
+  if (value === '') return { error: 'missing' };
+
+  if (!isSafeHttpUrl(value)) return { error: 'invalid' };
+  return { value, fromConfig: configEndpoint !== '' };
 }
 
-function resolveApiKey(deps: OperationDeps, config: OperationConfig): string {
+function resolveApiKey(deps: OperationDeps, config: OperationConfig, endpointFromConfig: boolean): string {
   if (typeof config['apiKey'] === 'string' && config['apiKey'].trim() !== '') {
     return config['apiKey'].trim();
   }
+  if (endpointFromConfig) return '';
   return typeof deps.env?.['CLICKTRAIL_API_KEY'] === 'string'
     ? (deps.env['CLICKTRAIL_API_KEY'] ?? '').trim()
     : '';
@@ -70,11 +83,14 @@ export function createSendEventHandler(
       }
 
       const endpoint = resolveEndpoint(deps, config);
-      if (endpoint === '') {
+      if ('error' in endpoint) {
         return {
           ok: false,
           status: 400,
-          error: 'No collector endpoint configured. Set CLICKTRAIL_ENDPOINT or pass endpoint.',
+          error:
+            endpoint.error === 'missing'
+              ? 'No collector endpoint configured. Set CLICKTRAIL_ENDPOINT or pass endpoint.'
+              : 'Collector endpoint must be a public absolute https URL without embedded credentials.',
         };
       }
 
@@ -91,14 +107,15 @@ export function createSendEventHandler(
         consent,
       });
 
-      const apiKey = resolveApiKey(deps, config);
-      const response = await fetchImpl(endpoint, {
+      const apiKey = resolveApiKey(deps, config, endpoint.fromConfig);
+      const response = await fetchImpl(endpoint.value, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           ...(apiKey !== '' ? { 'x-clicktrail-key': apiKey } : {}),
         },
         body: JSON.stringify({ events: [event] }),
+        redirect: 'error',
       });
       return { ok: response.ok, status: response.status };
     } catch (error) {

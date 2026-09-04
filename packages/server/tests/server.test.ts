@@ -57,7 +57,7 @@ describe('ClickTrailServer', () => {
     const server = makeServer(fetchMock);
     const result = await server.trackLead({
       identity: parseIdentityFromCookies(`${ATTRIBUTION_COOKIE}; ${SESSION_COOKIE}`),
-      data: { formId: 'contact' },
+      data: { formId: 'contact', marketing_trail: { site_id: 'attacker', workspace_id: 'other' } },
       now: '2026-08-24T10:00:00.000Z',
     });
     expect(result).toEqual({ ok: true, status: 204 });
@@ -65,7 +65,7 @@ describe('ClickTrailServer', () => {
     const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
     const sent = JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> };
     const event = sent.events[0]!;
-    expect(event['event_name']).toBe('lead');
+    expect(event['event_name']).toBe('lead_created');
     expect(event['schema_version']).toBeTypeOf('string');
     expect(event['classifier_version']).toBeTypeOf('string');
     expect(event['ft_source']).toBe('google');
@@ -75,7 +75,62 @@ describe('ClickTrailServer', () => {
     expect(event['session_number']).toBe('2');
     expect(event['site_id']).toBe('s1');
     expect(event['workspace_id']).toBe('w1');
-    expect(event['marketing_trail']).toBeTruthy();
+    expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
+    expect(init.redirect).toBe('error');
+  });
+
+  it('does not promote canonical fields from untrusted conversion data', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({
+      identity: { payload: {} },
+      data: {
+        visitor_id: 'attacker-visitor',
+        session_id: 'attacker-session',
+        session_number: '999',
+        trail_id: 'attacker-trail',
+        anonymous_id: 'attacker-anonymous',
+        marketing_trail: { site_id: 'attacker-site', workspace_id: 'attacker-workspace' },
+      },
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['visitor_id']).toBeUndefined();
+    expect(event['session_id']).toBeUndefined();
+    expect(event['session_number']).toBeUndefined();
+    expect(event['marketing_trail']).toMatchObject({
+      site_id: 's1',
+      workspace_id: 'w1',
+      trail_id: '',
+      anonymous_id: '',
+    });
+  });
+
+  it('carries a trusted typed event ID while ignoring a raw reserved event ID', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({
+      identity: { payload: {} },
+      eventId: 'evt_trusted',
+      data: { event_id: 'evt_attacker' },
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_id']).toBe('evt_trusted');
+    expect(event['marketing_trail']).toMatchObject({ event_id: 'evt_trusted' });
+  });
+
+  it('normalizes a typed event ID consistently across event surfaces', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackLead({ identity: { payload: {} }, eventId: 'response-1' });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_id']).toBe('evt_response-1');
+    expect(event['marketing_trail']).toMatchObject({ event_id: 'evt_response-1' });
   });
 
   it('trackPurchase validates transaction fields before sending', async () => {
@@ -105,5 +160,10 @@ describe('ClickTrailServer', () => {
       }),
     );
     await expect(server.trackLead({ identity: { payload: {} } })).resolves.toEqual({ ok: false, status: 0 });
+  });
+
+  it('rejects non-public collector destinations at construction', () => {
+    expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
+    expect(() => new ClickTrailServer({ endpoint: 'https://169.254.169.254/latest/meta-data' })).toThrow(/public absolute https/);
   });
 });

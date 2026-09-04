@@ -86,6 +86,7 @@ export function createEventHandler(
         method: 'POST',
         headers: { 'content-type': 'application/json', ...forwardHeaders },
         body: JSON.stringify({ events }),
+        redirect: 'error',
       });
       if (!upstreamResponse.ok) {
         return new Response(null, { status: 502 });
