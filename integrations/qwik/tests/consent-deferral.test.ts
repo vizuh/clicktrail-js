@@ -95,7 +95,7 @@ describe('consent gates (port of packages/consent)', () => {
   });
 
   it('transmissionAllowed honors purpose flags with analytics default', () => {
-    expect(transmissionAllowed(() => ({ state: 'granted' }))).toBe(true);
+    expect(transmissionAllowed(() => ({ state: 'granted' }))).toBe(false);
     expect(transmissionAllowed(() => ({ state: 'granted', advertising: false }), 'advertising')).toBe(false);
     expect(transmissionAllowed(() => ({ state: 'granted', marketing: true }), 'marketing')).toBe(true);
     expect(transmissionAllowed(() => null)).toBe(false);

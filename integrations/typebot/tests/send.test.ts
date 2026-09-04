@@ -14,6 +14,16 @@ function okFetch(status = 200): ReturnType<typeof vi.fn> {
 }
 
 describe('sendEvents', () => {
+  it('rejects cleartext, credential-bearing, and protocol-relative endpoints', () => {
+    for (const endpoint of [
+      'http://collector.example.com/e',
+      'https://key@example.com/e',
+      '//collector.example.com/e',
+    ]) {
+      expect(() => resolveTypebotBlockConfig({ endpoint })).toThrow(/absolute https/);
+    }
+  });
+
   it('POSTs a JSON batch body to the endpoint with content-type header', async () => {
     const fetchImpl = okFetch();
     const config = resolveTypebotBlockConfig({ endpoint: '/api/clicktrail' });

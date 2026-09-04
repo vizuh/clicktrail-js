@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { parseAttributionUrl } from '@vizuh/clicktrail-core';
 import { emptyAttribution, mergeAttributionTouch } from '@vizuh/clicktrail-core';
 import { SCHEMA_VERSION, CLASSIFIER_VERSION } from '@vizuh/clicktrail-core';
-import { buildEventPayload } from '../src/browser/serialize.js';
+import { buildEventPayload, sanitizeServerEventInput } from '../src/browser/serialize.js';
 
 const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../../clicktrail/fixtures');
 const fixture = JSON.parse(
@@ -23,6 +23,18 @@ function payloadFromFixture() {
 }
 
 describe('buildEventPayload', () => {
+  it('drops __proto__ before merging untrusted server data', () => {
+    const input = JSON.parse(
+      '{"__proto__":{"site_id":"forged","source":"forged"}}',
+    ) as Record<string, unknown>;
+    const clean = sanitizeServerEventInput(input);
+    const event = buildEventPayload({}, 'lead', clean);
+
+    expect(Object.hasOwn(clean, '__proto__')).toBe(false);
+    expect(event.marketing_trail.site_id).toBe('');
+    expect(event.marketing_trail.source).toBe('');
+  });
+
   it('stamps schema_version and classifier_version on every event', () => {
     const event = buildEventPayload(payloadFromFixture(), 'page_view');
     expect(event.schema_version).toBe(SCHEMA_VERSION);
