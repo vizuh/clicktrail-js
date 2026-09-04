@@ -61,6 +61,22 @@ Test the integration with consent granted, denied, and withdrawn. Test a
 cached page and a form added after page load. The resulting provider record is
 separate evidence from a browser event.
 
+### Executable WordPress-to-CRM reference
+
+Run `pnpm probe` to exercise the complete synthetic reference fixture in a real
+browser. It starts without consent, captures a Google Ads first touch after
+consent, follows a cached WordPress-shaped page to an email last touch, injects
+attribution into a late-added form, and sends the same canonical fields to a
+customer-controlled CRM endpoint. Withdrawal then clears browser state and
+blocks another conversion.
+
+Fixture inputs and expected fields live in
+[`probe/fixtures/wordpress-to-crm.json`](../probe/fixtures/wordpress-to-crm.json);
+the Playwright runner is
+[`probe/run-wordpress-reference.mjs`](../probe/run-wordpress-reference.mjs).
+The CRM is a localhost assertion endpoint, not live WordPress or provider
+delivery certification.
+
 ## Formbricks link-survey bridge
 
 Use the optional Formbricks adapter when a survey is hosted outside the page

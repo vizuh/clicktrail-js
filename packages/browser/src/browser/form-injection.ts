@@ -40,7 +40,7 @@ export interface CtInputElement extends CtAttrNode {}
 
 /** Form element contract the injector needs. */
 export interface CtFormElement extends CtAttrNode {
-  querySelectorAll(selector: string): CtAttrNode[];
+  querySelectorAll(selector: string): ArrayLike<CtAttrNode>;
   appendChild(node: CtInputElement): void;
   removeChild?(node: CtInputElement): void;
 }
@@ -225,7 +225,7 @@ export function applyEntryToForm(
   value: string,
   overwrite: boolean,
 ): boolean {
-  const existing = form.querySelectorAll(HIDDEN_INPUT_SELECTOR);
+  const existing = Array.from(form.querySelectorAll(HIDDEN_INPUT_SELECTOR));
   for (const node of existing) {
     if (node.getAttribute('name') !== name) continue;
     const current = node.getAttribute('value');
@@ -272,11 +272,11 @@ export function createFormInjector(config: FormInjectionConfig): FormInjector {
     const forms = doc.querySelectorAll(FORM_SELECTOR);
     for (const form of forms) {
       for (const [name, value] of entries) {
-        const before = form.querySelectorAll(HIDDEN_INPUT_SELECTOR);
+        const before = Array.from(form.querySelectorAll(HIDDEN_INPUT_SELECTOR));
         const existing = before.find((node) => node.getAttribute('name') === name);
         const originalValue = existing?.getAttribute('value') ?? null;
         if (!applyEntryToForm(form, doc, name, value, overwrite)) continue;
-        const node = existing ?? form.querySelectorAll(HIDDEN_INPUT_SELECTOR)
+        const node = existing ?? Array.from(form.querySelectorAll(HIDDEN_INPUT_SELECTOR))
           .find((candidate) => !before.includes(candidate) && candidate.getAttribute('name') === name);
         if (!node) continue;
         const prior = owned.get(node);
@@ -298,7 +298,7 @@ export function createFormInjector(config: FormInjectionConfig): FormInjector {
     for (const [node, mutation] of owned) {
       if (node.getAttribute('value') !== mutation.appliedValue) continue;
       if (mutation.created) {
-        const isChild = mutation.form.querySelectorAll(HIDDEN_INPUT_SELECTOR).includes(node);
+        const isChild = Array.from(mutation.form.querySelectorAll(HIDDEN_INPUT_SELECTOR)).includes(node);
         if (isChild && mutation.form.removeChild) {
           mutation.form.removeChild(node as CtInputElement);
         } else if (isChild) {

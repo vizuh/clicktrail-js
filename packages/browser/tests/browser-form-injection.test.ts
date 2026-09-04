@@ -16,6 +16,7 @@ import {
 } from '../src/browser/form-injection.js';
 import type {
   CtAttrNode,
+  CtFormElement,
   CtInputElement,
   DomMutationObserverLike,
   FormDomDocument,
@@ -78,6 +79,30 @@ class FakeDocument implements FormDomDocument {
   createElement(tagName: string): CtInputElement {
     expect(tagName).toBe('input');
     return new FakeInput();
+  }
+}
+
+class BrowserLikeForm implements CtFormElement {
+  private readonly form = new FakeForm();
+
+  getAttribute(name: string): string | null {
+    return this.form.getAttribute(name);
+  }
+  setAttribute(name: string, value: string): void {
+    this.form.setAttribute(name, value);
+  }
+  appendChild(node: CtInputElement): void {
+    this.form.appendChild(node);
+  }
+  removeChild(node: CtInputElement): void {
+    this.form.removeChild(node);
+  }
+  querySelectorAll(selector: string): ArrayLike<CtAttrNode> {
+    const nodes = this.form.querySelectorAll(selector);
+    return Object.assign({ length: nodes.length }, Object.fromEntries(nodes.map((node, index) => [index, node])));
+  }
+  hiddenInputs(): { name: string; value: string }[] {
+    return this.form.hiddenInputs();
   }
 }
 
@@ -240,6 +265,21 @@ describe('createFormInjector', () => {
       expect(names).toContain('ct_visitor_id');
       expect(names).toContain('ct_session_number');
     }
+  });
+
+  it('accepts browser NodeList results without array methods', () => {
+    const form = new BrowserLikeForm();
+    const doc: FormDomDocument = {
+      body: {},
+      querySelectorAll: () => [form],
+      createElement: () => new FakeInput(),
+    };
+
+    const injector = createFormInjector(CONFIG({ doc, fields: ['ft_source'] }));
+    injector.start();
+    expect(form.hiddenInputs()).toEqual([{ name: 'ct_ft_source', value: 'google' }]);
+    injector.clear();
+    expect(form.hiddenInputs()).toEqual([]);
   });
 
   it('empty payload values produce NO injected inputs', () => {

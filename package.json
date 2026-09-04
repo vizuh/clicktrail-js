@@ -8,7 +8,7 @@
     "typecheck": "pnpm --filter @vizuh/clicktrail... build && pnpm -r exec tsc -p tsconfig.json --noEmit",
     "build:global": "pnpm --filter @vizuh/clicktrail build:global",
     "test": "pnpm -r test",
-    "probe": "pnpm --filter @vizuh/clicktrail... build && pnpm --filter @vizuh/clicktrail build:global && node probe/run-probe.mjs",
+    "probe": "pnpm --filter @vizuh/clicktrail... build && pnpm --filter @vizuh/clicktrail build:global && node probe/run-probe.mjs && node probe/run-wordpress-reference.mjs",
     "parity": "node tools/wp-runtime/run-parity.mjs"
   },
   "pnpm": {

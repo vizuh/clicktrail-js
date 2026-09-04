@@ -1,0 +1,28 @@
+{
+  "name": "wordpress-cached-dynamic-form-to-crm",
+  "description": "A consented Google Ads first touch survives a cached WordPress-shaped page, gains an email last touch, reaches a late-added form, and is exported unchanged to a CRM-controlled endpoint.",
+  "quirk_decision": "CONTRACT: consent gates storage and delivery; first touch is write-once; a valid later campaign updates last touch; form and HTTP destinations expose the same canonical attribution fields.",
+  "first_touch": {
+    "path": "/wp/landing/?utm_source=google&utm_medium=cpc&utm_campaign=spring-launch&gclid=gclid-reference-001",
+    "now": "2026-09-04T09:00:00.000Z"
+  },
+  "last_touch": {
+    "path": "/wp/contact/?utm_source=newsletter&utm_medium=email&utm_campaign=follow-up",
+    "now": "2026-09-05T09:00:00.000Z"
+  },
+  "conversion": {
+    "event_id": "evt_reference_lead_001",
+    "occurred_at": "2026-09-05T09:05:00.000Z",
+    "form_provider": "reference-wordpress",
+    "form_id": "lead-form"
+  },
+  "expected": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_campaign": "spring-launch",
+    "gclid": "gclid-reference-001",
+    "lt_source": "newsletter",
+    "lt_medium": "email",
+    "lt_campaign": "follow-up"
+  }
+}

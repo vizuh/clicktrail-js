@@ -128,8 +128,10 @@ jobs:
           pnpm --filter @vizuh/clicktrail-server... build
           pnpm --filter @vizuh/clicktrail-formbricks... build
 
-      - name: Playwright golden-fixture probe
-        run: node probe/run-probe.mjs
+      - name: Playwright golden and WordPress reference probes
+        run: |
+          node probe/run-probe.mjs
+          node probe/run-wordpress-reference.mjs
         env:
           CLICKTRAIL_BROWSER: ${{ matrix.browser }}
 
