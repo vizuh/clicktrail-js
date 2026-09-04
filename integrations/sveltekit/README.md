@@ -11,7 +11,16 @@ data, and server helpers build events from `+page.server.ts` and form actions.
 The package preserves observed context. It does not prove campaign causation,
 configure destinations, or certify delivery.
 
+## Release and support status
+
+- Supported SvelteKit range: `>=2.0.0` (the declared peer dependency); this package targets SvelteKit only and does not provide standalone Vue support.
+- Maintainer: Vizuh OÜ. Support and issue tracker: [GitHub Issues](https://github.com/vizuh/clicktrail-js/issues).
+- Release policy: [repository release process](../../CONTRIBUTING.md#releases).
+- `0.1.0-rc.4` is a source release candidate, not a functional npm registry release. Directory eligibility requires a matching non-placeholder release, clean-room install, and representative runtime smoke; local source readiness does not establish those gates.
+
 ## Install
+
+> Use this command after the matching functional npm release is published. Until then, do not install or submit the registry package as directory-ready.
 
 ```sh
 npm install @vizuh/clicktrail-sveltekit
@@ -87,3 +96,9 @@ Validation contract (identical to `@vizuh/clicktrail-server`): money fields must
 MIT
 
 > **Distribution mirror.** Development happens in [vizuh/clicktrail-js](https://github.com/vizuh/clicktrail-js) (`integrations/sveltekit`). PRs and issues go there.
+
+## Directory status
+
+After publication and verified install/runtime evidence, the package can be
+considered for the [Svelte Society library](https://sveltesociety.dev/submit/library).
+Source or local pack evidence alone does not establish a directory listing.

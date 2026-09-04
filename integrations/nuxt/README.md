@@ -5,7 +5,16 @@ First-party attribution and conversion tracking for [Nuxt](https://nuxt.com).
 
 Boots the ClickTrail browser SDK (`@vizuh/clicktrail`) SSR-safely, tracks page views across vue-router navigations without duplicates, preserves first-touch/last-touch attribution on every route change, gates all tracking behind a cookie-backed consent flag shared between server and client, adds an optional first-party Nitro proxy endpoint, and ships server-side helpers for leads, bookings, and purchases.
 
+## Release and support status
+
+- Supported Nuxt range: `>=3.0.0` (the declared peer dependency); this package is a Nuxt module and does not support standalone Vue applications.
+- Maintainer: Vizuh OÜ. Support and issue tracker: [GitHub Issues](https://github.com/vizuh/clicktrail-js/issues).
+- Release policy: [repository release process](../../CONTRIBUTING.md#releases).
+- `0.1.0-rc.4` is a source release candidate, not a functional npm registry release. Directory eligibility requires a matching non-placeholder release, clean-room install, and runtime smoke; local source readiness does not establish those gates.
+
 ## Install
+
+> Use these commands after the matching functional npm release is published. Until then, do not install or submit the registry package as directory-ready.
 
 ```sh
 npx nuxi module add @vizuh/clicktrail-nuxt
@@ -139,6 +148,9 @@ export default defineEventHandler(async (event) => {
 - [`@vizuh/clicktrail`](https://www.npmjs.com/package/@vizuh/clicktrail) — deterministic attribution engine + browser SDK used underneath.
 - [`@vizuh/clicktrail-astro`](https://www.npmjs.com/package/@vizuh/clicktrail-astro) — the same engine for Astro.
 
-## Publishing
+## Directory status
 
-After the first npm publish, open an issue in the [nuxt/modules](https://github.com/nuxt/modules) repository to list this package in the official Nuxt modules directory.
+After a non-placeholder npm release and verified clean-room/runtime smoke,
+open an issue in the [nuxt/modules](https://github.com/nuxt/modules) repository
+to list this package in the official Nuxt modules directory. Source or local
+pack evidence alone does not establish a directory listing.

@@ -124,6 +124,7 @@ jobs:
           pnpm --filter @vizuh/clicktrail build:global
           pnpm --filter @vizuh/clicktrail-astro build
           pnpm --filter @vizuh/clicktrail-nuxt build
+          pnpm --filter @vizuh/clicktrail-sveltekit build
           pnpm --filter @vizuh/clicktrail-server... build
           pnpm --filter @vizuh/clicktrail-formbricks... build
 
@@ -152,6 +153,7 @@ jobs:
           pnpm --filter @vizuh/clicktrail pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail-astro pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail-nuxt pack --pack-destination /tmp/clicktrail-packs
+          pnpm --filter @vizuh/clicktrail-sveltekit pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail-server pack --pack-destination /tmp/clicktrail-packs
           pnpm --filter @vizuh/clicktrail-formbricks pack --pack-destination /tmp/clicktrail-packs
           tools/release/verify-packed-internal-versions.sh /tmp/clicktrail-packs
@@ -160,17 +162,19 @@ jobs:
           umbrella_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-[0-9]*.tgz' -printf '%f\n')"
           astro_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-astro-*.tgz' -printf '%f\n')"
           nuxt_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-nuxt-*.tgz' -printf '%f\n')"
+          sveltekit_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-sveltekit-*.tgz' -printf '%f\n')"
           server_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-server-*.tgz' -printf '%f\n')"
           formbricks_tar="$(find /tmp/clicktrail-packs -maxdepth 1 -name 'vizuh-clicktrail-formbricks-*.tgz' -printf '%f\n')"
           cd "$(mktemp -d)"
           echo '{"name":"smoke","type":"module","private":true}' > package.json
           # zizmor: ignore[adhoc-packages] -- local release tarballs are the consumer-test subjects
-          npm install --ignore-scripts \
+          npm install --ignore-scripts --no-audit --no-fund \
             "/tmp/clicktrail-packs/$core_tar" \
             "/tmp/clicktrail-packs/$browser_tar" \
             "/tmp/clicktrail-packs/$umbrella_tar" \
             "/tmp/clicktrail-packs/$astro_tar" \
             "/tmp/clicktrail-packs/$nuxt_tar" \
+            "/tmp/clicktrail-packs/$sveltekit_tar" \
             "/tmp/clicktrail-packs/$server_tar" \
             "/tmp/clicktrail-packs/$formbricks_tar" \
             --silent
@@ -184,6 +188,7 @@ jobs:
             const incubating = await import('@vizuh/clicktrail/incubating');
             const astro = await import('@vizuh/clicktrail-astro');
             const nuxt = await import('@vizuh/clicktrail-nuxt');
+            const sveltekit = await import('@vizuh/clicktrail-sveltekit');
             const server = await import('@vizuh/clicktrail-server');
             const formbricks = await import('@vizuh/clicktrail-formbricks');
             const checks = [
@@ -196,6 +201,7 @@ jobs:
               ['incubating', incubating.ATTR_JOURNEY_ID],
               ['astro', astro.clicktrailAstro],
               ['nuxt', nuxt.defineClicktrailModule],
+              ['sveltekit', sveltekit.clicktrail],
               ['server', server.ClickTrailServer],
               ['formbricks', formbricks.decorateFormbricksSurveyUrl],
             ];
