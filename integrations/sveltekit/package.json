@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-sveltekit",
-  "version": "0.1.0-rc.4",
+  "version": "0.2.0-rc.1",
   "description": "Carry observed acquisition context through SvelteKit requests and navigations with configurable consent, first-party storage, and explicit event helpers.",
   "license": "MIT",
   "author": "Vizuh OÜ",

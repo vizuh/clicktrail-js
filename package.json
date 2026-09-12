@@ -14,7 +14,9 @@
   "pnpm": {
     "overrides": {
       "form-data": "4.0.6",
-      "sharp": "^0.35.3",
+      "sharp": "^0.35.4",
+      "astro": "7.2.8",
+      "astro>js-yaml": "4.3.2",
       "@sveltejs/kit>cookie": "0.7.2"
     }
   },
