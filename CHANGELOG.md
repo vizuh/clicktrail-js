@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-rc.1] - 2026-09-12
+
+GitHub-only source prerelease: `github-v0.2.0-rc.1`. npm remains at 0.1.0.
+This snapshot includes the changes documented under 0.1.0-rc.4 below.
+
+### Fixed
+
+- Browser form injection handles native DOM NodeLists; the WordPress-to-CRM
+  reference fixture exercises the configured form boundary.
+- Delivery deadlines bound stalled network operations. Browser storage failures
+  no longer interrupt supported lifecycle paths.
+- Framework directory metadata distinguishes implemented packages from directory
+  acceptance and provider verification.
+
+- Release workspace dependencies update Astro to 7.2.8, sharp to the patched
+  0.35.4 range, and Astro's js-yaml to 4.3.2 after the fresh dependency audit.
+
+### Migration and scope
+
+- Stable replay IDs use `sha256-128-v1`. Preserve already-enqueued event IDs;
+  drain retry backlogs before deriving IDs under the new contract.
+- The included consent-withdrawal and destination-validation changes are described
+  in the RC4 section. Validate host consent and destination configuration before
+  adopting this prerelease.
+- Activepieces remains excluded from workspace validation and retains its earlier
+  version. Python distributions are not versioned or published by this JS release.
+- GitHub publication does not establish npm availability, WordPress deployment,
+  marketplace acceptance, or every provider's live behavior.
+
 ### Fixed
 
 - Report browser fetch HTTP failures through `onDropped`, preserving at-most-once delivery.

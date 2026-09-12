@@ -21,11 +21,10 @@ Part of [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) by
 Vizuh. The WordPress plugin (`click-trail-handler`) is the WordPress
 distribution; this repository contains the shared JavaScript engine.
 
-> **Release boundary:** use the [npm registry](https://www.npmjs.com/package/@vizuh/clicktrail)
-> for the published package version and [GitHub Releases](https://github.com/vizuh/clicktrail-js/releases)
-> for source tags. The `0.1.0-rc.4` source is promoted to `master`, but npm
-> publication still depends on the documented provenance, namespace-bootstrap,
-> and trusted-publisher gates. Stable and incubating entry points are listed below.
+> **GitHub source release: 0.2.0-rc.1** (`github-v0.2.0-rc.1`). This prerelease
+> includes runtime reliability, consent cleanup and browser form fixes. npm remains
+> at `@vizuh/clicktrail@0.1.0`; this GitHub release does not publish npm packages.
+> See [CHANGELOG.md](CHANGELOG.md) for migration notes and validation scope.
 
 ## Why ClickTrail
 
@@ -55,12 +54,6 @@ Install the engine:
 ```bash
 pnpm add @vizuh/clicktrail
 # or: npm install @vizuh/clicktrail
-```
-
-To test the release candidate after publication, use the RC dist-tag:
-
-```bash
-npm install @vizuh/clicktrail@next
 ```
 
 Parse an ad-click landing URL deterministically in Node, a worker, or a test:

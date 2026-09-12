@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-typebot",
-  "version": "0.1.0-rc.4",
+  "version": "0.2.0-rc.1",
   "description": "Typebot block for ClickTrail: maps Typebot variables (email, phone, lead id, UTM campaign, gclid, quoted value, marketing consent) onto ClickTrail attribution events and sends them to a first-party endpoint. Never breaks the chat flow.",
   "license": "MIT",
   "author": "Vizuh OÜ",
