@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "0.1.0-rc.4",
+  "release": "0.2.0-rc.1",
   "decisionStatus": "approved",
   "copyrightHolder": "Vizuh OÜ",
   "publisher": "npm user atroci on behalf of Vizuh OÜ",
@@ -19,12 +19,13 @@
     "GOV-001": "resolved"
   },
   "approvedBy": "Hugo Carvalho",
-  "approvedAt": "2026-08-25T23:00:29Z",
+  "approvedAt": "2026-09-13",
   "evidence": [
     "owner release instruction and copyright-holder decision recorded 2026-08-25",
     "docs/internal/OWNER-NAMESPACE-DECISION.md",
     "docs/internal/PROVENANCE-AUDIT.md",
     "specs/001-rc4-release-audit/checklists/package-artifact-audit.json",
-    "npm verification 2026-08-25: atroci is vizuh org owner and existing package collaborator with read-write access"
+    "npm verification 2026-08-25: atroci is vizuh org owner and existing package collaborator with read-write access",
+    "Hugo authorized npm publication of the GitHub candidate in this session on 2026-09-13: push that to npm; prerelease next tag, same five-package wave."
   ]
 }

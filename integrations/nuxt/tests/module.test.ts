@@ -28,7 +28,7 @@ describe('module factory shape', () => {
     const mod = defineClicktrailModule({ firstPartyProxy: false });
     expect(mod.name).toBe(MODULE_NAME);
     expect(mod.configKey).toBe('clicktrail');
-    expect(mod.version).toBe('0.1.0-rc.4');
+    expect(mod.version).toBe('0.2.0-rc.1');
     expect(typeof mod.setup).toBe('function');
     expect(typeof named).toBe('function');
     expect(named).toBe(defineClicktrailModule);

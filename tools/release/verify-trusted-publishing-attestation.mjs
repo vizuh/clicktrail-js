@@ -13,7 +13,7 @@ const expectedRepository = 'vizuh/clicktrail-js';
 const expectedWorkflow = 'publish.yml';
 const expectedEnvironment = 'npm';
 const expectedPublisher = 'atroci';
-const expectedVersion = '0.1.0-rc.4';
+const expectedVersion = '0.2.0-rc.1';
 const expectedPermissions = ['createPackage'];
 const maxAttestationAgeMs = 15 * 60 * 1000;
 

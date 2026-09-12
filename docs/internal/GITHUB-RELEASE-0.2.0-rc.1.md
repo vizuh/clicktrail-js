@@ -1,5 +1,26 @@
 # GitHub release validation: 0.2.0-rc.1
 
+## npm follow-up — 2026-09-13
+
+Hugo authorized the same five-package npm prerelease wave under `next`.
+Follow-up changes on PR #28 correct Nuxt's runtime version and patch the
+standalone site's separate lockfile. The previously published `github-v` tag
+is unchanged; these fixes are subsequent commits, not a retagged source archive.
+
+Checks: Nuxt 64 tests and build passed; six trusted-publishing verifier tests
+passed; authorization validation passed; independent site audit found no known
+vulnerabilities and site build produced 25 pages. Existing npm names are
+bootstrapped. No release package has been published by this follow-up.
+
+Publication prerequisites still open at inspection: `npm whoami` returned E401;
+GitHub's `npm` environment listed no secrets; PR #28 has a COMMENTED review but
+no APPROVED review. The existing workflow requires an exact approved master
+merge plus configured package trust and a fresh signed attestation. Preserve
+those checks; obtain authenticated publisher setup and approving review before
+creating the npm-triggering `v0.2.0-rc.1` tag. Stable `latest` stays unchanged.
+
+## Original GitHub snapshot
+
 Date: 2026-09-12. Runtime baseline: `2e4683b980b4df9091c5dfed465c9eb461f7f481`.
 Tag: `github-v0.2.0-rc.1`. Channel: GitHub source prerelease only.
 
