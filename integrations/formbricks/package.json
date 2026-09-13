@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-formbricks",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "description": "ClickTrail interoperability for Formbricks link-survey attribution and signed response webhooks.",
   "license": "MIT",
   "author": "Vizuh OÜ",

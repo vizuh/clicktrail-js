@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-rc.2] - pending publication
+
+Candidate prepared 2026-09-13 from merged PR #28 for matching GitHub/npm
+publication. The controlled npm wave remains core, browser, umbrella, Astro
+and Nuxt under `next`; other versioned packages are not included in that wave.
+
+### Fixed
+
+- Nuxt runtime metadata matches the candidate package version.
+- The standalone site has its own patched Astro/sharp/js-yaml dependency tree,
+  independently validated from the workspace dependency overrides.
+
+### Changed
+
+- Align included JS package versions and release authorization at 0.2.0-rc.2.
+- Carry forward RC1 runtime fixes and event-ID migration guidance. Historical
+  GitHub RC1 tags remain unchanged; no npm publication is claimed until verified.
+
 ## [0.2.0-rc.1] - 2026-09-12
 
 GitHub-only source prerelease: `github-v0.2.0-rc.1`. npm remains at 0.1.0.
@@ -137,7 +155,8 @@ This snapshot includes the changes documented under 0.1.0-rc.4 below.
 - MIT. The WordPress plugin remains GPL-2.0-or-later; MIT embeds cleanly
   into GPL.
 
-[Unreleased]: https://github.com/vizuh/clicktrail-js/compare/v0.1.0-rc.4...HEAD
+[Unreleased]: https://github.com/vizuh/clicktrail-js/compare/github-v0.2.0-rc.1...HEAD
+[0.2.0-rc.1]: https://github.com/vizuh/clicktrail-js/releases/tag/github-v0.2.0-rc.1
 [0.1.0-rc.4]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0-rc.3
 [0.1.0]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0
