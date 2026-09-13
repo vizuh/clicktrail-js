@@ -22,10 +22,10 @@ Parte do [ClickTrail](https://wordpress.org/plugins/click-trail-handler/) da
 Vizuh. O plugin WordPress (`click-trail-handler`) é a distribuição para
 WordPress; este repositório contém o motor JavaScript compartilhado.
 
-> **Release de código-fonte no GitHub: 0.2.0-rc.1** (`github-v0.2.0-rc.1`).
-> Esta prévia inclui correções de confiabilidade, consentimento e formulários.
-> O npm permanece em `@vizuh/clicktrail@0.1.0`; esta release não publica pacotes npm.
-> Consulte [CHANGELOG.md](CHANGELOG.md) para migração e escopo de validação.
+> **Candidata atual: 0.2.0-rc.2.** Preparada a partir das correções integradas
+> no GitHub para uma release correspondente no npm. Publicação npm pendente;
+> `latest` permanece em `@vizuh/clicktrail@0.1.0`. A tag prevista da prévia é `next`.
+> Consulte [CHANGELOG.md](CHANGELOG.md) para migração e escopo da release.
 
 ## Por que o ClickTrail
 

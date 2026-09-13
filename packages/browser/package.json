@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-browser",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "description": "Browser SDK for ClickTrail: consent-aware capture, first-party storage, forms, dataLayer and HTTP destinations, SPA page views.",
   "license": "MIT",
   "author": "Vizuh OÜ",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "0.2.0-rc.1",
+  "release": "0.2.0-rc.2",
   "decisionStatus": "approved",
   "copyrightHolder": "Vizuh OÜ",
   "publisher": "npm user atroci on behalf of Vizuh OÜ",
@@ -26,6 +26,7 @@
     "docs/internal/PROVENANCE-AUDIT.md",
     "specs/001-rc4-release-audit/checklists/package-artifact-audit.json",
     "npm verification 2026-08-25: atroci is vizuh org owner and existing package collaborator with read-write access",
-    "Hugo authorized npm publication of the GitHub candidate in this session on 2026-09-13: push that to npm; prerelease next tag, same five-package wave."
+    "Hugo authorized npm publication of the GitHub candidate in this session on 2026-09-13: push that to npm; prerelease next tag, same five-package wave.",
+    "Hugo approved proceeding with the proposed matching GitHub/npm 0.2.0-rc.2 release on 2026-09-13, keeping the five-package next wave and stable latest unchanged."
   ]
 }

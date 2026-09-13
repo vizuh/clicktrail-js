@@ -47,7 +47,7 @@ function signedAttestation(overrides = {}) {
     verificationMethod: 'npm trust list',
     packages,
     commitSha,
-    releaseVersion: '0.2.0-rc.1',
+    releaseVersion: '0.2.0-rc.2',
     issuedAt,
     expiresAt,
     verifiedAt: issuedAt,
@@ -79,7 +79,7 @@ function run(attestation, overrides = {}, documents = packages.map(() => trustDo
       CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY: key,
       CLICKTRAIL_NPM_TRUST_DIRECTORY: trustDir,
       CLICKTRAIL_RELEASE_SHA: commitSha,
-      CLICKTRAIL_RELEASE_VERSION: '0.2.0-rc.1',
+      CLICKTRAIL_RELEASE_VERSION: '0.2.0-rc.2',
       ...overrides,
     },
   });
@@ -128,7 +128,7 @@ test('rejects mismatched npm trust evidence', () => {
       CLICKTRAIL_TRUSTED_PUBLISHING_ATTESTATION_KEY: key,
       CLICKTRAIL_NPM_TRUST_DIRECTORY: trustDir,
       CLICKTRAIL_RELEASE_SHA: commitSha,
-      CLICKTRAIL_RELEASE_VERSION: '0.2.0-rc.1',
+      CLICKTRAIL_RELEASE_VERSION: '0.2.0-rc.2',
     },
   });
   rmSync(trustDir, { recursive: true, force: true });
