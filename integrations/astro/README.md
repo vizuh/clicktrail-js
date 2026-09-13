@@ -14,16 +14,16 @@ sites must use an absolute `endpoint` with `proxy: false`.
 - Supported Astro range: `>=4.0.0` (the declared peer dependency).
 - Maintainer: Vizuh OÜ. Support and issue tracker: [GitHub Issues](https://github.com/vizuh/clicktrail-js/issues).
 - Release policy: [repository release process](../../CONTRIBUTING.md#releases).
-- `0.1.0-rc.4` is a source release candidate, not a functional npm registry release. Directory eligibility requires a matching non-placeholder release, clean-room install, and runtime smoke; local source readiness does not establish those gates.
+- `0.2.0-rc.2` is the release candidate for the npm `next` channel. Verify registry availability before installing; directory eligibility additionally requires a matching non-placeholder release, clean-room install, and runtime smoke.
 
 ## Install
 
-> Use these commands after the matching functional npm release is published. Until then, do not install or submit the registry package as directory-ready.
+> These commands target this exact prerelease once it is available on npm. Package publication does not establish a framework directory listing.
 
 ```sh
-npx astro add @vizuh/clicktrail-astro
+npx astro add @vizuh/clicktrail-astro@0.2.0-rc.2
 # or
-npm install @vizuh/clicktrail-astro
+npm install @vizuh/clicktrail-astro@0.2.0-rc.2
 ```
 
 Then add the integration:

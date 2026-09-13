@@ -10,16 +10,16 @@ Boots the ClickTrail browser SDK (`@vizuh/clicktrail`) SSR-safely, tracks page v
 - Supported Nuxt range: `>=3.0.0` (the declared peer dependency); this package is a Nuxt module and does not support standalone Vue applications.
 - Maintainer: Vizuh OÜ. Support and issue tracker: [GitHub Issues](https://github.com/vizuh/clicktrail-js/issues).
 - Release policy: [repository release process](../../CONTRIBUTING.md#releases).
-- `0.1.0-rc.4` is a source release candidate, not a functional npm registry release. Directory eligibility requires a matching non-placeholder release, clean-room install, and runtime smoke; local source readiness does not establish those gates.
+- `0.2.0-rc.2` is the release candidate for the npm `next` channel. Verify registry availability before installing; directory eligibility additionally requires a matching non-placeholder release, clean-room install, and runtime smoke.
 
 ## Install
 
-> Use these commands after the matching functional npm release is published. Until then, do not install or submit the registry package as directory-ready.
+> These commands target this exact prerelease once it is available on npm. Package publication does not establish a framework directory listing.
 
 ```sh
-npx nuxi module add @vizuh/clicktrail-nuxt
+npx nuxi module add @vizuh/clicktrail-nuxt@0.2.0-rc.2
 # or
-npm install @vizuh/clicktrail-nuxt
+npm install @vizuh/clicktrail-nuxt@0.2.0-rc.2
 ```
 
 Then configure the module in `nuxt.config.ts`:
