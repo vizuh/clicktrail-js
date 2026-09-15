@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-sv",
-  "version": "0.1.0-rc.4",
+  "version": "0.2.0-rc.2",
   "description": "Experimental Svelte CLI add-on that scaffolds the ClickTrail SvelteKit hook, layout, environment placeholder, and example event endpoint.",
   "license": "MIT",
   "author": "Vizuh OÜ",

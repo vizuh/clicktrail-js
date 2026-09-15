@@ -63,7 +63,7 @@ jobs:
             | group_by(.user.login)
             | map(last)
             | map(select(.state == "APPROVED" and .commit_id == $head_sha))
-            | length
+            | length'
             <<<"$reviews")"
           test "$approvals" -gt 0 || {
             echo "::error::exact merged PR has no approving review"; exit 1;

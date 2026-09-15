@@ -7,6 +7,7 @@
  * a logged, returned result so one analytics outage can never kill a
  * customer automation.
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import { buildOperationEvent, parseConsent, safeParseJsonObject } from '../lib/events.js';
 import type { AttributionPayload } from '@vizuh/clicktrail';
 import { isSafeHttpUrl } from '@vizuh/clicktrail-core';
@@ -108,7 +109,8 @@ export function createSendEventHandler(
       });
 
       const apiKey = resolveApiKey(deps, config, endpoint.fromConfig);
-      const response = await fetchImpl(endpoint.value, {
+      const response = await withDeliveryTimeout((signal) => fetchImpl(endpoint.value, {
+        signal,
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -116,7 +118,7 @@ export function createSendEventHandler(
         },
         body: JSON.stringify({ events: [event] }),
         redirect: 'error',
-      });
+      }));
       return { ok: response.ok, status: response.status };
     } catch (error) {
       try {

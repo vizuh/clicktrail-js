@@ -27,6 +27,7 @@ describe('auth/header wiring', () => {
   it('POSTs a single-event batch to <baseUrl> with the API key header', () => {
     const request = buildEventsRequest('https://ct.internal.example', 'sk-live-123', EVENT);
     expect(request.method).toBe(HttpMethod.POST);
+    expect(request.timeout).toBe(3000);
     expect(request.url).toBe('https://ct.internal.example');
     expect(request.headers?.[CLICKTRAIL_API_KEY_HEADER]).toBe('sk-live-123');
     expect(request.headers?.['Content-Type']).toBe('application/json');

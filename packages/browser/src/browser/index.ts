@@ -82,3 +82,5 @@ export type {
   MirrorStorageConfig,
   StorageAdapter,
 } from './storage.js';
+
+export { withDeliveryTimeout } from './delivery-timeout.js';

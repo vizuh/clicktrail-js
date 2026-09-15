@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail-core",
-  "version": "0.1.0-rc.4",
+  "version": "0.2.0-rc.2",
   "description": "Deterministic attribution engine: parse, classify, merge, canonical event schemas, idempotent event ids. Frozen pure core of ClickTrail.",
   "license": "MIT",
   "author": "Vizuh OÜ",

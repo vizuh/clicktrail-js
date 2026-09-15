@@ -12,6 +12,7 @@
  * - send() resolves { ok, status } and NEVER throws into host request
  *   handling (an analytics outage must never break checkout).
  */
+import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import {
   buildEventPayload,
   parseCookieMap,
@@ -184,12 +185,13 @@ export async function trackConversion(
 
   const fetchImpl = options.fetch ?? fetch;
   try {
-    const response = await fetchImpl(endpoint, {
+    const response = await withDeliveryTimeout((signal) => fetchImpl(endpoint, {
+      signal,
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ events: [built] }),
       redirect: 'error',
-    });
+    }));
     return { ok: response.ok, status: response.status };
   } catch {
     // At-most-once delivery contract mirrors httpDestination: never throw

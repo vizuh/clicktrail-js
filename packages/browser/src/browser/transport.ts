@@ -56,7 +56,9 @@ function defaultSend(useBeacon: boolean): SendFn {
       keepalive: true,
       headers: { 'content-type': 'application/json' },
       body,
-    }).then(() => undefined);
+    }).then((response) => {
+      if (!response.ok) throw new Error(`clicktrail: collector returned HTTP ${response.status}.`);
+    });
   };
 }
 

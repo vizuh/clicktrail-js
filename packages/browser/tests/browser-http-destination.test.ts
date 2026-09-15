@@ -2,7 +2,7 @@
  * httpDestination: batching + flush through an INJECTED sender.
  * No network, no navigator access in unit tests.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { httpDestination, type SendFn } from '../src/browser/transport.js';
 import { buildEventPayload } from '../src/browser/serialize.js';
 
@@ -20,6 +20,19 @@ function fakeSend(): SendFn & { calls: { endpoint: string; body: string }[] } {
 }
 
 describe('httpDestination', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([429, 500])('reports HTTP %s from the default fetch sender exactly once', async (status) => {
+    const fetchMock = vi.fn(async () => new Response(null, { status }));
+    vi.stubGlobal('fetch', fetchMock);
+    const onDropped = vi.fn();
+    const dest = httpDestination({ endpoint: 'https://collector.example/events', beacon: false, onDropped });
+    dest.deliver(event(1));
+    await dest.flush?.();
+    await dest.flush?.();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onDropped).toHaveBeenCalledWith([event(1)], new Error(`clicktrail: collector returned HTTP ${status}.`));
+  });
   it('batches N events then flushes once via the injected sender', () => {
     const send = fakeSend();
     const dest = httpDestination({ endpoint: 'https://t.example/collect', batchSize: 3, send });

@@ -1,6 +1,6 @@
 {
   "name": "@vizuh/clicktrail",
-  "version": "0.1.0-rc.4",
+  "version": "0.2.0-rc.2",
   "description": "Deterministic engine for parsing and carrying observed acquisition context to configured application boundaries.",
   "license": "MIT",
   "type": "module",

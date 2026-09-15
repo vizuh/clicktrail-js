@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-rc.2] - pending publication
+
+Candidate prepared 2026-09-13 from merged PR #28 for matching GitHub/npm
+publication. The controlled npm wave remains core, browser, umbrella, Astro
+and Nuxt under `next`; other versioned packages are not included in that wave.
+
+### Fixed
+
+- Nuxt runtime metadata matches the candidate package version.
+- The standalone site has its own patched Astro/sharp/js-yaml dependency tree,
+  independently validated from the workspace dependency overrides.
+
+### Changed
+
+- Align included JS package versions and release authorization at 0.2.0-rc.2.
+- Carry forward RC1 runtime fixes and event-ID migration guidance. Historical
+  GitHub RC1 tags remain unchanged; no npm publication is claimed until verified.
+
+## [0.2.0-rc.1] - 2026-09-12
+
+GitHub-only source prerelease: `github-v0.2.0-rc.1`. npm remains at 0.1.0.
+This snapshot includes the changes documented under 0.1.0-rc.4 below.
+
+### Fixed
+
+- Browser form injection handles native DOM NodeLists; the WordPress-to-CRM
+  reference fixture exercises the configured form boundary.
+- Delivery deadlines bound stalled network operations. Browser storage failures
+  no longer interrupt supported lifecycle paths.
+- Framework directory metadata distinguishes implemented packages from directory
+  acceptance and provider verification.
+
+- Release workspace dependencies update Astro to 7.2.8, sharp to the patched
+  0.35.4 range, and Astro's js-yaml to 4.3.2 after the fresh dependency audit.
+
+### Migration and scope
+
+- Stable replay IDs use `sha256-128-v1`. Preserve already-enqueued event IDs;
+  drain retry backlogs before deriving IDs under the new contract.
+- The included consent-withdrawal and destination-validation changes are described
+  in the RC4 section. Validate host consent and destination configuration before
+  adopting this prerelease.
+- Activepieces remains excluded from workspace validation and retains its earlier
+  version. Python distributions are not versioned or published by this JS release.
+- GitHub publication does not establish npm availability, WordPress deployment,
+  marketplace acceptance, or every provider's live behavior.
+
+### Fixed
+
+- Report browser fetch HTTP failures through `onDropped`, preserving at-most-once delivery.
+- Tolerate blocked mirror storage access and prevent same-adapter revival after blocked deletion.
+- Bound server and proxy fetch delivery to 3 seconds across canonical/framework clients,
+  Typebot, and Directus; abort stalled requests while preserving host failure results.
+  Set Activepieces native request timeout to 3 seconds without enabling the excluded package.
+
 ## [0.1.0-rc.4] - 2026-08-25
 
 ### Added
@@ -100,7 +155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MIT. The WordPress plugin remains GPL-2.0-or-later; MIT embeds cleanly
   into GPL.
 
-[Unreleased]: https://github.com/vizuh/clicktrail-js/compare/v0.1.0-rc.4...HEAD
+[Unreleased]: https://github.com/vizuh/clicktrail-js/compare/github-v0.2.0-rc.1...HEAD
+[0.2.0-rc.1]: https://github.com/vizuh/clicktrail-js/releases/tag/github-v0.2.0-rc.1
 [0.1.0-rc.4]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0-rc.3
 [0.1.0]: https://github.com/vizuh/clicktrail-js/releases/tag/v0.1.0
