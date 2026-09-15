@@ -119,3 +119,11 @@ test('preserves an existing flat referral snapshot without mixing messages', () 
   assert.equal(result.clicktrail_referral_ctwa_clid, undefined);
   assert.equal(result.clicktrail_referral_arbitrary, undefined);
 });
+
+test('treats a recognized flat referral key as occupied regardless of value type', () => {
+  const existing = { clicktrail_referral_source_id: 42 };
+  assert.deepEqual(
+    mergeMetaWhatsAppReferralAttributes(existing, referral, { consentState: 'granted' }),
+    existing,
+  );
+});
