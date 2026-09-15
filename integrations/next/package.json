@@ -30,6 +30,9 @@
   ],
   "license": "MIT",
   "author": "Vizuh O\u00dc",
+  "dependencies": {
+    "@vizuh/clicktrail-core": "workspace:*"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/vizuh/clicktrail-js",
