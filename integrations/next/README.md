@@ -8,20 +8,27 @@ The package does not create ad-platform conversions or accept browser identity a
 
 Use `captureFirstTouchFromNextRequest` in middleware to capture the complete
 canonical record (UTMs, click IDs, channel, referrer, landing page, and
- timestamp). Set a parent-domain cookie when the marketing and app hosts are
+timestamp). Set a parent-domain cookie when the marketing and app hosts are
 subdomains of the same site:
 
 ```js
+import { NextResponse } from 'next/server';
 import { createMiddleware } from '@vizuh/clicktrail-next';
 
 export const middleware = createMiddleware({
+  nextResponse: NextResponse,
+  consentGate: (request) => request.cookies.get('ct_consent')?.value === 'granted',
   domain: '.recoupable.dev',
 });
 ```
 
-The middleware is first-touch write-once. A later `/signup` request cannot
-replace the original campaign. In the signup server action, attach the
-server-owned account ID and persist the returned `first_touch` object:
+`nextResponse` must be injected because the package has no hard Next.js runtime
+dependency. `consentGate` must return the boolean `true`; unknown or denied
+consent does not persist attribution, and denied consent clears an existing
+attribution cookie. The middleware is first-touch write-once.
+A later `/signup` request cannot replace the original campaign. In the signup
+server action, attach the server-owned account ID and persist the returned
+`first_touch` object:
 
 ```js
 import { cookies } from 'next/headers';

@@ -5,6 +5,7 @@ import {
   attachAttributionToAccount,
   captureAttribution,
   captureFirstTouch,
+  captureFromNextRequest,
   createHiddenFields,
   createMiddleware,
   parseAttributionCookie,
@@ -28,18 +29,55 @@ test('captures the canonical first touch needed by a signup account', () => {
   assert.equal(captured.ft_gclid, 'click-123');
 });
 
-test('preserves first touch across recoupable.dev and app.recoupable.dev', () => {
+test('captures click IDs from a relative Pages Router URL', () => {
+  assert.deepEqual(captureFromNextRequest({ url: '/api/lead?gclid=G-123' }), { gclid: 'G-123' });
+});
+
+test('requires affirmative consent before middleware persistence', () => {
   const writes = [];
-  const NextResponse = {
+  const nextResponse = {
     next: () => ({ cookies: { set: (...args) => writes.push(args) } }),
   };
-  const middleware = createMiddleware({ domain: '.recoupable.dev', now: '2026-09-01T10:00:00.000Z' });
+  const middleware = createMiddleware({ nextResponse, now: '2026-09-01T10:00:00.000Z' });
+  middleware({ nextUrl: new URL('https://recoupable.dev/?gclid=G-123'), cookies: { get: () => undefined } }, { waitUntil() {} });
+  assert.equal(writes.length, 0, 'unknown consent must not persist attribution');
+});
+
+test('clears stored attribution when consent is denied', () => {
+  const writes = [];
+  const nextResponse = {
+    next: () => ({ cookies: { set: (...args) => writes.push(args) } }),
+  };
+  const middleware = createMiddleware({ nextResponse, consentGate: () => false, domain: '.recoupable.dev' });
+  middleware({
+    nextUrl: new URL('https://recoupable.dev/signup'),
+    cookies: { get: () => ({ value: '{"gclid":"old"}' }) },
+  }, { waitUntil() {} });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0][0], 'ct_attribution');
+  assert.equal(writes[0][1], '');
+  assert.equal(writes[0][2].maxAge, 0);
+  assert.equal(writes[0][2].domain, '.recoupable.dev');
+});
+
+test('preserves first touch across recoupable.dev and app.recoupable.dev', () => {
+  const writes = [];
+  const nextResponse = {
+    next: () => ({ cookies: { set: (...args) => writes.push(args) } }),
+  };
+  const middleware = createMiddleware({
+    nextResponse,
+    consentGate: (request) => request.consent?.advertising === true,
+    domain: '.recoupable.dev',
+    now: '2026-09-01T10:00:00.000Z',
+  });
   const firstRequest = {
     nextUrl: new URL('https://recoupable.dev/pricing?utm_source=google&utm_medium=cpc&utm_campaign=spring&gclid=click-123'),
     consent: { advertising: true },
     cookies: { get: () => undefined },
   };
-  middleware(firstRequest, NextResponse);
+  // The second argument is NextFetchEvent in the real runtime and must be ignored.
+  middleware(firstRequest, { waitUntil() {} });
   assert.equal(writes.length, 1);
   assert.equal(writes[0][0], 'ct_attribution');
   assert.equal(writes[0][2].domain, '.recoupable.dev');
@@ -51,7 +89,7 @@ test('preserves first touch across recoupable.dev and app.recoupable.dev', () =>
     consent: { advertising: true },
     cookies: { get: () => ({ value: firstCookieValue }) },
   };
-  middleware(laterRequest, NextResponse);
+  middleware(laterRequest, { waitUntil() {} });
   assert.equal(writes.length, 1, 'a later signup visit must not replace first touch');
 });
 

@@ -119,9 +119,38 @@ export function parseAttributionCookie(header, name = DEFAULT_COOKIE_NAME) {
   try { return cleanRecord(JSON.parse(decodeURIComponent(match.slice(name.length + 1)))); } catch { return {}; }
 }
 
+function requestHeader(request, name) {
+  const headers = request?.headers;
+  if (typeof headers?.get === 'function') return headers.get(name) || '';
+  const value = headers?.[name] ?? headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? String(value[0] ?? '') : String(value ?? '');
+}
+
+function requestBaseUrl(request) {
+  const host = requestHeader(request, 'host') || 'clicktrail.invalid';
+  const forwardedProto = requestHeader(request, 'x-forwarded-proto').split(',')[0].trim();
+  const protocol = forwardedProto === 'http' ? 'http' : 'https';
+  try { return new URL(`${protocol}://${host}/`); } catch { return new URL('https://clicktrail.invalid/'); }
+}
+
+function queryUrl(request, base) {
+  const query = request?.query;
+  if (!query || typeof query !== 'object') return new URL('/', base);
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    const item = Array.isArray(value) ? value.at(-1) : value;
+    if (item !== undefined && item !== null) params.set(key, String(item));
+  }
+  return new URL(`/?${params.toString()}`, base);
+}
+
 function requestUrl(request) {
-  const candidate = request?.nextUrl || request?.url;
-  try { return candidate instanceof URL ? candidate : new URL(String(candidate || 'http://localhost/')); } catch { return new URL('http://localhost/'); }
+  const base = requestBaseUrl(request);
+  const candidate = request?.nextUrl ?? request?.url;
+  if (candidate) {
+    try { return candidate instanceof URL ? candidate : new URL(String(candidate), base); } catch { /* fall through to query */ }
+  }
+  return queryUrl(request, base);
 }
 
 export function captureFromNextRequest(request) {
@@ -133,7 +162,7 @@ export function captureFirstTouchFromNextRequest(request, options = {}) {
   return captureFirstTouch(url, {
     ...options,
     currentHost: options.currentHost ?? url.host,
-    referrer: options.referrer ?? request?.headers?.get?.('referer') ?? '',
+    referrer: options.referrer ?? requestHeader(request, 'referer'),
   });
 }
 
@@ -144,17 +173,46 @@ export function createHiddenFields(attribution) {
 function requestCookie(request, name) {
   const item = request?.cookies?.get?.(name);
   if (item?.value) return item.value;
-  return parseAttributionCookie(request?.headers?.get?.('cookie') ?? request?.headers?.cookie ?? '', name);
+  const direct = request?.cookies?.[name];
+  if (typeof direct === 'string' && direct) return direct;
+  return parseAttributionCookie(requestHeader(request, 'cookie'), name);
 }
 
-export function createMiddleware({ cookieName = DEFAULT_COOKIE_NAME, maxAge, domain, path = '/', sameSite = 'lax', secure = true, httpOnly = true, now } = {}) {
-  return function clickTrailMiddleware(request, NextResponse) {
+function hasRequestCookie(request, name) {
+  try {
+    if (request?.cookies?.get?.(name)) return true;
+    if (request?.cookies?.[name] !== undefined) return true;
+    return requestHeader(request, 'cookie').split(';').some((part) => part.trim().startsWith(`${name}=`));
+  } catch { return false; }
+}
+
+export function createMiddleware({ cookieName = DEFAULT_COOKIE_NAME, maxAge, domain, path = '/', sameSite = 'lax', secure = true, httpOnly = true, now, nextResponse, consentGate } = {}) {
+  if (!nextResponse || typeof nextResponse.next !== 'function') throw new TypeError('nextResponse with a next() method is required');
+  const hasConsent = (request) => {
+    try {
+      return typeof consentGate === 'function'
+        ? consentGate(request) === true
+        : request?.consent?.advertising === true;
+    } catch { return false; }
+  };
+  return function clickTrailMiddleware(request) {
+    const response = nextResponse.next();
+    // NextRequest has no consent property. Unknown consent is denied by default;
+    // hosts should inject their CMP decision through consentGate. Clear an
+    // existing attribution cookie when consent is denied or withdrawn.
+    if (!hasConsent(request)) {
+      if (hasRequestCookie(request, cookieName)) {
+        response.cookies.set(cookieName, '', {
+          httpOnly, secure, sameSite, maxAge: 0, path, ...(domain ? { domain } : {}),
+        });
+      }
+      return response;
+    }
     const incoming = captureFirstTouchFromNextRequest(request, now ? { now } : {});
     const previousRaw = requestCookie(request, cookieName);
     const previous = typeof previousRaw === 'string' ? parseAttributionCookie(`${cookieName}=${previousRaw}`, cookieName) : previousRaw;
     const attribution = mergeFirstTouch(previous, incoming);
-    const response = NextResponse.next();
-    if (Object.keys(attribution).length && request?.consent?.advertising !== false && !hasFirstTouch(previous)) {
+    if (Object.keys(attribution).length && !hasFirstTouch(previous)) {
       response.cookies.set(cookieName, JSON.stringify(attribution), {
         httpOnly, secure, sameSite, maxAge: maxAge ?? DEFAULT_MAX_AGE, path, ...(domain ? { domain } : {}),
       });
