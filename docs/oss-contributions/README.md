@@ -16,9 +16,12 @@ A proposal is not a reason to close an upstream issue automatically. Maintainers
 own issue state and may prefer a custom integration, a documentation recipe, a
 native admin surface, or no change.
 
+See the [six-issue review](./six-issues-review.md) for the current maintainer-first
+selection, validation boundary, and cross-project lessons.
+
 ## Verified status
 
-Status checked against the GitHub API on **2026-09-01**.
+Status checked against the GitHub API on **2026-09-15**.
 
 | Record | Upstream | Status and ClickTrail-relevant outcome |
 |---|---|---|
@@ -40,6 +43,12 @@ Status checked against the GitHub API on **2026-09-01**.
 | [phpList](./phplist-php-attribution-issue.md) | [#1140](https://github.com/phpList/phplist3/issues/1140) | Open; explicitly separated from outbound-link tracking issue #556. |
 | [Relaticle](./relaticle-provenance-issue.md) | [#531](https://github.com/relaticle/relaticle/issues/531) | Closed because ideas belong in Discussions; the recorded discussion link currently returns 404 from the API. |
 | [Comp AI](./comp-ai-provenance-short-note.md) | Project guidance | Short idea note only; do not post as a generated long issue. |
+| [Capacita](./capacita-google-ads-closed-loop-issue.md) | [#107](https://github.com/misaeln-pc1/marketing-performance-capacita/issues/107) | Open; design-only while native Zoho integration and CRM data gaps are resolved. No runtime PR. |
+| [matchXelerate](./matchxelerate-consent-utm-gclid-issue.md) | [#22](https://github.com/OS-labs-digital/matchxelerate-web/issues/22) | Open; optional Next.js consent/UTM/GCLID reference example is the smallest useful ClickTrail contribution. |
+| [Hauddy](./hauddy-campaign-attribution-issue.md) | [#95](https://github.com/Hauddy/hauddy/issues/95) | Open; native source and activation events already exist. Documentation/reporting comes before an adapter. |
+| [ROLANPRO](./rolan-google-ads-crm-issue.md) | [#139](https://github.com/zufarataev-code/Rolan-PRO-CRM/issues/139) and [PR #140](https://github.com/zufarataev-code/Rolan-PRO-CRM/pull/140) | Open; active draft PR already owns the CRM integration. Do not duplicate it. |
+| [Vanta Labs](./vanta-google-ads-attribution-issue.md) | [#184](https://github.com/brendenhuntzinger1/vanta-labs/issues/184) | Open; latent Google source/spend classification gap with no observed Google orders. Test/mapping proposal only. |
+| [CG Dynamics](./cg-dynamics-ga4-ads-issue.md) | [#335](https://github.com/CGProductionHouse/CG-Dynamics/issues/335) and [PR #336](https://github.com/CGProductionHouse/CG-Dynamics/pull/336) | Open; active PR already owns exact Ads↔GA4 reporting. Do not duplicate it. |
 
 ## ClickTrail-owned issue references
 
