@@ -10,6 +10,7 @@ SDK once.
 | [`static-page/`](static-page/) | Runnable (browser) | Zero-tooling page using the IIFE bundle: dataLayer destination + consent checkbox driving `start()`/`stop()`. Built bundle is committed in-folder. | open `examples/static-page/index.html`, or `npx serve examples/static-page` |
 | [`gtm-datalayer/`](gtm-datalayer/) | Copy-only recipe | How to read ClickTrail pushes in GTM: push shape, data-layer variables (`event_name`, `marketing_trail.trail_id`, `ft_source`/`lt_source`, `click_ids.gclid`), trigger config, PII warning. | copy snippets into your integration layer |
 | [`astro-demo/`](astro-demo/) | Documentation-only walkthrough | The official Astro integration in one page: `astro.config.mjs` snippet, condensed options table, consent gating, server-side conversions. Full starter: [`../site/`](../site/). | follow along in your Astro project |
+| [`open-mercato-meta-whatsapp/`](open-mercato-meta-whatsapp/) | Copy-only recipe | Bounded, consent-gated Meta/WhatsApp referral handoff into an Open Mercato-style `captureContext`; no host files or runtime dependencies. | copy `index.mjs` into the host boundary |
 
 ## Prerequisite
 
