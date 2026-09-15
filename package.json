@@ -9,7 +9,8 @@
     "build:global": "pnpm --filter @vizuh/clicktrail build:global",
     "test": "pnpm -r test",
     "probe": "pnpm --filter @vizuh/clicktrail... build && pnpm --filter @vizuh/clicktrail build:global && node probe/run-probe.mjs && node probe/run-wordpress-reference.mjs",
-    "parity": "node tools/wp-runtime/run-parity.mjs"
+    "parity": "node tools/wp-runtime/run-parity.mjs",
+    "verify:workspace": "node tools/ci/verify-workspace-contract.mjs"
   },
   "pnpm": {
     "overrides": {
