@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { dealToConversion } from '../src/index.js'; test('maps HubSpot attribution fields', () => { assert.equal(dealToConversion({ id: 'd', properties: { dealstage: 'closedwon', amount: '40' } }).value, 40); });

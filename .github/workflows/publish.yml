@@ -134,6 +134,7 @@ jobs:
           node tools/release/verify-trusted-publishing-attestation.mjs
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:workspace
       - run: pnpm typecheck
       - run: pnpm -r test
       - run: pnpm -r build

@@ -1,0 +1,1 @@
+export function enrichContact(contact = {}, attribution = {}) { const attrs = { ...(contact.custom_attributes || {}) }; for (const key of ['gclid','gbraid','wbraid','fbclid','fbc','fbp']) if (attribution[key]) attrs[`clicktrail_${key}`] = String(attribution[key]).slice(0,512); return { ...contact, custom_attributes: attrs }; }

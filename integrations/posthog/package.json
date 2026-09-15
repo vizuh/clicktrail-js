@@ -1,0 +1,14 @@
+{
+  "name": "@vizuh/clicktrail-posthog",
+  "version": "0.1.0-rc.4",
+  "description": "Enrich PostHog events with consent-aware ClickTrail attribution context.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": { ".": { "import": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": { "build": "node scripts/build.mjs", "test": "node --test tests/*.test.mjs" },
+  "keywords": ["posthog", "attribution", "clicktrail", "gclid", "revenue-attribution"],
+  "license": "MIT",
+  "author": "Vizuh OÜ",
+  "repository": { "type": "git", "url": "https://github.com/vizuh/clicktrail-js", "directory": "integrations/posthog" }
+}

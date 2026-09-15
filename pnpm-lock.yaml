@@ -47,6 +47,8 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  integrations/chatwoot: {}
+
   integrations/directus:
     dependencies:
       '@vizuh/clicktrail':
@@ -88,6 +90,8 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  integrations/hubspot: {}
+
   integrations/n8n:
     dependencies:
       '@vizuh/clicktrail':
@@ -110,6 +114,12 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  integrations/next:
+    dependencies:
+      '@vizuh/clicktrail-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+
   integrations/nuxt:
     dependencies:
       '@vizuh/clicktrail':
@@ -131,6 +141,10 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+
+  integrations/odoo: {}
+
+  integrations/posthog: {}
 
   integrations/qwik:
     dependencies:
@@ -159,6 +173,8 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+
+  integrations/shopify: {}
 
   integrations/sv:
     dependencies:
@@ -209,6 +225,8 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+
+  integrations/twenty: {}
 
   integrations/typebot:
     dependencies:
@@ -311,6 +329,8 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
+  packages/node: {}
+
   packages/server:
     dependencies:
       '@vizuh/clicktrail-browser':
@@ -329,6 +349,8 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
+
+  packages/wordpress: {}
 
 packages:
 

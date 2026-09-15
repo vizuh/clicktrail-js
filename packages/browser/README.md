@@ -1,6 +1,7 @@
 # @vizuh/clicktrail-browser
 
-Consent-aware browser effects for ClickTrail.
+Consent-aware browser effects for ClickTrail's open-source attribution handoff
+layer.
 
 The browser SDK captures attribution, stores it in first-party browser
 storage, injects `ct_*` fields into forms, tracks SPA page views, and sends

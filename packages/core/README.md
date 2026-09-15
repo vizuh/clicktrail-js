@@ -1,6 +1,7 @@
 # @vizuh/clicktrail-core
 
-The small, deterministic core of ClickTrail.
+The small, deterministic core of ClickTrail's open-source attribution handoff
+layer. It keeps the conversion contract portable across stacks you own.
 
 It parses campaign URLs, classifies referrers, merges first-touch and
 last-touch attribution, builds canonical events, and creates stable event IDs

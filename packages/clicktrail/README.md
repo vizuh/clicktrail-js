@@ -3,8 +3,10 @@
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-Deterministic first-party attribution conventions and engine. Captures the
-trail from ad click to conversion — UTMs, ad click IDs (gclid, fbclid,
+> **ClickTrail is the open-source attribution handoff layer that keeps observed acquisition context attached to conversion records inside the stack you own.**
+
+This package is the deterministic engine in that layer. It captures the trail
+from ad click to conversion boundary — UTMs, ad click IDs (gclid, fbclid,
 ttclid, ...), referrer classification, first-touch/last-touch merge — as a
 flat canonical payload.
 

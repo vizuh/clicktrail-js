@@ -1,6 +1,7 @@
 # @vizuh/clicktrail-server
 
-Server-side conversion helpers for ClickTrail.
+Server-side conversion helpers for ClickTrail's open-source attribution handoff
+layer.
 
 The package reads the attribution and identity cookies supplied by the host,
 builds canonical lead, booking, and purchase events, and sends them to a

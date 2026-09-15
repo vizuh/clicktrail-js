@@ -6,9 +6,10 @@
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-**Carry observed acquisition context from arrival to the conversion boundary.**
+> **ClickTrail is the open-source attribution handoff layer that keeps observed acquisition context attached to conversion records inside the stack you own.**
 
-ClickTrail JS parses UTMs, referrers, and ad click IDs, applies deterministic
+ClickTrail JS is the deterministic engine and host adapter layer behind that
+handoff. It parses UTMs, referrers, and ad click IDs, applies deterministic
 first-touch and last-touch rules, and returns a flat canonical payload. Its
 browser adapter can persist that payload in host-controlled first-party storage
 and attach it to configured forms and events behind the host's consent gate.

@@ -44,6 +44,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify workspace contracts
+        run: pnpm verify:workspace
+
       - name: Strict typecheck (tsc --noEmit)
         run: pnpm typecheck
 

@@ -1,6 +1,7 @@
 # @vizuh/clicktrail-consent
 
-Small consent contracts shared by ClickTrail integrations.
+Small consent contracts shared by ClickTrail integrations. They gate the
+attribution handoff before storage or transmission.
 
 This package does not provide a consent-management platform. Your CMP or
 application owns the decision. These helpers give integrations one consistent
