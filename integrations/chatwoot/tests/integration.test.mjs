@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { enrichContact } from '../src/index.js'; test('maps Chatwoot attribution fields', () => { assert.equal(enrichContact({ custom_attributes: {} }, { fbclid: 'f' }).custom_attributes.clicktrail_fbclid, 'f'); });

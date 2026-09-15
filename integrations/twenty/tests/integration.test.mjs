@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { opportunityToConversion } from '../src/index.js'; test('maps Twenty CRM attribution fields', () => { assert.equal(opportunityToConversion({ id: '1', stage: 'Won', amount: '10', customFields: { gclid: 'g' } }).clickIds.gclid, 'g'); });

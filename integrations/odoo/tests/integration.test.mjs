@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { leadToAttribution } from '../src/index.js'; test('maps Odoo attribution fields', () => { assert.equal(leadToAttribution({ id: 2, expected_revenue: '30', x_attribution: { gclid: 'g' } }).value, 30); });

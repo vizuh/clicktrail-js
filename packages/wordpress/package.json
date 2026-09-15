@@ -1,0 +1,14 @@
+{
+  "name": "@vizuh/clicktrail-wordpress",
+  "version": "0.1.0-rc.4",
+  "description": "WordPress attribution contract helpers for ClickTrail forms and order metadata.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": { ".": { "import": "./dist/index.js" } },
+  "files": ["dist", "src", "README.md", "LICENSE"],
+  "scripts": { "build": "node scripts/build.mjs", "test": "node --test tests/*.test.mjs" },
+  "keywords": ["wordpress", "woocommerce", "forms", "attribution", "gclid", "clicktrail"],
+  "license": "MIT",
+  "author": "Vizuh OÜ",
+  "repository": { "type": "git", "url": "https://github.com/vizuh/clicktrail-js", "directory": "packages/wordpress" }
+}
