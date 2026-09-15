@@ -6,9 +6,10 @@
 
 ![ClickTrail](https://ps.w.org/click-trail-handler/assets/icon-256x256.png)
 
-**Leve o contexto de aquisição observado da chegada até o ponto de conversão.**
+> **ClickTrail é a camada open source de handoff de atribuição que mantém o contexto de aquisição observado ligado aos registros de conversão dentro da stack que você controla.**
 
-O ClickTrail JS interpreta UTMs, referenciadores e IDs de clique, aplica regras
+O ClickTrail JS é o motor determinístico e a camada de adapters desse handoff.
+Ele interpreta UTMs, referenciadores e IDs de clique, aplica regras
 determinísticas de primeiro e último toque e retorna um payload canônico plano.
 O adapter de navegador pode persistir esse payload em armazenamento first-party
 controlado pelo host e anexá-lo a formulários e eventos configurados, atrás do
