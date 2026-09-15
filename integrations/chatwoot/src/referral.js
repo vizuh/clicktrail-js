@@ -127,8 +127,11 @@ export function mergeMetaWhatsAppReferralAttributes(
   if (options?.consentState !== 'granted') return base;
 
   const candidate = metaWhatsAppReferralAttributes(referral);
-  const hasExistingReferral = Object.keys(base).some(
-    (key) => key.startsWith(META_WHATSAPP_REFERRAL_ATTRIBUTE_PREFIX) && hasValue(base[key]),
+  const hasExistingReferral = META_WHATSAPP_REFERRAL_FIELDS.some(
+    (key) => Object.prototype.hasOwnProperty.call(
+      base,
+      `${META_WHATSAPP_REFERRAL_ATTRIBUTE_PREFIX}${key}`,
+    ),
   );
   if (hasExistingReferral) return base;
 
