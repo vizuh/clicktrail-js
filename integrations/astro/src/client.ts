@@ -14,7 +14,11 @@ import {
   createClickTrail,
   httpDestination,
 } from '@vizuh/clicktrail/browser';
-import type { ClickTrailConfig, ClickTrailInstance } from '@vizuh/clicktrail/browser';
+import type {
+  ClickTrailConfig,
+  ClickTrailInstance,
+  RandomBytesFn,
+} from '@vizuh/clicktrail/browser';
 import type { NavigationSeam } from './page-views.js';
 import { attachPageViewTracking } from './page-views.js';
 import { CLIENT_CONFIG_GLOBAL } from './config.js';
@@ -36,9 +40,18 @@ export interface ClientDomSeams {
     dispatchEvent?: (event: { type: string }) => void;
   };
   navigationSeam?: NavigationSeam;
+  /** Injectable randomness seam for non-browser test runtimes. */
+  randomBytes?: RandomBytesFn;
 }
 
-function defaultSeams(): Required<ClientDomSeams> & { navigationSeam: NavigationSeam } {
+type ResolvedClientDomSeams = {
+  storageLike: NonNullable<ClientDomSeams['storageLike']>;
+  eventTarget: NonNullable<ClientDomSeams['eventTarget']>;
+  navigationSeam: NonNullable<ClientDomSeams['navigationSeam']>;
+  randomBytes?: RandomBytesFn;
+};
+
+function defaultSeams(): ResolvedClientDomSeams {
   const w = globalThis as unknown as {
     localStorage?: Pick<Storage, 'getItem' | 'setItem'>;
     document?: {
@@ -90,11 +103,11 @@ export interface BootedClient {
   detachPageViews(): void;
 }
 
-function resolveSeams(seams: ClientDomSeams): Required<ClientDomSeams> {
+function resolveSeams(seams: ClientDomSeams): ResolvedClientDomSeams {
   if (seams.storageLike && seams.eventTarget && seams.navigationSeam) {
-    return seams as Required<ClientDomSeams>;
+    return seams as ResolvedClientDomSeams;
   }
-  return { ...defaultSeams(), ...seams } as Required<ClientDomSeams>;
+  return { ...defaultSeams(), ...seams } as ResolvedClientDomSeams;
 }
 
 export function bootClickTrailClient(
@@ -113,6 +126,7 @@ export function bootClickTrailClient(
     ...(config.storage?.retentionDays !== undefined
       ? { retentionDays: config.storage.retentionDays }
       : {}),
+    ...(resolved.randomBytes !== undefined ? { randomBytes: resolved.randomBytes } : {}),
   };
   const crossDomain: ClickTrailConfig['crossDomain'] = config.crossDomain && {
     domains: config.crossDomain.domains,

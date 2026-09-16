@@ -53,6 +53,7 @@ function makeSeams(href: string) {
       referrer: () => '',
       host: () => 'example.com',
     },
+    randomBytes: (length: number) => new Uint8Array(length).fill(7),
   };
 }
 
