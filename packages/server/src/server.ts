@@ -12,10 +12,11 @@ import {
   buildEventPayload,
   parseCookieMap,
   sanitizeServerEventInput,
+  filterServerAttributionPayload,
 } from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
+import { deriveStableEventId, isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -48,7 +49,7 @@ export function parseIdentityFromCookies(cookieHeader: string | null | undefined
   const payloadRaw = cookies[ATTRIBUTION_KEY] ?? cookies[LEGACY_ATTRIBUTION_KEY];
   const payload =
     typeof payloadRaw === 'string' && payloadRaw
-      ? ((safeJsonParse(payloadRaw) as AttributionPayload | null) ?? {})
+      ? filterServerAttributionPayload(safeJsonParse(payloadRaw))
       : {};
 
   let visitorId: string | undefined;
@@ -125,6 +126,41 @@ function normalizeEventId(value: unknown): string {
   return eventId.startsWith('evt_') ? eventId : `evt_${eventId}`;
 }
 
+function stableConversionKey(
+  eventName: string,
+  input: ConversionInput<Record<string, unknown>>,
+): string {
+  const data = input.data ?? {};
+  const stableInput = input.eventId
+    ?? data['transactionId']
+    ?? data['transaction_id']
+    ?? data['bookingId']
+    ?? data['booking_id']
+    ?? data['leadId']
+    ?? data['lead_id']
+    ?? data['formId']
+    ?? data['form_id']
+    ?? `${input.identity.visitorId ?? ''}:${input.identity.sessionId ?? ''}`;
+  return JSON.stringify([
+    eventName,
+    String(stableInput),
+    input.identity.visitorId ?? '',
+    input.identity.sessionId ?? '',
+    input.now ?? '',
+  ]);
+}
+
+function resolveEventId(
+  eventName: string,
+  input: ConversionInput<Record<string, unknown>>,
+  siteId?: string,
+): string {
+  if (input.eventId !== undefined) return normalizeEventId(input.eventId);
+  // Server conversions have no browser clock/UUID lifecycle. Derive an ID
+  // from stable occurrence data so retries of the same call deduplicate.
+  return deriveStableEventId(siteId ?? 'clicktrail', stableConversionKey(eventName, input));
+}
+
 function requireSafeHttpUrl(value: unknown, field: string): string {
   const endpoint = requireNonEmptyString(value, field);
   if (!isSafeHttpUrl(endpoint)) {
@@ -170,14 +206,12 @@ export class ClickTrailServer {
   }
 
   private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
-    const payload = sanitizeServerEventInput(input.identity.payload ?? {});
+    const payload = filterServerAttributionPayload(input.identity.payload ?? {});
     const data = sanitizeServerEventInput(input.data ?? {});
-    const eventId = input.eventId === undefined ? undefined : normalizeEventId(input.eventId);
+    const eventId = resolveEventId(eventName, input, this.siteId);
     return buildEventPayload(payload, toCanonicalEventName(eventName), {
       ...data,
-      ...(input.eventId !== undefined
-        ? { event_id: eventId }
-        : {}),
+      event_id: eventId,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),

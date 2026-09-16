@@ -8,6 +8,7 @@
  */
 import { stampVersions } from '@vizuh/clicktrail-core';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import { CANONICAL_PAYLOAD_KEYS } from './payload-store.js';
 
 export interface MarketingTrailEnvelope {
   schema_version: 1;
@@ -77,6 +78,27 @@ export function sanitizeServerEventInput<T extends Record<string, unknown>>(inpu
   return sanitized as T;
 }
 
+const SERVER_COOKIE_IDENTITY_KEYS = new Set(['visitor_id', 'session_id', 'session_number']);
+const SERVER_ATTRIBUTION_KEYS = new Set(
+  CANONICAL_PAYLOAD_KEYS.filter((key) => !SERVER_COOKIE_IDENTITY_KEYS.has(key)),
+);
+
+/**
+ * Keep only canonical attribution values from a server-readable cookie.
+ * Identity and arbitrary/PII fields are deliberately excluded; identity is
+ * read from the dedicated session cookies and explicit server input instead.
+ */
+export function filterServerAttributionPayload(input: unknown): AttributionPayload {
+  if (!isRecord(input)) return {};
+  const filtered: AttributionPayload = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (SERVER_ATTRIBUTION_KEYS.has(key) && typeof value === 'string') {
+      filtered[key] = value;
+    }
+  }
+  return filtered;
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value : value == null ? '' : String(value);
 }
@@ -115,21 +137,20 @@ export function buildMarketingTrailEnvelope(
   data: Record<string, unknown> = {},
   context: MarketingTrailContext = {},
 ): MarketingTrailEnvelope {
-  const supplied = isRecord(data['marketing_trail']) ? data['marketing_trail'] : {};
   const visitorId = firstText(context.identity?.visitorId, data['visitor_id'], payload['visitor_id']);
-  const anonymousId = prefixed(firstText(supplied['anonymous_id'], data['anonymous_id'], visitorId), 'anon_');
-  const eventId = prefixed(firstText(supplied['event_id'], data['event_id']), 'evt_');
+  const anonymousId = prefixed(firstText(data['anonymous_id'], visitorId), 'anon_');
+  // The top-level event identity and name are authoritative. Nested values
+  // are legacy/additive input and must not fork canonical envelope fields.
+  const eventId = prefixed(firstText(data['event_id']), 'evt_');
   const leadEvent = ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
   const leadId = prefixed(
-    firstText(supplied['lead_id'], data['lead_id'], leadEvent ? eventId.replace(/^evt_/, '') : ''),
+    firstText(data['lead_id'], leadEvent ? eventId.replace(/^evt_/, '') : ''),
     'lead_',
   );
   const clickIds: Record<string, string> = {};
-  const suppliedClickIds = isRecord(supplied['click_ids']) ? supplied['click_ids'] : {};
   const dataClickIds = isRecord(data['click_ids']) ? data['click_ids'] : {};
   for (const key of CLICK_ID_KEYS) {
     const value = firstText(
-      suppliedClickIds[key],
       dataClickIds[key],
       payload[key],
       payload[`lt_${key}`],
@@ -138,35 +159,33 @@ export function buildMarketingTrailEnvelope(
     if (value) clickIds[key] = value;
   }
 
-  const suppliedForm = isRecord(supplied['form']) ? supplied['form'] : {};
   const dataForm = isRecord(data['form']) ? data['form'] : isRecord(data['lead_context']) ? data['lead_context'] : {};
-  const suppliedConsent = isRecord(supplied['consent']) ? supplied['consent'] : {};
   const dataConsent = isRecord(data['consent']) ? data['consent'] : {};
   const consent = context.consent ?? dataConsent;
 
   return {
     schema_version: 1,
     event_id: eventId,
-    trail_id: prefixed(firstText(supplied['trail_id'], data['trail_id'], payload['trail_id'], visitorId), 'trl_'),
+    trail_id: prefixed(firstText(data['trail_id'], payload['trail_id'], visitorId), 'trl_'),
     anonymous_id: anonymousId,
     lead_id: leadId,
-    workspace_id: firstText(context.workspaceId, supplied['workspace_id'], data['workspace_id']),
-    site_id: firstText(context.siteId, supplied['site_id'], data['site_id']),
-    event_name: firstText(supplied['event_name'], canonicalEventName(eventName)),
-    occurred_at: firstText(supplied['occurred_at'], data['occurred_at'], data['event_time']),
-    landing_page: firstText(supplied['landing_page'], touchValue(payload, 'landing_page', data)),
-    referrer: firstText(supplied['referrer'], touchValue(payload, 'referrer', data)),
-    source: firstText(supplied['source'], touchValue(payload, 'source', data)),
-    medium: firstText(supplied['medium'], touchValue(payload, 'medium', data)),
-    campaign: firstText(supplied['campaign'], touchValue(payload, 'campaign', data)),
+    workspace_id: firstText(context.workspaceId, data['workspace_id']),
+    site_id: firstText(context.siteId, data['site_id']),
+    event_name: canonicalEventName(eventName),
+    occurred_at: firstText(data['occurred_at'], data['event_time']),
+    landing_page: touchValue(payload, 'landing_page', data),
+    referrer: touchValue(payload, 'referrer', data),
+    source: touchValue(payload, 'source', data),
+    medium: touchValue(payload, 'medium', data),
+    campaign: touchValue(payload, 'campaign', data),
     click_ids: clickIds,
     consent: {
-      analytics: Boolean(suppliedConsent['analytics'] ?? consent['analytics']),
-      advertising: Boolean(suppliedConsent['advertising'] ?? suppliedConsent['marketing'] ?? consent['advertising'] ?? consent['marketing']),
+      analytics: (consent['analytics']) === true,
+      advertising: (consent['advertising'] ?? consent['marketing']) === true,
     },
     form: {
-      provider: firstText(suppliedForm['provider'], dataForm['provider'], data['form_provider']),
-      form_id: firstText(suppliedForm['form_id'], dataForm['form_id'], data['form_id']),
+      provider: firstText(dataForm['provider'], data['form_provider']),
+      form_id: firstText(dataForm['form_id'], data['form_id']),
     },
   };
 }

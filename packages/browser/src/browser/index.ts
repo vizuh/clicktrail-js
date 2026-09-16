@@ -9,6 +9,7 @@ export {
   buildEventPayload,
   buildMarketingTrailEnvelope,
   sanitizeServerEventInput,
+  filterServerAttributionPayload,
 } from './serialize.js';
 export type {
   ClickTrailEvent,

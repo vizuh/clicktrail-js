@@ -166,4 +166,36 @@ describe('ClickTrailServer', () => {
     expect(() => new ClickTrailServer({ endpoint: 'https://127.0.0.1/events' })).toThrow(/public absolute https/);
     expect(() => new ClickTrailServer({ endpoint: 'https://169.254.169.254/latest/meta-data' })).toThrow(/public absolute https/);
   });
+
+  it('emits a stable non-empty event ID when no explicit ID is supplied', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    const input = { identity: { payload: {}, visitorId: 'v-1', sessionId: 's-1' }, data: { leadId: 'lead-1' } };
+    await server.trackLead(input);
+    await server.trackLead(input);
+    const first = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as { events: Array<Record<string, unknown>> };
+    const second = JSON.parse(String((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body)) as { events: Array<Record<string, unknown>> };
+    expect(first.events[0]?.['event_id']).toEqual(second.events[0]?.['event_id']);
+    expect(first.events[0]?.['event_id']).toMatch(/^evt_s-/);
+    expect(first.events[0]?.['event_id']).toBe(first.events[0]?.['marketing_trail'] && (first.events[0]?.['marketing_trail'] as Record<string, unknown>)['event_id']);
+    const other = await server.trackLead({ identity: { payload: {}, visitorId: 'v-2', sessionId: 's-2' }, data: { leadId: 'lead-1' } });
+    expect(other).toEqual({ ok: true, status: 204 });
+    const third = JSON.parse(String((fetchMock.mock.calls[2] as unknown as [string, RequestInit])[1].body)) as { events: Array<Record<string, unknown>> };
+    expect(third.events[0]?.['event_id']).not.toBe(first.events[0]?.['event_id']);
+  });
+
+  it('filters arbitrary and identity fields from attribution cookies', () => {
+    const raw = encodeURIComponent(JSON.stringify({
+      ft_source: 'google',
+      email: 'victim@example.com',
+      visitor_id: 'forged-visitor',
+      session_id: 'forged-session',
+      pii: 'secret',
+    }));
+    const id = parseIdentityFromCookies(`attribution=${raw}`);
+    expect(id.payload).toEqual({ ft_source: 'google' });
+    expect(id.visitorId).toBeUndefined();
+    expect(id.sessionId).toBeUndefined();
+  });
+
 });

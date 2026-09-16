@@ -49,6 +49,12 @@ Status checked against the GitHub API on **2026-09-15**.
 | [ROLANPRO](./rolan-google-ads-crm-issue.md) | [#139](https://github.com/zufarataev-code/Rolan-PRO-CRM/issues/139) and [PR #140](https://github.com/zufarataev-code/Rolan-PRO-CRM/pull/140) | Open; active draft PR already owns the CRM integration. Do not duplicate it. |
 | [Vanta Labs](./vanta-google-ads-attribution-issue.md) | [#184](https://github.com/brendenhuntzinger1/vanta-labs/issues/184) | Open; latent Google source/spend classification gap with no observed Google orders. Test/mapping proposal only. |
 | [CG Dynamics](./cg-dynamics-ga4-ads-issue.md) | [#335](https://github.com/CGProductionHouse/CG-Dynamics/issues/335) and [PR #336](https://github.com/CGProductionHouse/CG-Dynamics/pull/336) | Open; active PR already owns exact Ads↔GA4 reporting. Do not duplicate it. |
+| [Chatwoot](./chatwoot-whatsapp-referral-preservation.md) | [#12560](https://github.com/chatwoot/chatwoot/issues/12560) | Open with 26 comments; narrowed first PR advised. Read existing comments before posting. |
+| [Matomo](./matomo-deferred-campaign-attribution.md) | [#24882](https://github.com/matomo-org/matomo/issues/24882) and [#24751](https://github.com/matomo-org/matomo/issues/24751) | Open; deferred-consent design discussion only until maintainers settle the consent source of truth. |
+| [Odoo](./odoo-link-tracker-click-id-preservation.md) | [#268774](https://github.com/odoo/odoo/issues/268774) | Open; defect fix candidate with a regression test. No ClickTrail dependency required. |
+| [PostHog](./posthog-google-ads-gbraid-wbraid.md) | [#95999](https://github.com/PostHog/posthog/issues/95999) | Open; one deterministic destination rule plus fixtures. |
+| [Sourcebuster](./sourcebuster-wbraid-gbraid-click-ids.md) | [#39](https://github.com/alex35mil/sourcebuster-js/issues/39) | Open upstream; fix implemented, tested, and pushed to the `vizuh` fork. No pull request opened. |
+| [trace-ids](./trace-ids-cached-click-id-leak.md) | [#1](https://github.com/lifexmarketing/trace-ids/issues/1) | Open; clearing-on-absence rule for the cached-form boundary. |
 
 ## ClickTrail-owned issue references
 

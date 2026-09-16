@@ -131,4 +131,36 @@ describe('buildEventPayload', () => {
       form: { provider: 'elementor', form_id: 'consultation' },
     });
   });
+
+  it('uses the top-level event identity and canonical name for the envelope', () => {
+    const event = buildEventPayload({}, 'page_view', {
+      event_id: 'evt_top-level',
+      event_name: 'sale',
+      marketing_trail: { event_id: 'evt_nested-forged', event_name: 'sale' },
+    });
+    expect(event.event_name).toBe('page_view');
+    expect(event.marketing_trail.event_name).toBe('page_view');
+    expect(event.marketing_trail.event_id).toBe('evt_top-level');
+  });
+
+  it('does not accept nested canonical envelope routing overrides', () => {
+    const event = buildEventPayload({}, 'page_view', {
+      marketing_trail: {
+        site_id: 'forged-site',
+        workspace_id: 'forged-workspace',
+        source: 'forged-source',
+      },
+    });
+    expect(event.marketing_trail.site_id).toBe('');
+    expect(event.marketing_trail.workspace_id).toBe('');
+    expect(event.marketing_trail.source).toBe('');
+  });
+
+  it('treats only literal booleans as consent grants', () => {
+    const event = buildEventPayload({}, 'page_view', {
+      consent: { analytics: 'false', advertising: 1 },
+    });
+    expect(event.marketing_trail.consent).toEqual({ analytics: false, advertising: false });
+  });
+
 });
