@@ -53,6 +53,7 @@ function makeSeams(href: string) {
       referrer: () => '',
       host: () => 'example.com',
     },
+    randomBytes: (length: number) => new Uint8Array(length).fill(7),
   };
 }
 
@@ -86,6 +87,22 @@ describe('bootClickTrailClient', () => {
     );
 
     expect(booted.instance.getField('ft_source')).toBe('');
+  });
+
+  it('recaptures the initial touch when consent is granted after boot', async () => {
+    const seams = makeSeams('https://example.com/?utm_source=google&utm_medium=cpc&gclid=G-1');
+    const booted = bootClickTrailClient(
+      defaultClientConfig({ endpoint: '/api/ct', consentRequired: true }),
+      seams,
+    );
+
+    expect(booted.instance.getField('ft_source')).toBe('');
+    setConsent(true, seams);
+    await booted.whenStarted();
+
+    expect(booted.instance.getField('ft_source')).toBe('google');
+    expect(booted.instance.getField('ft_medium')).toBe('cpc');
+    expect(booted.instance.getField('gclid')).toBe('G-1');
   });
 
   it('a denied flag never starts tracking', async () => {

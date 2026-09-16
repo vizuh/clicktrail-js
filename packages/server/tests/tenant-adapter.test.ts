@@ -46,6 +46,7 @@ describe('TenantAdapter', () => {
     expect(event.event_name).toBe('lead_created');
     expect(event.event_id).toMatch(/^evt_s-/);
     expect(event.occurred_at).toBe('2026-08-25T10:00:00.000Z');
+    expect(event.event_time).toBeUndefined();
     expect(event.properties).toEqual({
       source_status: 'new',
       tenant_id: 'med10x-tenant-1',
@@ -153,6 +154,34 @@ describe('TenantAdapter', () => {
     expect(first.build(input('provider-bzj5xdm3z8n6')).event_id).not.toBe(
       second.build(input('provider-6t1hedgr8o2r')).event_id,
     );
+  });
+
+  it('maps trusted conversion IDs while ignoring reserved input aliases', () => {
+    const adapter = createTenantAdapter(baseConfig());
+    const lead = adapter.build({
+      ...input('lead-provider-1'),
+      eventName: 'lead_created',
+      leadId: 'lead_42',
+      data: { lead_id: 'attacker-lead', properties: { attribution_id: 'attr_42' } },
+    });
+    expect(lead.lead_id).toBe('lead_42');
+    expect(lead.marketing_trail.lead_id).toBe('lead_42');
+    expect(lead.properties).toEqual({
+      attribution_id: 'attr_42',
+      tenant_id: 'med10x-tenant-1',
+      adapter_name: 'med10x',
+      adapter_version: '0.1.0',
+    });
+
+    const sale = adapter.build({
+      ...input('pix-provider-1'),
+      eventName: 'sale',
+      orderId: 'invoice_42',
+      data: { order_id: 'attacker-order', transactionId: 'attacker-transaction', value: 49.9, currency: 'EUR' },
+    });
+    expect(sale.order_id).toBe('invoice_42');
+    expect(sale.order_id).not.toBe('attacker-order');
+    expect(sale.transactionId).toBeUndefined();
   });
 
   it('sends one stable event through the existing server client', async () => {

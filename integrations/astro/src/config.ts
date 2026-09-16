@@ -21,6 +21,22 @@ export const DEFAULT_PROXY_PATTERN = '/api/clicktrail';
 /** Default browser event endpoint (the injected proxy route). */
 export const DEFAULT_ENDPOINT = DEFAULT_PROXY_PATTERN;
 
+export interface ClickTrailClientStorageConfig {
+  /** Parent-domain cookie scope used for approved sibling-subdomain handoff. */
+  cookieDomain?: string;
+  /** Client-side mirror retention in whole days (1-400). */
+  retentionDays?: number;
+}
+
+export interface ClickTrailClientCrossDomainConfig {
+  /** Approved target domains. Tokens are never decorated for other hosts. */
+  domains: readonly string[];
+  /** Continuation-token URL parameter. Default `ct_token`. */
+  tokenParam?: string;
+  /** Skip URLs that already carry a continuation token. Default true. */
+  skipSignedUrls?: boolean;
+}
+
 export interface ClickTrailClientConfig {
   /** Event delivery endpoint. Default `/api/clicktrail`. */
   endpoint: string;
@@ -28,6 +44,10 @@ export interface ClickTrailClientConfig {
   workspaceId?: string;
   consentRequired: boolean;
   debug: boolean;
+  /** Serializable subset of browser storage settings. */
+  storage?: ClickTrailClientStorageConfig;
+  /** Serializable cross-domain settings; signing uses the shared cookie key. */
+  crossDomain?: ClickTrailClientCrossDomainConfig | false;
 }
 
 export interface ClickTrailProxyConfig {

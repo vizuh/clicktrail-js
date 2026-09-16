@@ -1,0 +1,47 @@
+{
+  "name": "supletivo-astro-django-pix",
+  "site_id": "supletivo.test",
+  "workspace_id": "supletivo-workspace",
+  "landing_url": "https://landing.supletivo.test/?utm_source=google&utm_medium=cpc&gclid=G-opaque-42&ref=partner_opaque_42",
+  "app_url": "https://app.supletivo.test/checkout",
+  "rejected_url": "https://outside.test/checkout",
+  "partner_ref": "partner_opaque_42",
+  "host_owned": {
+    "attribution_id": "attr_opaque_42",
+    "lead_id": "lead_opaque_42",
+    "customer_id": "customer_opaque_42",
+    "invoice_id": "invoice_opaque_42"
+  },
+  "otp": {
+    "identity_key": "otp_subject_opaque_42"
+  },
+  "checkout": {
+    "value": 49.9,
+    "currency": "BRL"
+  },
+  "pix": {
+    "provider_event_id": "pix_event_opaque_42",
+    "status": "PAID",
+    "amount": 49.9,
+    "currency": "BRL",
+    "invoice_id": "invoice_opaque_42"
+  },
+  "events": {
+    "lead": {
+      "external_id": "crm_lead_event_opaque_42",
+      "occurred_at": "2026-09-17T12:00:00.000Z"
+    },
+    "sale": {
+      "occurred_at": "2026-09-18T12:00:00.000Z"
+    }
+  },
+  "expected": {
+    "first_source": "google",
+    "first_medium": "cpc",
+    "last_source": "email",
+    "order_id": "invoice_opaque_42",
+    "approved_host": "app.supletivo.test",
+    "rejected_host": "outside.test",
+    "duplicate_sale_count": 1
+  }
+}

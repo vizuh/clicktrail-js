@@ -84,6 +84,17 @@ describe('buildEventPayload', () => {
     expect(event.marketing_trail.workspace_id).toBe('trusted-workspace');
   });
 
+  it('derives a lead ID for the canonical lead_created event', () => {
+    const event = buildEventPayload(
+      emptyAttribution(),
+      'lead_created',
+      { event_id: 'evt_lead-1' },
+    );
+
+    expect(event.marketing_trail.event_name).toBe('lead_created');
+    expect(event.marketing_trail.lead_id).toBe('lead_lead-1');
+  });
+
   it('builds the normalized marketing trail envelope', () => {
     const event = buildEventPayload(
       {

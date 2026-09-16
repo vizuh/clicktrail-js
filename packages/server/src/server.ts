@@ -89,7 +89,9 @@ export interface ClickTrailServerConfig {
 export interface ConversionInput<D extends Record<string, unknown>> {
   identity: ServerIdentity;
   data?: D;
+  /** ISO-8601 occurrence time override. Defaults to the current wall clock. */
   now?: string;
+  /** Stable caller-owned key reused when the same logical event is retried. */
   eventId?: string;
 }
 
@@ -105,6 +107,8 @@ export interface BookingData extends Record<string, unknown> {
 }
 export interface PurchaseData extends Record<string, unknown> {
   transactionId: string;
+  /** Optional canonical alias; takes precedence over transactionId when set. */
+  orderId?: string;
   value: number;
   currency: string;
 }
@@ -161,6 +165,56 @@ function resolveEventId(
   return deriveStableEventId(siteId ?? 'clicktrail', stableConversionKey(eventName, input));
 }
 
+function optionalText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+}
+
+const CONVERSION_RESERVED_KEYS = [
+  'lead_id',
+  'booking_id',
+  'order_id',
+  'form_id',
+  'event_time',
+  'occurred_at',
+  'formId',
+  'leadId',
+  'bookingId',
+  'transactionId',
+  'orderId',
+  'startDate',
+] as const;
+
+const SAFE_CONVERSION_DATA_KEYS = new Set([
+  'value',
+  'currency',
+  'landing_url',
+  'referrer',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'gbraid',
+  'wbraid',
+  'fbclid',
+  'msclkid',
+  'consent',
+  'consent_state',
+  'consent_source',
+  'consent_version',
+  'form_provider',
+  'properties',
+]);
+
+function sanitizeConversionData(input: Record<string, unknown>): Record<string, unknown> {
+  const sanitized = sanitizeServerEventInput(input);
+  for (const key of CONVERSION_RESERVED_KEYS) delete sanitized[key];
+  return Object.fromEntries(
+    Object.entries(sanitized).filter(([key]) => SAFE_CONVERSION_DATA_KEYS.has(key)),
+  );
+}
+
 function requireSafeHttpUrl(value: unknown, field: string): string {
   const endpoint = requireNonEmptyString(value, field);
   if (!isSafeHttpUrl(endpoint)) {
@@ -207,12 +261,27 @@ export class ClickTrailServer {
 
   private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
     const payload = filterServerAttributionPayload(input.identity.payload ?? {});
-    const data = sanitizeServerEventInput(input.data ?? {});
+    const inputData = input.data ?? {};
+    const data = sanitizeConversionData(inputData);
+    const canonicalName = toCanonicalEventName(eventName);
+    const occurredAt = input.now === undefined
+      ? new Date().toISOString()
+      : requireNonEmptyString(input.now, 'now');
+    const formId = optionalText(inputData['formId']);
+    const leadId = optionalText(inputData['leadId']);
+    const bookingId = optionalText(inputData['bookingId']);
+    const orderId = optionalText(inputData['orderId']) ?? optionalText(inputData['transactionId']);
+    const startDate = optionalText(inputData['startDate']);
     const eventId = resolveEventId(eventName, input, this.siteId);
-    return buildEventPayload(payload, toCanonicalEventName(eventName), {
+    return buildEventPayload(payload, canonicalName, {
       ...data,
+      ...(formId !== undefined ? { form_id: formId } : {}),
+      ...(leadId !== undefined ? { lead_id: leadId } : {}),
+      ...(bookingId !== undefined ? { booking_id: bookingId } : {}),
+      ...(orderId !== undefined ? { order_id: orderId } : {}),
+      ...(startDate !== undefined ? { start_date: startDate } : {}),
       event_id: eventId,
-      ...(input.now !== undefined ? { event_time: input.now } : {}),
+      occurred_at: occurredAt,
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),
       ...(input.identity.visitorId ? { visitor_id: input.identity.visitorId } : {}),

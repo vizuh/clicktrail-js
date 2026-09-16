@@ -142,7 +142,13 @@ export function buildMarketingTrailEnvelope(
   // The top-level event identity and name are authoritative. Nested values
   // are legacy/additive input and must not fork canonical envelope fields.
   const eventId = prefixed(firstText(data['event_id']), 'evt_');
-  const leadEvent = ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
+  const leadEvent = [
+    'lead',
+    'lead.submitted',
+    'lead_submitted',
+    'lead_created',
+    'form_submission',
+  ].includes(eventName);
   const leadId = prefixed(
     firstText(data['lead_id'], leadEvent ? eventId.replace(/^evt_/, '') : ''),
     'lead_',
