@@ -106,16 +106,36 @@ export function bootClickTrailClient(
     httpDestination({ endpoint: config.endpoint }),
   ];
 
+  const storage: ClickTrailConfig['storage'] = {
+    ...(config.storage?.cookieDomain !== undefined
+      ? { cookieAttrs: { domain: config.storage.cookieDomain } }
+      : {}),
+    ...(config.storage?.retentionDays !== undefined
+      ? { retentionDays: config.storage.retentionDays }
+      : {}),
+  };
+  const crossDomain: ClickTrailConfig['crossDomain'] = config.crossDomain && {
+    domains: config.crossDomain.domains,
+    ...(config.crossDomain.tokenParam !== undefined
+      ? { tokenParam: config.crossDomain.tokenParam }
+      : {}),
+    ...(config.crossDomain.skipSignedUrls !== undefined
+      ? { skipSignedUrls: config.crossDomain.skipSignedUrls }
+      : {}),
+  };
+
   const instance = createClickTrail({
     destinations,
     ...(config.siteId !== undefined ? { siteId: config.siteId } : {}),
     ...(config.workspaceId !== undefined ? { workspaceId: config.workspaceId } : {}),
     consentGate: () => !config.consentRequired || readStoredConsent(resolved.storageLike) === true,
-    storage: {},
+    storage,
+    ...(crossDomain ? { crossDomain } : {}),
   });
 
-  // Touches merge in memory pre-start; nothing persists before consent.
-  const detachPageViews = attachPageViewTracking(instance, resolved.navigationSeam, resolved.eventTarget.addEventListener, resolved.eventTarget.removeEventListener);
+  // Attach page views only after the SDK starts. This keeps the initial URL
+  // touch from being discarded by start() hydration when consent is deferred.
+  let detachPageViews: () => void = () => {};
 
   let started = false;
   let resolveStart!: () => void;
@@ -127,7 +147,15 @@ export function bootClickTrailClient(
   });
 
   const startNow = (): void => {
-    if (!instance.isStarted()) instance.start();
+    if (!instance.isStarted()) {
+      instance.start();
+      detachPageViews = attachPageViewTracking(
+        instance,
+        resolved.navigationSeam,
+        resolved.eventTarget.addEventListener,
+        resolved.eventTarget.removeEventListener,
+      );
+    }
     resolveStart();
   };
 
@@ -136,6 +164,8 @@ export function bootClickTrailClient(
       const state = readStoredConsent(resolved.storageLike);
       if (state === true) startNow();
       else if (state === false) {
+        detachPageViews();
+        detachPageViews = () => {};
         instance.clearData();
         if (instance.isStarted()) instance.stop();
       }
@@ -150,7 +180,13 @@ export function bootClickTrailClient(
     console.info(`[clicktrail] endpoint=${config.endpoint} started=${started}`);
   }
 
-  return { instance, whenStarted: () => whenStarted, detachPageViews };
+  return {
+    instance,
+    whenStarted: () => whenStarted,
+    // Resolve the current lifecycle-bound disposer so deferred consent and
+    // later re-grants remain detachable through the public handle.
+    detachPageViews: () => detachPageViews(),
+  };
 }
 
 /** Entry point invoked by the injected page script. */

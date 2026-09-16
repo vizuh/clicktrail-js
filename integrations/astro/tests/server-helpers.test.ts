@@ -25,6 +25,18 @@ describe('parseIdentityFromCookies', () => {
     expect(id.sessionNumber).toBe(2);
   });
 
+  it('filters arbitrary and identity fields from attribution cookies', () => {
+    const raw = encodeURIComponent(JSON.stringify({
+      ft_source: 'google',
+      email: 'victim@example.com',
+      visitor_id: 'forged-visitor',
+      arbitrary: 'secret',
+    }));
+    const id = parseIdentityFromCookies(`attribution=${raw}`);
+    expect(id.payload).toEqual({ ft_source: 'google' });
+    expect(id.visitorId).toBeUndefined();
+  });
+
   it('falls back to lightweight visitor/session cookies', () => {
     const id = parseIdentityFromCookies('ct_visitor_id=v-f; ct_session_id=s-f');
     expect(id.visitorId).toBe('v-f');
@@ -57,7 +69,8 @@ describe('ClickTrailServer', () => {
     const server = makeServer(fetchMock);
     const result = await server.trackLead({
       identity: parseIdentityFromCookies(`${ATTRIBUTION_COOKIE}; ${SESSION_COOKIE}`),
-      data: { formId: 'contact' },
+      eventId: 'lead-provider-1',
+      data: { formId: 'contact', leadId: 'lead_42', email: 'must-not-be-forwarded' },
       now: '2026-08-24T10:00:00.000Z',
     });
     expect(result).toEqual({ ok: true, status: 204 });
@@ -70,13 +83,45 @@ describe('ClickTrailServer', () => {
     expect(event['schema_version']).toBeTypeOf('string');
     expect(event['classifier_version']).toBeTypeOf('string');
     expect(event['ft_source']).toBe('google');
-    expect(event['formId']).toBe('contact');
+    expect(event['form_id']).toBe('contact');
+    expect(event['formId']).toBeUndefined();
+    expect(event['email']).toBeUndefined();
+    expect(event['lead_id']).toBe('lead_42');
+    expect(event['event_id']).toBe('evt_lead-provider-1');
+    expect(event['occurred_at']).toBe('2026-08-24T10:00:00.000Z');
+    expect(event['event_time']).toBeUndefined();
     expect(event['visitor_id']).toBe('v-1');
     expect(event['session_id']).toBe('s-9');
     expect(event['session_number']).toBe('2');
     expect(event['site_id']).toBe('s1');
     expect(event['workspace_id']).toBe('w1');
-    expect(event['marketing_trail']).toBeTruthy();
+    expect(event['marketing_trail']).toMatchObject({
+      event_id: 'evt_lead-provider-1',
+      lead_id: 'lead_42',
+      occurred_at: '2026-08-24T10:00:00.000Z',
+    });
+  });
+
+  it('maps purchase transactionId to canonical order_id', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackPurchase({
+      identity: { payload: {} },
+      eventId: 'pix-provider-1',
+      data: { transactionId: 'invoice-42', value: 49.9, currency: 'EUR' },
+      now: '2026-08-24T10:05:00.000Z',
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_name']).toBe('sale');
+    expect(event['order_id']).toBe('invoice-42');
+    expect(event['transactionId']).toBeUndefined();
+    expect(event['occurred_at']).toBe('2026-08-24T10:05:00.000Z');
+    expect(event['marketing_trail']).toMatchObject({
+      event_id: 'evt_pix-provider-1',
+      occurred_at: '2026-08-24T10:05:00.000Z',
+    });
   });
 
   it('trackPurchase validates transaction fields before sending', async () => {

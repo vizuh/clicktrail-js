@@ -121,6 +121,39 @@ Separate origins need shared provisioning or explicit matching `sign` and
 `verify` functions. Test an approved destination and an unapproved destination
 before enabling the path.
 
+## Astro -> Django/OTP/Pix handoff recipe
+
+Use the synthetic fixture at
+[`packages/server/tests/fixtures/supletivo-handoff.json`](../packages/server/tests/fixtures/supletivo-handoff.json)
+and its replay test at
+[`packages/server/tests/supletivo-handoff.test.ts`](../packages/server/tests/supletivo-handoff.test.ts)
+as the source-level reference. It uses no live client, CRM, payment, Meta, or
+WhatsApp credentials.
+
+The ownership boundary is:
+
+| Owner | Fields and responsibility |
+|---|---|
+| Browser / ClickTrail | Consent decision, UTM and click IDs, first-party session IDs, and best-effort `ft_*` / `lt_*` payload. |
+| Host application | Allowlisted opaque `ref`, opaque host-owned `attribution_id`, immutable first-touch snapshot, OTP identity association, lead record, and invoice record. |
+| Server / provider authority | Canonical `event_id`, `occurred_at`, `lead_id`, `order_id`, signed Pix webhook verification, invoice amount/currency, and duplicate-delivery handling. |
+
+At lead creation, validate `ref` in host code and create the immutable
+snapshot. Keep `attribution_id` in the host database and, only when useful for
+correlation, in `properties.attribution_id`; it is not a ClickTrail field.
+After OTP, carry the correlation key through the host session. At checkout,
+load the price and currency from the host invoice record, not from the browser
+or webhook body. For a delayed Pix event, verify the provider signature,
+resolve the stored invoice, compare amount/currency, and reuse the provider
+idempotency key as `eventId`. A repeated webhook must be a no-op.
+
+The Astro wrapper accepts `storage.cookieDomain` and
+`crossDomain.domains` for approved sibling subdomains. The default continuation
+token is readable and integrity-protected, not confidential. Never put PII,
+host IDs, prices, or commission data in it. If the host cannot provision a
+shared parent-domain cookie, use the stable browser API with explicit matching
+sign/verify functions or disable the cross-domain path.
+
 ## Related package docs
 
 - [package README](../packages/clicktrail/README.md)

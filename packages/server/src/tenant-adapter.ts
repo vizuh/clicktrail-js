@@ -27,6 +27,12 @@ export interface TenantAdapterEventInput {
   identity: ServerIdentity;
   eventName: string;
   externalEventId: string;
+  /** Trusted host-owned conversion ID mapped to canonical `lead_id`. */
+  leadId?: string;
+  /** Trusted host-owned conversion ID mapped to canonical `booking_id`. */
+  bookingId?: string;
+  /** Trusted host-owned conversion ID mapped to canonical `order_id`. */
+  orderId?: string;
   data?: Record<string, unknown>;
   now?: string;
 }
@@ -45,6 +51,42 @@ function requireTenantText(value: unknown, field: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function optionalTenantText(value: unknown, field: string): string | undefined {
+  return value === undefined ? undefined : requireTenantText(value, field);
+}
+
+/**
+ * Safe top-level event fields accepted from adapter input. Provider-specific
+ * values belong under `properties`; dropping unknown top-level keys keeps
+ * email/phone/content from crossing the metadata boundary by accident.
+ */
+const SAFE_EVENT_DATA_KEYS = new Set([
+  'value',
+  'currency',
+  'landing_url',
+  'referrer',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'gbraid',
+  'wbraid',
+  'fbclid',
+  'msclkid',
+  'consent_state',
+  'consent_source',
+  'consent_version',
+  'refund_of',
+]);
+
+function filterSafeEventData(data: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(data).filter(([key]) => SAFE_EVENT_DATA_KEYS.has(key) || key === 'properties'),
+  );
 }
 
 export function validateTenantAdapterConfig(config: TenantAdapterConfig): TenantAdapterConfig {
@@ -78,17 +120,26 @@ export class TenantAdapter {
       this.config.siteId,
       JSON.stringify([this.config.tenantId, this.config.adapterName, eventName, externalEventId]),
     );
+    const occurredAt = input.now === undefined
+      ? new Date().toISOString()
+      : requireTenantText(input.now, 'now');
     const inputProperties = isRecord(input.data?.['properties']) ? input.data['properties'] : {};
-    const data = sanitizeServerEventInput({ ...(input.data ?? {}) });
+    const data = filterSafeEventData(
+      sanitizeServerEventInput({ ...(input.data ?? {}) }),
+    );
+    const leadId = optionalTenantText(input.leadId, 'leadId');
+    const bookingId = optionalTenantText(input.bookingId, 'bookingId');
+    const orderId = optionalTenantText(input.orderId, 'orderId');
 
     return buildEventPayload(filterServerAttributionPayload(input.identity.payload ?? {}), eventName, {
       ...data,
+      ...(leadId !== undefined ? { lead_id: leadId } : {}),
+      ...(bookingId !== undefined ? { booking_id: bookingId } : {}),
+      ...(orderId !== undefined ? { order_id: orderId } : {}),
       site_id: this.config.siteId,
       ...(this.config.workspaceId !== undefined ? { workspace_id: this.config.workspaceId } : {}),
       event_id: eventId,
-      ...(input.now !== undefined
-        ? { event_time: requireTenantText(input.now, 'now'), occurred_at: input.now }
-        : {}),
+      occurred_at: occurredAt,
       ...(input.identity.visitorId ? { visitor_id: input.identity.visitorId } : {}),
       ...(input.identity.sessionId ? { session_id: input.identity.sessionId } : {}),
       ...(input.identity.sessionNumber !== undefined

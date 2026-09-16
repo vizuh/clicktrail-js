@@ -29,7 +29,9 @@ const clickTrail = new ClickTrailServer({
 
 const result = await clickTrail.trackLead({
   identity,
-  data: { formId: 'contact' },
+  // Use a stable CRM/provider key when the host may retry this event.
+  eventId: 'crm-lead-123',
+  data: { formId: 'contact', leadId: 'lead_123' },
 });
 
 if (!result.ok) {
@@ -69,8 +71,14 @@ deduplicate repeated `event_id` values; the adapter does not hide a second
 browser, WordPress, or webhook capture path.
 
 The host owns authentication, retry policy, consent policy, and endpoint
-availability. Validate conversion fields before calling the helper and never
-send customer content as attribution metadata.
+availability. `formId`, `leadId`, `bookingId`, and `transactionId` are input
+aliases; the wire builder maps them to `form_id`, `lead_id`, `booking_id`, and
+`order_id` and emits `occurred_at`. Unknown top-level adapter data is dropped;
+put provider-specific non-PII values under `properties`. Validate conversion
+fields before calling the helper and never send customer content as attribution
+metadata. For retryable webhooks, always pass the stable provider key as
+`eventId`; when it is omitted, the helper derives an ID from the conversion key
+or occurrence timestamp, which is not a retry guarantee if the timestamp changes.
 
 ## License
 

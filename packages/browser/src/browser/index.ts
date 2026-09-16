@@ -39,6 +39,7 @@ export {
 export { createClickTrail } from './create-clicktrail.js';
 export type {
   ClickTrailConfig,
+  ClickTrailCrossDomainConfig,
   ClickTrailInstance,
   ClickTrailStorageConfig,
   DiagnosticsLevel,
@@ -83,5 +84,23 @@ export type {
   MirrorStorageConfig,
   StorageAdapter,
 } from './storage.js';
+
+export {
+  buildReferralTouch,
+  decodeContinuationToken,
+  encodeContinuationToken,
+  isApprovedHost,
+  DEFAULT_TOKEN_PARAM,
+  MAX_TOKEN_LENGTH,
+  TOKEN_TTL_MS,
+} from './link-decoration.js';
+export type {
+  ContinuationPayload,
+  ConsumeResult,
+  LandingConsumeOutcome,
+  LocationHistorySeam,
+  SignFn,
+  VerifyFn,
+} from './link-decoration.js';
 
 export { withDeliveryTimeout } from './delivery-timeout.js';
