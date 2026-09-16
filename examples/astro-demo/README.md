@@ -51,6 +51,9 @@ export default defineConfig({
 | `proxy: false` | — | Disable the first-party proxy entirely. |
 | `consentRequired` | `false` | With `true`, nothing starts or persists until consent is granted (see below). |
 | `debug` | `false` | Verbose diagnostics during setup. |
+| `storage.cookieDomain` | — | Shared parent-domain cookie scope for approved sibling-subdomain handoff. |
+| `storage.retentionDays` | `90` | Expiry of the local mirror (1-400 days). |
+| `crossDomain.domains` | — | Exact approved domain suffixes for continuation-token decoration. |
 
 ## 4. Consent gating
 
@@ -79,7 +82,14 @@ export const POST: APIRoute = async ({ request }) => {
   const identity = parseIdentityFromCookies(request.headers.get('cookie'));
   await server.trackPurchase({
     identity,
-    data: { transactionId: 't-1234', value: 49.9, currency: 'EUR' },
+    // Reuse this provider/invoice key for webhook retries.
+    eventId: 'pix-event-1234',
+    data: {
+      transactionId: 't-1234',
+      orderId: 'invoice-1234',
+      value: 49.9,
+      currency: 'EUR',
+    },
   });
   return new Response(null, { status: 204 });
 };

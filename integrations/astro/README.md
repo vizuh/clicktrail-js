@@ -70,6 +70,15 @@ interface ClickTrailAstroOptions {
     | false;
   consentRequired?: boolean;  // default false
   debug?: boolean;            // default false
+  storage?: {
+    cookieDomain?: string;     // shared parent domain for sibling handoff
+    retentionDays?: number;    // 1-400; default 90
+  };
+  crossDomain?: false | {
+    domains: readonly string[];
+    tokenParam?: string;       // default 'ct_token'
+    skipSignedUrls?: boolean;  // default true
+  };
 }
 ```
 
@@ -83,6 +92,23 @@ interface ClickTrailAstroOptions {
 ```
 
 Denying (`__clicktrailSetConsent(false)`) before grant leaves no persisted state; the SDK's denial path also wipes attribution storage.
+
+## Approved sibling-subdomain handoff
+
+Set a shared parent-domain cookie and an explicit approved-domain list. The
+Astro wrapper uses the browser SDK's readable HMAC token with the shared
+`ct_signing_key`; the token carries attribution context, not PII, prices, or
+host records. Do not include a partner `ref` in the ClickTrail payload. Parse
+and validate that host-owned opaque value in the landing/app code instead.
+
+```js
+clicktrail({
+  consentRequired: true,
+  storage: { cookieDomain: '.example.com' },
+  crossDomain: { domains: ['example.com'] },
+  proxy: { upstream: 'https://collector.example.com/v1/events' },
+});
+```
 
 ## Server-side conversions
 
@@ -100,13 +126,20 @@ export const POST: APIRoute = async ({ request }) => {
   const identity = parseIdentityFromCookies(request.headers.get('cookie'));
   await server.trackPurchase({
     identity,
-    data: { transactionId: 't-1234', value: 49.9, currency: 'EUR' },
+    // Reuse the provider/invoice key for every retry of this sale.
+    eventId: 'pix-event-1234',
+    data: {
+      transactionId: 't-1234',
+      orderId: 'invoice-1234',
+      value: 49.9,
+      currency: 'EUR',
+    },
   });
   return new Response(null, { status: 204 });
 };
 ```
 
-`trackPurchase` validates that `transactionId`, `value`, and `currency` are present and well-formed before sending. Delivery failures resolve to `{ ok: false }` instead of throwing so an analytics outage never breaks checkout.
+`trackPurchase` validates that `transactionId`, `value`, and `currency` are present and well-formed before sending. `orderId` maps to canonical `order_id`; `leadId` and `bookingId` map to `lead_id` and `booking_id`. `eventId` is normalized and reused across retries; when it is omitted, the helper derives an ID from the conversion key or occurrence timestamp, so hosts must pass the provider's stable key for webhook retries. The canonical wire timestamp is `occurred_at`. Delivery failures resolve to `{ ok: false }` instead of throwing so an analytics outage never breaks checkout.
 
 ## Related packages
 

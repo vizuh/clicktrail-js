@@ -18,7 +18,12 @@ import {
   defaultClientConfig,
   defaultProxyConfig,
 } from './config.js';
-import type { ClickTrailClientConfig, ClickTrailProxyConfig } from './config.js';
+import type {
+  ClickTrailClientConfig,
+  ClickTrailClientCrossDomainConfig,
+  ClickTrailClientStorageConfig,
+  ClickTrailProxyConfig,
+} from './config.js';
 
 export interface ClickTrailAstroOptions {
   /** Site identifier copied into normalized marketing trail envelopes. */
@@ -53,6 +58,16 @@ export interface ClickTrailAstroOptions {
   consentRequired?: boolean;
   /** Log boot diagnostics to console. Default false. */
   debug?: boolean;
+  /**
+   * Serializable browser storage settings. Set `cookieDomain` to the shared
+   * parent domain when continuity must cross approved sibling subdomains.
+   */
+  storage?: ClickTrailClientStorageConfig;
+  /**
+   * Approved sibling-subdomain continuation. Astro uses the shared cookie
+   * signing key; configure `storage.cookieDomain` for cross-origin handoff.
+   */
+  crossDomain?: ClickTrailClientCrossDomainConfig | false;
 }
 
 function isAbsoluteEndpoint(endpoint: string): boolean {
@@ -60,12 +75,47 @@ function isAbsoluteEndpoint(endpoint: string): boolean {
 }
 
 export function clicktrailAstro(options: ClickTrailAstroOptions = {}): AstroIntegration {
+  if (options.storage?.cookieDomain !== undefined) {
+    if (
+      typeof options.storage.cookieDomain !== 'string' ||
+      options.storage.cookieDomain.trim() === '' ||
+      options.storage.cookieDomain.includes('/') ||
+      options.storage.cookieDomain.includes('@')
+    ) {
+      throw new TypeError('clicktrailAstro: storage.cookieDomain must be a host name.');
+    }
+  }
+  if (
+    options.storage?.retentionDays !== undefined &&
+    (!Number.isSafeInteger(options.storage.retentionDays) ||
+      options.storage.retentionDays < 1 ||
+      options.storage.retentionDays > 400)
+  ) {
+    throw new RangeError('clicktrailAstro: storage.retentionDays must be an integer from 1 through 400.');
+  }
+  if (options.crossDomain && (
+    !Array.isArray(options.crossDomain.domains) ||
+    options.crossDomain.domains.length === 0 ||
+    options.crossDomain.domains.some(
+      (domain) => typeof domain !== 'string' || domain.trim() === '' || domain.includes('/') || domain.includes('@'),
+    )
+  )) {
+    throw new TypeError('clicktrailAstro: crossDomain.domains must contain host names.');
+  }
+  if (options.crossDomain && !options.storage?.cookieDomain) {
+    throw new TypeError(
+      'clicktrailAstro: crossDomain requires storage.cookieDomain so approved sibling subdomains share the signing key.',
+    );
+  }
+
   const clientCfg: ClickTrailClientConfig = defaultClientConfig({
     endpoint: options.endpoint ?? DEFAULT_ENDPOINT,
     ...(options.siteId !== undefined ? { siteId: options.siteId } : {}),
     ...(options.workspaceId !== undefined ? { workspaceId: options.workspaceId } : {}),
     ...(options.consentRequired !== undefined ? { consentRequired: options.consentRequired } : {}),
     ...(options.debug !== undefined ? { debug: options.debug } : {}),
+    ...(options.storage !== undefined ? { storage: options.storage } : {}),
+    ...(options.crossDomain !== undefined ? { crossDomain: options.crossDomain } : {}),
   });
 
   const wantsRoute =

@@ -119,7 +119,13 @@ export function buildMarketingTrailEnvelope(
   const visitorId = firstText(context.identity?.visitorId, data['visitor_id'], payload['visitor_id']);
   const anonymousId = prefixed(firstText(supplied['anonymous_id'], data['anonymous_id'], visitorId), 'anon_');
   const eventId = prefixed(firstText(supplied['event_id'], data['event_id']), 'evt_');
-  const leadEvent = ['lead', 'lead.submitted', 'lead_submitted', 'form_submission'].includes(eventName);
+  const leadEvent = [
+    'lead',
+    'lead.submitted',
+    'lead_submitted',
+    'lead_created',
+    'form_submission',
+  ].includes(eventName);
   const leadId = prefixed(
     firstText(supplied['lead_id'], data['lead_id'], leadEvent ? eventId.replace(/^evt_/, '') : ''),
     'lead_',

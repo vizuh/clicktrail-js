@@ -39,6 +39,21 @@ describe('clicktrailAstro', () => {
     expect(typeof define[PROXY_CONFIG_GLOBAL]).toBe('string');
   });
 
+  it('serializes shared cookie and approved-domain handoff settings', () => {
+    const { updateConfig } = runSetup(
+      clicktrailAstro({
+        storage: { cookieDomain: '.example.com', retentionDays: 30 },
+        crossDomain: { domains: ['example.com'], tokenParam: 'ct' },
+        proxy: false,
+      }),
+    );
+    const define = updateConfig.mock.calls[0]![0].vite!.define!;
+    const clientCfg = JSON.parse(define[CLIENT_CONFIG_GLOBAL]!);
+
+    expect(clientCfg.storage).toEqual({ cookieDomain: '.example.com', retentionDays: 30 });
+    expect(clientCfg.crossDomain).toEqual({ domains: ['example.com'], tokenParam: 'ct' });
+  });
+
   it('injects the default proxy route when upstream is given', () => {
     const { injectRoute } = runSetup(
       clicktrailAstro({ proxy: { upstream: 'https://collector.example.com/v1/events' } }),
@@ -67,6 +82,13 @@ describe('clicktrailAstro', () => {
   it('proxy: false disables the route entirely', () => {
     const { injectRoute } = runSetup(clicktrailAstro({ proxy: false }));
     expect(injectRoute).not.toHaveBeenCalled();
+  });
+
+  it('requires a shared cookie domain for cross-domain handoff', () => {
+    expect(() => clicktrailAstro({
+      crossDomain: { domains: ['example.com'] },
+      proxy: false,
+    })).toThrow(/storage\.cookieDomain/);
   });
 
   it('throws a TypeError when the default proxy lacks an upstream', () => {

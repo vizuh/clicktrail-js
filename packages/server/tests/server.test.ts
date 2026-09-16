@@ -57,7 +57,13 @@ describe('ClickTrailServer', () => {
     const server = makeServer(fetchMock);
     const result = await server.trackLead({
       identity: parseIdentityFromCookies(`${ATTRIBUTION_COOKIE}; ${SESSION_COOKIE}`),
-      data: { formId: 'contact', marketing_trail: { site_id: 'attacker', workspace_id: 'other' } },
+      eventId: 'lead-provider-1',
+      data: {
+        formId: 'contact',
+        leadId: 'lead_42',
+        lead_id: 'attacker-lead',
+        marketing_trail: { site_id: 'attacker', workspace_id: 'other' },
+      } as never,
       now: '2026-08-24T10:00:00.000Z',
     });
     expect(result).toEqual({ ok: true, status: 204 });
@@ -69,14 +75,87 @@ describe('ClickTrailServer', () => {
     expect(event['schema_version']).toBeTypeOf('string');
     expect(event['classifier_version']).toBeTypeOf('string');
     expect(event['ft_source']).toBe('google');
-    expect(event['formId']).toBe('contact');
+    expect(event['form_id']).toBe('contact');
+    expect(event['formId']).toBeUndefined();
+    expect(event['lead_id']).toBe('lead_42');
+    expect(event['event_id']).toBe('evt_lead-provider-1');
+    expect(event['occurred_at']).toBe('2026-08-24T10:00:00.000Z');
+    expect(event['event_time']).toBeUndefined();
     expect(event['visitor_id']).toBe('v-1');
     expect(event['session_id']).toBe('s-9');
     expect(event['session_number']).toBe('2');
     expect(event['site_id']).toBe('s1');
     expect(event['workspace_id']).toBe('w1');
-    expect(event['marketing_trail']).toMatchObject({ site_id: 's1', workspace_id: 'w1' });
+    expect(event['marketing_trail']).toMatchObject({
+      site_id: 's1',
+      workspace_id: 'w1',
+      event_id: 'evt_lead-provider-1',
+      lead_id: 'lead_42',
+      occurred_at: '2026-08-24T10:00:00.000Z',
+    });
     expect(init.redirect).toBe('error');
+  });
+
+  it('maps purchase transactionId to canonical order_id', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackPurchase({
+      identity: { payload: {} },
+      eventId: 'pix-provider-1',
+      data: { transactionId: 'invoice-42', value: 49.9, currency: 'EUR' },
+      now: '2026-08-24T10:05:00.000Z',
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_name']).toBe('sale');
+    expect(event['order_id']).toBe('invoice-42');
+    expect(event['transactionId']).toBeUndefined();
+    expect(event['occurred_at']).toBe('2026-08-24T10:05:00.000Z');
+    expect(event['marketing_trail']).toMatchObject({
+      event_id: 'evt_pix-provider-1',
+      occurred_at: '2026-08-24T10:05:00.000Z',
+    });
+  });
+
+  it('maps bookingId to canonical booking_id and preserves occurred_at', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    await server.trackBooking({
+      identity: { payload: {} },
+      eventId: 'booking-provider-1',
+      data: { bookingId: 'booking_42', startDate: '2026-09-19T10:00:00.000Z', value: 20, currency: 'BRL' },
+      now: '2026-09-19T09:00:00.000Z',
+    });
+
+    const [, init] = fetchMock.mock.calls[0]! as unknown as [string, RequestInit];
+    const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+    expect(event['event_name']).toBe('booking_created');
+    expect(event['booking_id']).toBe('booking_42');
+    expect(event['bookingId']).toBeUndefined();
+    expect(event['start_date']).toBe('2026-09-19T10:00:00.000Z');
+    expect(event['occurred_at']).toBe('2026-09-19T09:00:00.000Z');
+  });
+
+  it('derives the same ID for a repeated conversion key when eventId is omitted', async () => {
+    const fetchMock = okFetch();
+    const server = makeServer(fetchMock);
+    const input = {
+      identity: { payload: {} },
+      data: { leadId: 'lead_42' },
+      now: '2026-09-20T09:00:00.000Z',
+    };
+    await server.trackLead(input);
+    await server.trackLead(input);
+    await server.trackLead({ ...input, data: { leadId: 'lead_43' } });
+
+    const ids = fetchMock.mock.calls.map((call) => {
+      const [, init] = call as unknown as [string, RequestInit];
+      const event = (JSON.parse(String(init.body)) as { events: Array<Record<string, unknown>> }).events[0]!;
+      return event['event_id'];
+    });
+    expect(ids[0]).toBe(ids[1]);
+    expect(ids[2]).not.toBe(ids[0]);
   });
 
   it('does not promote canonical fields from untrusted conversion data', async () => {
@@ -90,6 +169,7 @@ describe('ClickTrailServer', () => {
         session_number: '999',
         trail_id: 'attacker-trail',
         anonymous_id: 'attacker-anonymous',
+        email: 'must-not-be-forwarded',
         marketing_trail: { site_id: 'attacker-site', workspace_id: 'attacker-workspace' },
       },
     });
@@ -99,6 +179,7 @@ describe('ClickTrailServer', () => {
     expect(event['visitor_id']).toBeUndefined();
     expect(event['session_id']).toBeUndefined();
     expect(event['session_number']).toBeUndefined();
+    expect(event['email']).toBeUndefined();
     expect(event['marketing_trail']).toMatchObject({
       site_id: 's1',
       workspace_id: 'w1',
