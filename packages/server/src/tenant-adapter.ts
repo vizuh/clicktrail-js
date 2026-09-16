@@ -1,4 +1,8 @@
-import { buildEventPayload, sanitizeServerEventInput } from '@vizuh/clicktrail-browser';
+import {
+  buildEventPayload,
+  filterServerAttributionPayload,
+  sanitizeServerEventInput,
+} from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
 import {
   deriveStableEventId,
@@ -77,7 +81,7 @@ export class TenantAdapter {
     const inputProperties = isRecord(input.data?.['properties']) ? input.data['properties'] : {};
     const data = sanitizeServerEventInput({ ...(input.data ?? {}) });
 
-    return buildEventPayload(sanitizeServerEventInput(input.identity.payload ?? {}), eventName, {
+    return buildEventPayload(filterServerAttributionPayload(input.identity.payload ?? {}), eventName, {
       ...data,
       site_id: this.config.siteId,
       ...(this.config.workspaceId !== undefined ? { workspace_id: this.config.workspaceId } : {}),

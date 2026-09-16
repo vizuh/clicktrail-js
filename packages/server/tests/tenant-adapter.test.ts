@@ -67,6 +67,25 @@ describe('TenantAdapter', () => {
     expect(adapter.build(input('provider-event-2')).event_id).not.toBe(adapter.build(input()).event_id);
   });
 
+  it('filters untrusted identity payloads to canonical attribution fields', () => {
+    const adapter = createTenantAdapter(baseConfig());
+    const event = adapter.build({
+      ...input(),
+      identity: {
+        payload: {
+          ft_source: 'google',
+          email: 'secret@example.com',
+          visitor_id: 'forged-visitor',
+          arbitrary: 'forged',
+        },
+      },
+    });
+    expect(event.ft_source).toBe('google');
+    expect(event.email).toBeUndefined();
+    expect(event.visitor_id).toBeUndefined();
+    expect(event.arbitrary).toBeUndefined();
+  });
+
   it('does not let input data replace canonical identity or tenant metadata', () => {
     const adapter = createTenantAdapter(baseConfig());
     const event = adapter.build({
