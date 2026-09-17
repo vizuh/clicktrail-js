@@ -10,7 +10,10 @@ function validEndpoint(value) {
   if (value.startsWith('/') && !value.startsWith('//')) return true;
   try {
     const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    const origin = globalThis.location?.origin;
+    return Boolean(origin)
+      && (url.protocol === 'http:' || url.protocol === 'https:')
+      && url.origin === origin;
   } catch {
     return false;
   }
