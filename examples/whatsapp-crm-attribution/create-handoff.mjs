@@ -4,12 +4,17 @@ export const HANDOFF_DESTINATION = 'whatsapp';
 export const DEFAULT_HANDOFF_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const MAX_HANDOFF_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const HANDOFF_CODE_PATTERN = /^CT-[0-9A-F]{20}$/;
+export const HANDOFF_ID_PATTERN = /^hnd_[0-9a-f]{24}$/;
 
 const MAX_FIELD_LENGTH = 512;
 const CLICK_ID_KEYS = [
   'gclid', 'wbraid', 'gbraid', 'fbclid', 'ttclid', 'msclkid', 'twclid',
   'li_fat_id', 'sccid', 'epik', 'fbc', 'fbp', 'ttp', 'li_gc',
   'ga_client_id', 'ga_session_id', 'ga_session_number',
+];
+const PER_TOUCH_CLICK_ID_KEYS = [
+  'gclid', 'wbraid', 'gbraid', 'fbclid', 'ttclid', 'msclkid', 'twclid',
+  'li_fat_id', 'sccid', 'epik',
 ];
 const TOUCH_FIELDS = [
   'source', 'medium', 'campaign', 'term', 'content', 'utm_id',
@@ -25,12 +30,37 @@ const SAFE_PAYLOAD_KEYS = new Set([
   'schema_version',
   'classifier_version',
   ...TOUCH_FIELDS.flatMap((field) => [`ft_${field}`, `lt_${field}`]),
+  ...PER_TOUCH_CLICK_ID_KEYS.flatMap((key) => [`ft_${key}`, `lt_${key}`]),
 ]);
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const boundedText = (value) => typeof value === 'string' && value.trim() !== ''
   ? value.trim().slice(0, MAX_FIELD_LENGTH)
   : '';
+
+function boundedClickIdHistory(value) {
+  if (typeof value !== 'string') return '';
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return '';
+  }
+  if (!Array.isArray(parsed)) return '';
+
+  const entries = parsed
+    .filter((entry) => isRecord(entry) && typeof entry.k === 'string' && typeof entry.v === 'string' && typeof entry.t === 'string')
+    .map((entry) => ({ k: boundedText(entry.k), v: boundedText(entry.v), t: boundedText(entry.t) }))
+    .filter((entry) => entry.k && entry.v && entry.t);
+  const retained = [];
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const candidate = [entries[index], ...retained];
+    const encoded = JSON.stringify(candidate);
+    if (encoded.length > MAX_FIELD_LENGTH) break;
+    retained.unshift(entries[index]);
+  }
+  return JSON.stringify(retained);
+}
 
 export function normalizeHandoffCode(value) {
   if (typeof value !== 'string') return null;
@@ -64,7 +94,7 @@ function snapshotPayload(payload) {
   const result = {};
   for (const [key, value] of Object.entries(payload)) {
     if (SAFE_PAYLOAD_KEYS.has(key)) {
-      const text = boundedText(value);
+      const text = key === 'click_id_history' ? boundedClickIdHistory(value) : boundedText(value);
       if (text) result[key] = text;
     }
   }

@@ -1,4 +1,9 @@
-import { HANDOFF_DESTINATION, hashHandoffCode, normalizeHandoffCode } from './create-handoff.mjs';
+import {
+  HANDOFF_DESTINATION,
+  HANDOFF_ID_PATTERN,
+  hashHandoffCode,
+  normalizeHandoffCode,
+} from './create-handoff.mjs';
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -39,6 +44,34 @@ export async function resolveHandoff({
     destination: record.destination,
     createdAt: record.createdAt,
     expiresAt: record.expiresAt,
+    consent: clone(record.consent),
+    identity: clone(record.identity),
+  };
+}
+
+/**
+ * Resolve the durable snapshot retained at CRM lead attachment. This lookup
+ * intentionally does not use the short-lived WhatsApp code, so a later signed
+ * contract can still be attributed after the message code expires.
+ */
+export async function resolveHandoffForContract({ id, now } = {}, store) {
+  if (typeof id !== 'string' || !HANDOFF_ID_PATTERN.test(id) || !store || typeof store.getById !== 'function') {
+    return null;
+  }
+  const current = now instanceof Date ? new Date(now.getTime()) : new Date(now ?? Date.now());
+  if (Number.isNaN(current.getTime())) return null;
+
+  const record = await store.getById(id);
+  if (!isRecord(record) || record.version !== 1 || record.kind !== 'contract_snapshot' || record.id !== id) return null;
+  if (record.destination !== HANDOFF_DESTINATION || !validExpiry(record.retainedUntil, current)) return null;
+  if (!isRecord(record.identity) || !isRecord(record.consent)) return null;
+
+  return {
+    id: record.id,
+    destination: record.destination,
+    createdAt: record.createdAt,
+    expiresAt: record.codeExpiresAt,
+    retainedUntil: record.retainedUntil,
     consent: clone(record.consent),
     identity: clone(record.identity),
   };
