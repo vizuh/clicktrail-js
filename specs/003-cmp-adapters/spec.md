@@ -70,7 +70,7 @@ A developer opens `vizuh/clicktrail-examples/cmp-booking-handoff/` and sees a la
 - **FR-001**: New entry `@vizuh/clicktrail-consent/cmp`, exporting `connectCookiebot`, `connectOneTrust` and `connectComplianz`. Each takes `(hub, options?)` and returns a disposer.
 - **FR-002**: There MUST be no DOM access at import time. Each adapter accesses globals only when called (`sideEffects: false` stays true).
 - **FR-003**: Each adapter MUST map CMP state to `ConsentRecord` (`state`, `analytics`, `marketing`, `advertising`, `source`, `at`) with a documented, overridable category mapping.
-- **FR-004**: Adapters MUST emit only after the CMP's decision event, and MUST NOT emit anything for `pending`.
+- **FR-004**: Adapters MUST emit the CMP's effective decision, and MUST NOT emit a grant the CMP does not report. Cookiebot emits nothing before `hasResponse`. OneTrust and Complianz report their current state, which is `denied` under an opt-in banner until the visitor accepts. (Amended 2026-09-29 after review; see #41.)
 - **FR-005**: Adapters MUST deduplicate identical consecutive records.
 - **FR-006**: The README MUST document the ordering contract: capture and persist on the emitted grant, reading the click ID from the current URL. Nothing is stored while pending. Denial clears state through the SDK.
 - **FR-007**: The mapping semantics MUST match `click-trail-handler`'s `clicutcl-consent-bridge.js` (Cookiebot `consent.marketing` / `statistics`; OneTrust groups; Complianz `marketing` / `statistics`).
