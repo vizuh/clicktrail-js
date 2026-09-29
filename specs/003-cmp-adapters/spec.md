@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft
+**Status**: Adapters implemented in #41. The `cmp-booking-handoff` example (US3) is still open.
 
 **Input**: GitHub issue [#39](https://github.com/vizuh/clicktrail-js/issues/39). Headless and framework sites must hand-write CMP glue today, and the ordering is easy to get wrong. In production, Cookiebot wiped attribution before the host's `OnAccept` handler re-saved it, and Calendly bookings lost `gclid` and UTMs (`bfroos/myhb-store#168`). The WordPress plugin already ships this glue (`clicutcl-consent-bridge.js`); the SDK has none.
 
