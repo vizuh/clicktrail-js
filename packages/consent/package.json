@@ -9,6 +9,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./cmp": { "types": "./dist/cmp/index.d.ts", "default": "./dist/cmp/index.js" },
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],

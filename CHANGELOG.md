@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `@vizuh/clicktrail-consent/cmp`: `connectCookiebot`, `connectOneTrust`, and
+  `connectComplianz` forward CMP decisions to a `ConsentHub`, never emit while
+  consent is pending, deduplicate repeated events, and observe in-page
+  withdrawals (#39).
+
 ## [0.2.0-rc.2] - pending publication
 
 Candidate prepared 2026-09-13 from merged PR #28 for matching GitHub/npm
