@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: vizuh/click-trail-handler
-          ref: ead6682d6433c4f27309b7ee412e2dfc1fd50de4
+          ref: 43bbbab24c0c8792c20ddf5e31a000e30585a116
           path: click-trail-handler
           fetch-depth: 1
           persist-credentials: false

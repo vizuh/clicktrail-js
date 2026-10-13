@@ -105,7 +105,7 @@ Target after implementation: runtime harness diffs shrink to approved standing d
 
 Runtime parity gate:
 
-- Local and CI runs must execute plugin commit `ead6682d6433c4f27309b7ee412e2dfc1fd50de4`; the harness fails on any other checkout and records the commit in `PARITY-RUN.md`.
+- Local and CI runs must execute plugin commit `43bbbab24c0c8792c20ddf5e31a000e30585a116` (WP 1.10.5; previously `ead6682`); the harness fails on any other checkout and records the commit in `PARITY-RUN.md`.
 - The legacy parity projection treats optional empty `click_id_history` (`[]`) as equivalent to an absent plugin field. Non-empty history remains visible.
 - D3 fields (`click_id_history`, `attribution_selected_click_id`, `attribution_selected_click_id_reason`) are additive engine-contract checks, reported as ruled differences rather than hidden.
 - The classifier follows Hugo gate D2: bare `fbclid` is platform-known but paid status remains unknown without explicit paid evidence.
