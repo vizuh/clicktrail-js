@@ -89,6 +89,8 @@ Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DR
 - **Channel labels**: `ft_channel` / `lt_channel` carry human-readable labels
   ('Google Ads', 'Facebook Organic', AI-assistant names) from the versioned
   `CHANNEL_LABELS` table; machine enum channels remain authoritative.
+- **Channel codes (opt-in)**: `ft_channel_code` / `lt_channel_code` carry the
+  machine `Channel` enum next to the labels. See [Channel codes](#channel-codes-opt-in).
 - **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.2.0` for the
   `0.1.0` package line; these bumps record semantic decisions, not published
   breaking releases.
@@ -98,6 +100,52 @@ Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DR
   names as `ct_<name>` and the canonical `page_view` as `ct_page_view`
   (#48); a change to which keys or `event` values reach the dataLayer bumps
   its major.
+
+### Channel codes (opt-in)
+
+`createClickTrail({ channelCodes: true })` (core:
+`mergeAttributionTouch(stored, touch, { channelCodes: true })`) also stores
+the touch's machine `Channel` value as `ft_channel_code` / `lt_channel_code`
+(`CHANNEL_CODE_KEYS`). Use the code for CRM, warehouse, and reporting joins;
+keep the label for display.
+
+- Default OFF. The WordPress plugin stores labels only and its
+  `marketing_trail` envelope has no channel slot, so the default payload,
+  `emptyAttribution()`, and the envelope are unchanged.
+- Same lifecycle as the labels: the first-touch code is write-once and the
+  last-touch code is rewritten on every touch. A first touch stored before
+  the option was enabled has no `ft_channel_code`; there is no backfill,
+  because the code cannot be derived from the label (table below).
+- With the option off, every new `ft_`/`lt_` write removes that side's code
+  key, so a stale code never sits next to a newer label.
+- Values: `paid_search`, `paid_social`, `paid_other`, `organic_search`,
+  `organic_social`, `referral`, `email`, `affiliate`, `unknown`. `direct` is
+  part of the enum but the parser never emits it (no signal = no touch).
+
+The label and the code come from two independent rule sets
+(`resolveChannelLabel()` vs. the parser's classification), so one label maps
+to several codes. Mapping on `CLASSIFIER_VERSION` 1.2.0:
+
+| `ft_channel` / `lt_channel` label | `*_channel_code` | Deciding input |
+|---|---|---|
+| Google Ads, Microsoft Ads | `paid_search` | `gclid` / `wbraid` / `gbraid` / `msclkid` (medium defaults to `cpc`) |
+| Google Ads, Microsoft Ads, Facebook Ads, LinkedIn Ads, X Ads, Reddit Ads, TikTok Ads, Pinterest Ads, Snapchat Ads | `paid_other` | paid `utm_medium` (`cpc`, `ppc`, `paid`, …) and no click ID |
+| Facebook Ads, LinkedIn Ads, X Ads, TikTok Ads, Pinterest Ads, Snapchat Ads | `paid_social` | `fbclid` / `li_fat_id` / `twclid` / `ttclid` / `epik` / `sccid` plus a paid `utm_medium` |
+| Facebook, LinkedIn, X, TikTok, Pinterest, Snapchat | `unknown`, or the `utm_medium` class (`email`, …) | the same click IDs without a paid `utm_medium` |
+| Paid Search, Paid Social | `paid_other` | paid `utm_medium` with an unrecognised source |
+| Google Organic, Bing Organic, Yahoo, DuckDuckGo, Yandex, Brave, Startpage, Ecosia, Baidu | `organic_search` | search-engine referrer |
+| Facebook Organic, Instagram Organic, LinkedIn Organic, X Organic, Reddit Organic, TikTok Organic, Pinterest Organic, YouTube, Threads, WhatsApp, Telegram, Discord | `organic_social` | social referrer |
+| ChatGPT, Perplexity, Claude, DeepSeek, Microsoft Copilot (`copilot.microsoft.com`), Grok (`grok.com`) | `referral` | AI-assistant referrer |
+| Gemini (`gemini.google.com`), Microsoft Copilot (`bing.com/chat`) | `organic_search` | host matches a search-engine rule |
+| Grok (`x.com/i/grok`) | `organic_social` | host matches a social rule |
+| HubSpot, Salesforce Pardot, Constant Contact | any code, from `utm_medium` | `utm_source` names the platform |
+| Unknown | `unknown`, `email`, `affiliate`, `referral`, `organic_search`, `organic_social` | UTMs without a paid medium, other referrers |
+
+Known edges, recorded and not changed by the code field: `utm_medium=cpc`
+without a click ID is `paid_other` even when `utm_source=google`;
+`utm_medium=paid_social` is also `paid_other`; `gclid` alone is
+`paid_search`; `fbclid` alone is `unknown`. `Mailchimp`, `Display & Video 360`
+and `Instagram` exist in `CHANNEL_LABELS` but no current rule produces them.
 
 ## Fixture policy
 

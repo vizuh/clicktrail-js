@@ -112,6 +112,17 @@ export interface ParseAttributionInput {
   referrerFormat?: ReferrerFormat;
 }
 
+/** Options for {@link mergeAttributionTouch}. */
+export interface MergeAttributionOptions {
+  /**
+   * Also write the machine `Channel` code (e.g. 'paid_search') to
+   * `ft_channel_code` / `lt_channel_code`, next to the unchanged
+   * `ft_channel` / `lt_channel` labels. Default false: the WordPress plugin
+   * writes labels only, so the keys are absent unless a host opts in.
+   */
+  channelCodes?: boolean;
+}
+
 /** Result of a parse attempt: a touch, or a reason no touch was created. */
 export type ParseResult =
   | { kind: 'touch'; touch: ParsedTouch }

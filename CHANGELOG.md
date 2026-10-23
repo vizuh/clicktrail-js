@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   replace one. Defaults match the WordPress plugin and are unchanged, as are
   `CLASSIFIER_VERSION` and `SCHEMA_VERSION`. `CHANNEL_LABELS_VERSION` moves to
   `2` for the two new labels (#56).
+- Opt-in machine channel codes: `createClickTrail({ channelCodes: true })` and
+  `mergeAttributionTouch(stored, touch, { channelCodes: true })` store the
+  `Channel` enum (`paid_search`, `organic_search`, …) as `ft_channel_code` /
+  `lt_channel_code` next to the unchanged `ft_channel` / `lt_channel` labels.
+  Off by default; the default payload, fixtures and `marketing_trail` are
+  unchanged. New exports: `CHANNEL_CODE_KEYS`, `MergeAttributionOptions`. The
+  label-to-code table is in `docs/ARCHITECTURE.md` (#58).
 
 ### Fixed
 

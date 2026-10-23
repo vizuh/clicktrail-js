@@ -222,6 +222,38 @@ describe('createClickTrail', () => {
     expect(event['_channel']).toBeUndefined(); // channel is classification metadata, not a payload key
   });
 
+  it('channelCodes: off by default, opt-in adds ft_/lt_channel_code to events and getData()', () => {
+    const touch = {
+      source: 'google', medium: 'cpc', campaign: '', term: '', content: '',
+      utmId: '', utmSourcePlatform: '', utmCreativeFormat: '', utmMarketingTactic: '',
+      referrer: '', landingPage: 'https://example.com/', touchTimestamp: '2026-08-23T10:00:00.000Z',
+      channel: 'paid_search' as const, channelLabel: 'Google Ads', clickIds: { gclid: 'GTEST' },
+    };
+
+    const plain = recordingDestination();
+    const ctPlain = createClickTrail({ destinations: [plain] });
+    ctPlain.start();
+    ctPlain.mergeParsedTouch(touch);
+    ctPlain.track('page_view');
+    expect(plain.events[0]).not.toHaveProperty('ft_channel_code');
+    expect(plain.events[0]).not.toHaveProperty('lt_channel_code');
+    expect(plain.events[0]!['ft_channel']).toBe('Google Ads');
+
+    const coded = recordingDestination();
+    const ctCoded = createClickTrail({ destinations: [coded], channelCodes: true });
+    ctCoded.start();
+    ctCoded.mergeParsedTouch(touch);
+    ctCoded.track('page_view');
+    const event = coded.events[0]!;
+    expect(event['ft_channel']).toBe('Google Ads');
+    expect(event['ft_channel_code']).toBe('paid_search');
+    expect(event['lt_channel_code']).toBe('paid_search');
+    expect(ctCoded.getField('lt_channel_code')).toBe('paid_search');
+    // The marketing_trail envelope has no channel slot (plugin parity).
+    expect(event['marketing_trail']).not.toHaveProperty('channel');
+    expect(event['marketing_trail']).not.toHaveProperty('channel_code');
+  });
+
   it('stop() flushes buffered http events and halts delivery', () => {
     const calls: string[] = [];
     const http = httpDestination({

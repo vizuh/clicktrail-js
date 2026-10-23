@@ -79,6 +79,13 @@ export interface ClickTrailConfig {
   /** Event destinations. Started/flushed by the instance lifecycle. */
   destinations: readonly Destination[];
   /**
+   * Also store the machine channel code (`paid_search`, `organic_search`,
+   * …) as `ft_channel_code` / `lt_channel_code` next to the `ft_channel` /
+   * `lt_channel` labels, for CRMs and warehouses that need a stable value.
+   * Default: OFF (the WordPress plugin stores labels only).
+   */
+  channelCodes?: boolean;
+  /**
    * Consent gate, evaluated per capture attempt. When it returns false,
    * nothing is delivered and a consent diagnostic is reported once per gate
    * denial streak. Omit only when the host handles consent elsewhere.
@@ -255,6 +262,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   }
   const now = config.now;
   const consentGate = config.consentGate;
+  const mergeOptions = { channelCodes: config.channelCodes === true };
   const sink = resolveSink(config);
   // Snapshot + validate once: invalid IDs throw here, never inside capture.
   const ga4MeasurementId =
@@ -656,7 +664,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       // Capture path: refresh cookie-derived browser IDs first so a fresh
       // _fbp/_ga* value lands top-level on the same write (RULING A part b).
       mergeCookieBrowserIds();
-      payload = mergeAttributionTouch(payload, touch);
+      payload = mergeAttributionTouch(payload, touch, mergeOptions);
       // Zero side effects until start(): pre-start merges stay in memory
       // and are flushed to storage by the hydration step in start().
       if (started && adapters) persistPayload();

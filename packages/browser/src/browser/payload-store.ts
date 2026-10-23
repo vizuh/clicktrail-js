@@ -9,6 +9,7 @@
  */
 import {
   BROWSER_ID_KEYS,
+  CHANNEL_CODE_KEYS,
   CLICK_ID_KEYS,
   touchKeys,
 } from '@vizuh/clicktrail-core';
@@ -28,6 +29,9 @@ const LT_KEYS = touchKeys('lt');
 export const CANONICAL_PAYLOAD_KEYS: readonly string[] = [
   ...Object.values(FT_KEYS),
   ...Object.values(LT_KEYS),
+  // Opt-in machine channel codes (createClickTrail `channelCodes`); present
+  // only when written, so they must survive store round-trips too.
+  ...Object.values(CHANNEL_CODE_KEYS),
   // Ruling #12: captured click IDs are mirrored into touch fields
   // (ft_<cid>/lt_<cid>) and MUST survive store round-trips + hydration.
   ...CLICK_ID_KEYS.flatMap((cid) => [`ft_${cid}`, `lt_${cid}`]),
