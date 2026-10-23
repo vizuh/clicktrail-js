@@ -73,7 +73,7 @@ Consent gating, pending-capture promotion (sessionStorage `ct_pending_v1`), cros
 | # | Topic | Ruling |
 |---|---|---|
 | 1 | Click-ID list | ENGINE 10-key list is CONTRACT. Plugin extras (rdt_cid, pin_cid, snap_cid, mc_cid, mc_eid, dclid) = ACCIDENT (storage-only legacy). Drop entirely. |
-| 2 | Bare click-ID inference | ENGINE inference is CONTRACT (intentional deviation). Plugin's bare-fbclid -> 'Facebook Organic' is factually wrong attribution. Recorded as classifier deviation; MUST be confirmed by Hugo before the WP runtime swap ships (major version + changelog). |
+| 2 | Bare click-ID inference | ENGINE inference is CONTRACT (intentional deviation). Plugin's bare-fbclid -> 'Facebook Organic' is factually wrong attribution. Recorded as classifier deviation; MUST be confirmed by Hugo before the WP runtime swap ships (major version + changelog). Default kept; hosts that keep their own channel rules opt into `inferSourceMedium: false`, which stores source/medium as received (plugin shape on the click-ID path) and also leaves referrer-inferred source/medium empty; channels are unchanged (#64). |
 | 3 | Channel taxonomy | PORT the label layer into core knowledge.ts as a versioned CHANNEL_LABELS map writing ft_channel/lt_channel (incl. AI-assistant labels). Enum channels stay as the machine-readable layer. Resolves open question 1. |
 | 4 | Referrer source names | PLUGIN is contract: canonical names ('google', 'bing', ...), never raw hosts. |
 | 5 | Search matching | Explicit domain-suffix rules incl. intl TLDs (yahoo.co.jp etc.). No label regex. |
@@ -85,8 +85,8 @@ Consent gating, pending-capture promotion (sessionStorage `ct_pending_v1`), cros
 | 11 | Duplicate params | LAST-wins (plugin + server-parser convention). Fix engine. |
 | 12 | Landing page | PLUGIN contract: full href incl. query string. Privacy note: consent already gates storage; revisit redaction if PII patterns observed. Default kept; hosts that must not store the query opt into `landingPageFormat` `'path'` / `'path+allowlisted-query'` and `referrerFormat: 'host'` (#56). |
 | 13 | Timestamps | Millisecond ISO ('...T10:00:00.000Z') frozen — plugin + ISO standard. |
-| 14+16 | Length caps / control chars | ENGINE uniform 512 kept; plugin two-pass 128/256 = accident. Control-char deletion kept. Documented deviation. |
-| 15 | Macro rejection | FIX ENGINE: reject '{{...}}' values outright. |
+| 14+16 | Length caps / control chars | ENGINE uniform 512 kept; plugin two-pass 128/256 = accident. Control-char deletion kept. Documented deviation. Defaults kept; opt-in `maxFieldLength`, `overLengthPolicy: 'drop'` and `controlCharPolicy: 'drop'` for query-parameter values (#64). |
+| 15 | Macro rejection | FIX ENGINE: reject '{{...}}' values outright. Default kept; opt-in `macroPolicy: 'keep'` (#64). |
 | 17 | First-touch guard | FIX ENGINE: emptiness check must include ft_ click-ID keys. |
 
 Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing payload merged via the engine's own merge path). Approved.

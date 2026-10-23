@@ -110,8 +110,13 @@ export function readQuery(url: string): QueryValues | null {
  *   `landingPageFormat` / `referrerFormat`. Classification reads raw values.
  * - Opt-in `recordDirectTouch` turns `no_signal` / `internal_referrer` into an
  *   unmeasured placeholder touch (see {@link ParsedTouch.unmeasured}).
+ * - Opt-in `inferSourceMedium: false` keeps `source` / `medium` as received
+ *   from the URL; inferred values then feed only `channel` / `channelLabel`.
+ * - Query-parameter values follow the caller's `SanitizeFieldOptions`
+ *   (length limit, over-length / macro / control-character policies).
  */
 export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
+  const inferSourceMedium = input.inferSourceMedium !== false;
   const now = input.now ? input.now : '';
   const query = readQuery(input.url);
   const landingPage = landingPageOf(
@@ -127,7 +132,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     for (const [param, field] of Object.entries(UTM_PARAM_TO_FIELD)) {
       const raw = query.get(param);
       if (raw != null && raw !== '') {
-        touch[field] = sanitizeField(raw);
+        touch[field] = sanitizeField(raw, input);
         hasUtm = true;
       }
     }
@@ -140,7 +145,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
       const canonical = PARAM_ALIASES[key] ?? key;
       if ((CLICK_ID_KEYS as readonly string[]).includes(canonical)) {
         const value = query.get(key);
-        if (value) clickIds[canonical] = sanitizeField(value);
+        if (value) clickIds[canonical] = sanitizeField(value, input);
       }
     }
   }
@@ -158,10 +163,10 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     if (!raw) continue;
     if (canonical === 'ga_client_id') {
       // Plugin validates the GA format even for query-param values (:876).
-      const parsed = parseGaClientIdValue(sanitizeField(raw));
+      const parsed = parseGaClientIdValue(sanitizeField(raw, input));
       if (parsed) browserIds[canonical] = parsed;
     } else {
-      browserIds[canonical] = sanitizeField(raw);
+      browserIds[canonical] = sanitizeField(raw, input);
     }
   }
   // Plugin evidence (:860-866): a bare fbclid derives an fbc when no explicit
@@ -170,7 +175,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   if (!browserIds.fbc && clickIds.fbclid) {
     const nowMs = now ? Date.parse(now) : NaN;
     if (!Number.isNaN(nowMs)) {
-      browserIds.fbc = sanitizeField(`fb.1.${nowMs}.${clickIds.fbclid}`);
+      browserIds.fbc = sanitizeField(`fb.1.${nowMs}.${clickIds.fbclid}`, input);
     }
   }
 
@@ -186,13 +191,13 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     // --- referrer inference path ---
     if (!rHost) {
       return input.recordDirectTouch
-        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'direct') }
+        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'direct', inferSourceMedium) }
         : { kind: 'none', reason: 'no_signal' };
     }
     const pageHost = input.currentHost ? normalizeHost(input.currentHost) : '';
     if (pageHost && areRelatedHosts(rHost, pageHost)) {
       return input.recordDirectTouch
-        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'before_capture') }
+        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'before_capture', inferSourceMedium) }
         : { kind: 'none', reason: 'internal_referrer' };
     }
     if (referrerIgnored) {
@@ -208,6 +213,10 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     const channelLabel = resolveChannelLabel({
       source: touch.source, medium: touch.medium, clickIds: {}, referrer,
     });
+    if (!inferSourceMedium) {
+      touch.source = '';
+      touch.medium = '';
+    }
     return {
       kind: 'touch',
       touch: { ...touch, clickIds: {}, browserIds, channel: inferred.channel, channelLabel },
@@ -215,6 +224,8 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   }
 
   // --- campaign-parameter path ---
+  const receivedSource = touch.source;
+  const receivedMedium = touch.medium;
   let channel: Channel;
   if (hasClickId) {
     // Platform map decides; first matching click ID wins (deterministic order).
@@ -246,6 +257,10 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const channelLabel = resolveChannelLabel({
     source: touch.source, medium: touch.medium, clickIds, referrer,
   });
+  if (!inferSourceMedium) {
+    touch.source = receivedSource;
+    touch.medium = receivedMedium;
+  }
   const withClickIds: ParsedTouch = { ...touch, clickIds, browserIds, channel, channelLabel };
   return { kind: 'touch', touch: withClickIds };
 }
@@ -264,17 +279,19 @@ function classifyUtmChannel(medium: string): Channel {
 /**
  * Placeholder for a landing without signal (opt-in `recordDirectTouch`).
  * `direct`: no usable referrer; source/medium follow the GA convention
- * `(direct)` / `(none)`. `before_capture`: a same-site referrer, so the visit
- * began before capture and its origin is unknown.
+ * `(direct)` / `(none)` unless `inferSourceMedium` is off. `before_capture`:
+ * a same-site referrer, so the visit began before capture and its origin is
+ * unknown.
  */
 function unmeasuredTouch(
   now: string,
   landingPage: string,
   browserIds: Record<string, string>,
   kind: 'direct' | 'before_capture',
+  inferSourceMedium: boolean,
 ): ParsedTouch {
   const touch = emptyTouch(now, landingPage);
-  if (kind === 'direct') {
+  if (kind === 'direct' && inferSourceMedium) {
     touch.source = '(direct)';
     touch.medium = '(none)';
   }

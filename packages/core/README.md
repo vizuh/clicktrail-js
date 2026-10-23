@@ -66,10 +66,19 @@ below is opt-in:
 | `landingPageFormat` | `'url'` (default), `'path'`, `'path+allowlisted-query'` | `'path'` stores `/pricing`. `'path+allowlisted-query'` also keeps the query keys in `landingPageQueryAllowlist`, which defaults to `LANDING_PAGE_QUERY_ALLOWLIST` (UTMs and click IDs). |
 | `referrerFormat` | `'url'` (default), `'host'` | `'host'` stores `www.google.com`. Classification still reads the full referrer. |
 | `recordDirectTouch` | `false` (default), `true` | Turns a landing without signal into a placeholder touch: `Direct` (source `(direct)`, medium `(none)`) when there is no referrer, and `Unknown (before capture)` when the referrer is your own site, for example because consent came after the first page. |
+| `inferSourceMedium` | `true` (default), `false` | `false` stores `source` / `medium` only as received in `utm_source` / `utm_medium`. A bare `gclid` then stores empty source and medium instead of `google` / `cpc`, and a bare referrer instead of `google` / `organic`. Inferred values still decide the channel label and code. |
+| `maxFieldLength` | positive integer, default `512` | Length limit for query-parameter values: UTM fields, click IDs and browser IDs. |
+| `overLengthPolicy` | `'truncate'` (default), `'drop'` | `'drop'` stores `''` for a value over `maxFieldLength` instead of cutting it. |
+| `macroPolicy` | `'drop'` (default), `'keep'` | `'keep'` stores an unexpanded `{{macro}}` value as received. |
+| `controlCharPolicy` | `'strip'` (default), `'drop'` | `'drop'` trims the value, then stores `''` if it still contains a control character. |
 
 `mergeAttributionTouch` writes a placeholder only into an empty payload, and
 the first measured touch (UTMs, click ID or external referrer) replaces a
 stored placeholder as first touch.
+
+The value policies leave the landing page and referrer alone. A query
+parameter whose value a policy drops still counts as received, as a
+rejected macro does by default, so the landing still creates a touch.
 
 ## Contract
 

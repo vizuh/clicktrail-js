@@ -1,0 +1,20 @@
+{
+  "name": "opt-in-macro-keep-control-drop",
+  "description": "macroPolicy 'keep' stores an unexpanded {{macro}} as received; controlCharPolicy 'drop' stores '' for a value with an inner control character.",
+  "quirk_decision": "CONTRACT (opt-in, #64): defaults stay macro rejection (ruling #15) and control-character deletion (ruling #16). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=%7B%7Badset.name%7D%7D&utm_content=ad%01one",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "macroPolicy": "keep",
+    "controlCharPolicy": "drop"
+  },
+  "expected": {
+    "_channel": "paid_other",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_campaign": "{{adset.name}}",
+    "ft_content": ""
+  }
+}
