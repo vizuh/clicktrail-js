@@ -30,7 +30,7 @@
  * ```
  */
 import { mergeAttributionTouch, parseAttributionUrl } from '@vizuh/clicktrail-core';
-import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import type { AttributionPayload, ParseResult } from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -85,8 +85,8 @@ export interface ClickTrailMiddlewareOptions {
 export interface CaptureResult {
   /** True when the landing URL carried an attribution signal. */
   captured: boolean;
-  /** Why nothing was captured ('no_signal' | 'internal_referrer'). */
-  reason?: 'no_signal' | 'internal_referrer';
+  /** Why nothing was captured ('no_signal' | 'internal_referrer' | 'ignored_referrer'). */
+  reason?: Extract<ParseResult, { kind: 'none' }>['reason'];
   /** Consent decision observed on the request (null = absent). */
   consentState: boolean | null;
   /** Whether the merged payload was mirrored into the attribution cookie. */

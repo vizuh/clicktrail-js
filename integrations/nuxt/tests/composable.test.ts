@@ -28,6 +28,7 @@ function makeInstance(): ClickTrailInstance {
     isStarted: () => true,
     track: vi.fn(),
     mergeParsedTouch: vi.fn(),
+    captureLanding: vi.fn(() => ({ kind: 'none' as const, reason: 'no_signal' as const })),
     hydrateStoredPayload: vi.fn(),
     getData: vi.fn(() => ({ ft_source: 'google' })),
     getField: vi.fn(() => 'google'),

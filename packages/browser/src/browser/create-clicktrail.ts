@@ -8,9 +8,14 @@
 import { DIAGNOSTIC_CODES, nullDiagnosticSink } from '@vizuh/clicktrail-core';
 import type { DiagnosticSink } from '@vizuh/clicktrail-core';
 import { emptyAttribution } from '@vizuh/clicktrail-core';
-import type { ParsedTouch } from '@vizuh/clicktrail-core';
+import type { ParseAttributionInput, ParseResult, ParsedTouch } from '@vizuh/clicktrail-core';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { mergeAttributionTouch } from '@vizuh/clicktrail-core';
+import {
+  isIgnoredReferrerHost,
+  mergeAttributionTouch,
+  parseAttributionUrl,
+  referrerHostOf,
+} from '@vizuh/clicktrail-core';
 import { createIdentityStore } from './identity.js';
 import type { IdentityStore, RandomBytesFn } from './identity.js';
 import {
@@ -119,6 +124,14 @@ export interface ClickTrailConfig {
    * default WebCrypto signer is used so the signing key can persist.
    */
   crossDomain?: ClickTrailCrossDomainConfig;
+  /**
+   * Referrer hosts that never form a touch, e.g. payment and hosted-checkout
+   * returns. Applied by `captureLanding()`; a host or any subdomain of it
+   * matches. Default: none. Pass `PAYMENT_REFERRER_HOSTS` from
+   * `@vizuh/clicktrail-core` for the WordPress plugin's default list. This
+   * does not change GA4: add the same hosts to GA4's unwanted referrals.
+   */
+  ignoredReferrerHosts?: readonly string[];
 }
 
 export interface ClickTrailStorageConfig {
@@ -193,6 +206,12 @@ export interface ClickTrailInstance {
   track(eventName: string, data?: Record<string, unknown>): void;
   /** Feed a parsed attribution signal into the stored payload. */
   mergeParsedTouch(touch: ParsedTouch): void;
+  /**
+   * Parse a landing (URL + referrer) with `config.ignoredReferrerHosts`,
+   * merge the touch when one forms, and return the parse result. Reports
+   * `ignored_referrer_host` when an ignored referrer was blanked.
+   */
+  captureLanding(input: Omit<ParseAttributionInput, 'ignoredReferrerHosts'>): ParseResult;
   /**
    * Merge a previously stored canonical payload (legacy import / migration).
    * Only canonical keys with non-empty string values are adopted; incoming
@@ -641,6 +660,32 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       // Zero side effects until start(): pre-start merges stay in memory
       // and are flushed to storage by the hydration step in start().
       if (started && adapters) persistPayload();
+    },
+
+    captureLanding(input) {
+      const ignoredReferrerHosts = config.ignoredReferrerHosts ?? [];
+      const result = parseAttributionUrl({ ...input, ignoredReferrerHosts });
+      const referrerHost = input.referrer ? referrerHostOf(input.referrer) : '';
+      if (
+        referrerHost &&
+        (result.kind === 'touch' || result.reason === 'ignored_referrer') &&
+        isIgnoredReferrerHost(referrerHost, ignoredReferrerHosts)
+      ) {
+        try {
+          sink.report({
+            code: DIAGNOSTIC_CODES.IGNORED_REFERRER_HOST,
+            level: 'info',
+            message: result.kind === 'touch'
+              ? 'Ignored referrer blanked; URL parameters still formed a touch.'
+              : 'Ignored referrer created no touch; stored attribution kept.',
+            context: { referrer_host: referrerHost, touch: result.kind === 'touch' },
+          });
+        } catch (error) {
+          void error;
+        }
+      }
+      if (result.kind === 'touch') instance.mergeParsedTouch(result.touch);
+      return result;
     },
 
     hydrateStoredPayload(incoming) {

@@ -54,3 +54,44 @@ export function areRelatedHosts(firstHost: string, secondHost: string): boolean 
   if (!a || !b) return false;
   return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
 }
+
+/** Dotted hostname shape accepted in referrer host lists (WordPress plugin parity). */
+const LISTED_HOST_PATTERN = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+
+/**
+ * Normalize a caller-supplied referrer host list (WordPress plugin 1.11.0
+ * `get_ignored_referrer_hosts` parity): non-strings are skipped, entries are
+ * trimmed and lowercased, a URL is reduced to its host, trailing dots and a
+ * leading `www.` are dropped, anything that is not a dotted hostname is
+ * discarded, and duplicates collapse. Input order is kept.
+ */
+export function normalizeReferrerHosts(hosts: unknown): string[] {
+  if (!Array.isArray(hosts)) return [];
+  const out = new Set<string>();
+  for (const entry of hosts) {
+    if (typeof entry !== 'string') continue;
+    let host = entry.trim().toLowerCase();
+    if (host.includes('/')) {
+      try {
+        host = new URL(host.includes('://') ? host : `https://${host}`).hostname;
+      } catch {
+        continue;
+      }
+    }
+    host = host.replace(/\.+$/, '').replace(/^www\./, '');
+    if (LISTED_HOST_PATTERN.test(host)) out.add(host);
+  }
+  return Array.from(out);
+}
+
+/**
+ * True when `host` equals or is a subdomain of any entry of `ignoredHosts`
+ * (entries normalized with {@link normalizeReferrerHosts}). One-directional
+ * like the plugin: `checkout.stripe.com` matches `stripe.com`, never the
+ * reverse.
+ */
+export function isIgnoredReferrerHost(host: string, ignoredHosts: unknown): boolean {
+  const h = normalizeHost(host).replace(/\.+$/, '');
+  if (!h) return false;
+  return normalizeReferrerHosts(ignoredHosts).some((d) => h === d || h.endsWith(`.${d}`));
+}

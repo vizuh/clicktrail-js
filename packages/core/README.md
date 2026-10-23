@@ -43,6 +43,13 @@ if (result.kind === 'touch') {
 }
 ```
 
+Payment and sign-in returns: pass `ignoredReferrerHosts` (for example
+`PAYMENT_REFERRER_HOSTS`, the WordPress plugin's default payment list) so a
+return from `paypal.com` or `checkout.stripe.com` yields
+`{ kind: 'none', reason: 'ignored_referrer' }` instead of a referral touch.
+No list applies by default. GA4 needs the same hosts in its unwanted
+referrals setting; this list does not change GA4.
+
 Use [`@vizuh/clicktrail`](../clicktrail/) for the public umbrella package.
 It keeps the same stable core surface and adds browser and incubating
 entrypoints.

@@ -105,7 +105,8 @@ Target after implementation: runtime harness diffs shrink to approved standing d
 
 Runtime parity gate:
 
-- Local and CI runs must execute plugin commit `ead6682d6433c4f27309b7ee412e2dfc1fd50de4`; the harness fails on any other checkout and records the commit in `PARITY-RUN.md`.
+- Local and CI runs must execute plugin commit `bee00d96bd9da1c848a8b6225f8592a961b21fd3` (plugin v1.11.0); the harness fails on any other checkout and records the commit in `PARITY-RUN.md`.
+- Ignored referrer hosts (plugin 1.11.0, issue #43): fixtures pass `input.ignoredReferrerHosts`; the harness copies it into `clicutcl_config.ignoredReferrerHosts`. A listed host or subdomain counts like a same-site referrer (no touch, stored payload kept); URL parameters still form a touch with the referrer blanked. The engine ships NO default list (classifier behavior changes are major-only); `PAYMENT_REFERRER_HOSTS` mirrors the plugin default for opt-in. Pinned by `wp-payment-referrer-*` and `wp-identity-provider-referrer-keeps-last-touch`.
 - The legacy parity projection treats optional empty `click_id_history` (`[]`) as equivalent to an absent plugin field. Non-empty history remains visible.
 - D3 fields (`click_id_history`, `attribution_selected_click_id`, `attribution_selected_click_id_reason`) are additive engine-contract checks, reported as ruled differences rather than hidden.
 - The classifier follows Hugo gate D2: bare `fbclid` is platform-known but paid status remains unknown without explicit paid evidence.

@@ -13,7 +13,7 @@ import {
   type ReferrerRule,
   PAID_MEDIUMS,
 } from './knowledge.js';
-import { areRelatedHosts, hostMatches, normalizeHost, sanitizeField } from './sanitize.js';
+import { areRelatedHosts, hostMatches, isIgnoredReferrerHost, normalizeHost, sanitizeField } from './sanitize.js';
 
 function emptyTouch(now?: string, landingPage = ''): AttributionTouch & { clickIds: Record<string, string> } {
   return {
@@ -90,6 +90,9 @@ export function readQuery(url: string): QueryValues | null {
  * - Otherwise an EXTERNAL referrer infers organic_search / organic_social /
  *   referral with CANONICAL source names. Same-site or related-host
  *   referrers create NO new touch (symmetric check, ruling #8).
+ * - A referrer on a caller-listed `ignoredReferrerHosts` host (or subdomain),
+ *   e.g. a payment return, counts like a same-site one: no referrer touch,
+ *   and a URL-parameter touch carries an empty referrer (plugin 1.11.0).
  * - A click ID without UTMs still yields a paid touch via its platform map.
  * - Browser-ID query params (fbc/fbp/ttp/li_gc/ga_*) ride along on the parsed
  *   touch and land top-level at merge time; bare fbclid derives an fbc.
@@ -154,9 +157,15 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     }
   }
 
+  // Ignored (payment/hosted-checkout) referrers are blanked before either
+  // path, like the plugin's resolveTouch (WP plugin 1.11.0).
+  const rHost = input.referrer ? referrerHostOf(input.referrer) : '';
+  const referrerIgnored =
+    rHost !== '' && isIgnoredReferrerHost(rHost, input.ignoredReferrerHosts);
+  const referrer = referrerIgnored ? '' : input.referrer ?? '';
+
   if (!hasUtm && !hasClickId) {
     // --- referrer inference path ---
-    const rHost = input.referrer ? referrerHostOf(input.referrer) : '';
     if (!rHost) {
       return { kind: 'none', reason: 'no_signal' };
     }
@@ -164,15 +173,18 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     if (pageHost && areRelatedHosts(rHost, pageHost)) {
       return { kind: 'none', reason: 'internal_referrer' };
     }
+    if (referrerIgnored) {
+      return { kind: 'none', reason: 'ignored_referrer' };
+    }
     const inferred = classifyReferrerHost(rHost);
     touch.source = sanitizeField(inferred.source);
     touch.medium =
       inferred.channel === 'organic_search' ? 'organic'
       : inferred.channel === 'organic_social' ? 'social'
       : 'referral';
-    touch.referrer = sanitizeField(input.referrer ?? '');
+    touch.referrer = sanitizeField(referrer);
     const channelLabel = resolveChannelLabel({
-      source: touch.source, medium: touch.medium, clickIds: {}, referrer: input.referrer ?? '',
+      source: touch.source, medium: touch.medium, clickIds: {}, referrer,
     });
     return {
       kind: 'touch',
@@ -208,9 +220,9 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     channel = classifyUtmChannel(touch.medium);
   }
 
-  touch.referrer = sanitizeField(input.referrer ?? '');
+  touch.referrer = sanitizeField(referrer);
   const channelLabel = resolveChannelLabel({
-    source: touch.source, medium: touch.medium, clickIds, referrer: input.referrer ?? '',
+    source: touch.source, medium: touch.medium, clickIds, referrer,
   });
   const withClickIds: ParsedTouch = { ...touch, clickIds, browserIds, channel, channelLabel };
   return { kind: 'touch', touch: withClickIds };

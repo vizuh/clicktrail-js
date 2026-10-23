@@ -30,6 +30,8 @@ export const DIAGNOSTIC_CODES = {
   CLICK_ID_WITHOUT_UTM: 'click_id_without_utm',
   NO_SIGNAL_LANDING: 'no_signal_landing',
   INTERNAL_REFERRER_IGNORED: 'internal_referrer_ignored',
+  /** Referrer matched `ignoredReferrerHosts` (e.g. a payment return) and was blanked. */
+  IGNORED_REFERRER_HOST: 'ignored_referrer_host',
   CONSENT_DENIED_CAPTURE_ATTEMPTED: 'consent_denied_capture_attempted',
   FIELD_TRUNCATED: 'field_truncated',
   /** Unpinned GA session read while several `_ga_<property>` cookies exist. */

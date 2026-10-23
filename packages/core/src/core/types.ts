@@ -60,9 +60,20 @@ export interface ParseAttributionInput {
    * precision; the engine stores the string verbatim.
    */
   now?: string;
+  /**
+   * Referrer hosts that never form a touch, typically payment and
+   * hosted-checkout returns (`paypal.com`, `stripe.com`). A referrer on a
+   * listed host or any subdomain of it counts like a same-site referrer:
+   * referrer-only landings return `{ kind: 'none', reason: 'ignored_referrer' }`;
+   * UTMs and click IDs on the URL still form a touch, with the referrer
+   * blanked. Entries are normalized with {@link normalizeReferrerHosts}.
+   * Default: none. {@link PAYMENT_REFERRER_HOSTS} holds the WordPress
+   * plugin's default list for hosts that opt in.
+   */
+  ignoredReferrerHosts?: readonly string[];
 }
 
 /** Result of a parse attempt: a touch, or a reason no touch was created. */
 export type ParseResult =
   | { kind: 'touch'; touch: ParsedTouch }
-  | { kind: 'none'; reason: 'internal_referrer' | 'no_signal'; detail?: string };
+  | { kind: 'none'; reason: 'internal_referrer' | 'ignored_referrer' | 'no_signal'; detail?: string };

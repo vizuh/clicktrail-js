@@ -130,6 +130,22 @@ Separate origins need shared provisioning or explicit matching `sign` and
 `verify` functions. Test an approved destination and an unapproved destination
 before enabling the path.
 
+## Payment and sign-in returns
+
+Hosted checkouts (PayPal, Stripe Checkout, Mercado Pago) and identity
+providers (`accounts.google.com`, `appleid.apple.com`,
+`login.microsoftonline.com`) send the visitor back with their own referrer.
+Pass those hosts as `ignoredReferrerHosts` to `createClickTrail` (and call
+`captureLanding`) or to `parseAttributionUrl`, so the return keeps the stored
+last touch. `PAYMENT_REFERRER_HOSTS` is the WordPress plugin 1.11.0 default
+payment list; ClickTrail applies no list unless you pass one. See
+[Payment and sign-in returns](../packages/clicktrail/README.md#payment-and-sign-in-returns-ignoredreferrerhosts).
+
+The list does not affect GA4. Add the same domains to GA4 Admin › Data
+streams › Configure tag settings › List unwanted referrals; otherwise a
+return after the GA4 session timeout opens a new GA4 session with the
+provider as its source.
+
 ## Astro -> Django/OTP/Pix handoff recipe
 
 Use the synthetic fixture at

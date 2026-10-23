@@ -1,10 +1,10 @@
 export { parseAttributionUrl, readQuery, referrerHostOf } from './parse.js';
 export { isSafeHttpUrl } from './url.js';
 export { mergeAttributionTouch, extractClickIds, emptyAttribution, stampVersions } from './merge.js';
-export { sanitizeField, normalizeHost, hostMatches, areRelatedHosts } from './sanitize.js';
+export { sanitizeField, normalizeHost, hostMatches, areRelatedHosts, normalizeReferrerHosts, isIgnoredReferrerHost } from './sanitize.js';
 export { resolveChannelLabel, CHANNEL_LABELS, CHANNEL_LABELS_VERSION } from './knowledge.js';
 export type { ChannelLabelInput } from './knowledge.js';
-export { SEARCH_REFERRER_RULES, SOCIAL_REFERRER_RULES } from './knowledge.js';
+export { SEARCH_REFERRER_RULES, SOCIAL_REFERRER_RULES, PAYMENT_REFERRER_HOSTS } from './knowledge.js';
 export type { ReferrerRule } from './knowledge.js';
 export { DIAGNOSTIC_CODES, nullDiagnosticSink } from './diagnostics.js';
 export type { Diagnostic, DiagnosticLevel, DiagnosticSink } from './diagnostics.js';

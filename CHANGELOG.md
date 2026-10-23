@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ga_session_id`/`ga_session_number` to the configured property's
   `_ga_<ID>` cookie. Without it, several `_ga_*` cookies report the
   `ga_session_property_unpinned` diagnostic once per instance (#47).
+- `@vizuh/clicktrail-core`: `ParseAttributionInput.ignoredReferrerHosts`
+  treats a referrer on a listed host or subdomain (payment or sign-in return)
+  like a same-site referrer: referrer-only landings return
+  `{ kind: 'none', reason: 'ignored_referrer' }` and keep the stored last
+  touch; UTMs and click IDs still form a touch with the referrer blanked.
+  Adds `normalizeReferrerHosts`, `isIgnoredReferrerHost`, the opt-in
+  `PAYMENT_REFERRER_HOSTS` list (WordPress plugin 1.11.0 default) and the
+  `ignored_referrer_host` diagnostic code. No list applies by default;
+  `CLASSIFIER_VERSION` is unchanged (#43).
+- `@vizuh/clicktrail-browser`: `createClickTrail({ ignoredReferrerHosts })`
+  and `captureLanding()`, which parses with that list, reports
+  `ignored_referrer_host`, and merges the touch (#43).
 
 ### Fixed
 
@@ -51,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ClickTrail's `session_id` overrode GA4's own session, and catch-all tags
   duplicated the Google tag's page views (#48). `schema_version`,
   `classifier_version`, and the HTTP destination payload are unchanged.
+- WordPress runtime parity is pinned to plugin v1.11.0 (`bee00d9`), with
+  payment and identity-provider return fixtures.
 
 ### Migration
 
