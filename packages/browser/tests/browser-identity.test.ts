@@ -382,6 +382,9 @@ describe('createIdentityStore seed', () => {
     { name: 'future start', seed: { sessionId: SESSION, sessionStartedAt: 10_001 } },
     { name: 'non-finite start', seed: { sessionId: SESSION, sessionStartedAt: Number.NaN } },
     { name: 'start without session', seed: { visitorId: VISITOR, sessionStartedAt: 1 } },
+    { name: 'visitor created without visitor', seed: { sessionId: SESSION, visitorCreatedAt: 1 } },
+    { name: 'future visitor creation', seed: { visitorId: VISITOR, visitorCreatedAt: 10_001 } },
+    { name: 'non-numeric visitor creation', seed: { visitorId: VISITOR, visitorCreatedAt: '1' } },
     { name: 'non-object', seed: 'visitor' },
   ];
   for (const c of invalid) {
@@ -424,17 +427,26 @@ describe('createIdentityStore activity and passive reads', () => {
   const MIN = 60 * 1000;
   const HOUR = 60 * MIN;
 
-  function store(opts: { timeoutMs?: number; maxMs?: number; seed?: () => unknown } = {}) {
-    let now = 1_700_000_000_000;
+  const T0 = 1_700_000_000_000;
+
+  function store(
+    opts: { timeoutMs?: number; maxMs?: number; visitorMaxAgeMs?: number; seed?: () => unknown } = {},
+  ) {
+    let now = T0;
     let n = 0;
+    let seedCalls = 0;
     const adapter = fakeAdapter();
+    const seed = opts.seed;
     const s = createIdentityStore({
       adapter,
       randomBytes: () => new Uint8Array(16).fill(++n),
       nowMs: () => now,
       ...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
       ...(opts.maxMs !== undefined ? { maxMs: opts.maxMs } : {}),
-      ...(opts.seed !== undefined ? { seed: opts.seed as never } : {}),
+      ...(opts.visitorMaxAgeMs !== undefined ? { visitorMaxAgeMs: opts.visitorMaxAgeMs } : {}),
+      ...(seed !== undefined
+        ? { seed: () => { seedCalls++; return seed() as never; } }
+        : {}),
     });
     return {
       adapter,
@@ -442,6 +454,7 @@ describe('createIdentityStore activity and passive reads', () => {
       advance: (ms: number) => { now += ms; },
       now: () => now,
       randomCalls: () => n,
+      seedCalls: () => seedCalls,
     };
   }
 
@@ -487,13 +500,83 @@ describe('createIdentityStore activity and passive reads', () => {
     expect(randomCalls()).toBe(2);
   });
 
-  it('peek() does not consult the seed', () => {
-    let calls = 0;
-    const { store: s } = store({ seed: () => { calls++; return { visitorId: 'host-visitor-0001' }; } });
-    expect(s.peek().visitorId).toBe('');
-    expect(calls).toBe(0);
-    expect(s.current().visitorId).toBe('host-visitor-0001');
-    expect(calls).toBe(1);
+  it('peek() adopts a seed whose visitor and session are valid, without minting', () => {
+    const ctx = store({
+      timeoutMs: 2 * HOUR,
+      seed: () => ({ visitorId: 'host-visitor-0001', sessionId: 'host-session-0001', lastActivityAt: T0 - HOUR }),
+    });
+    expect(ctx.store.peek()).toEqual({ visitorId: 'host-visitor-0001', sessionId: 'host-session-0001', sessionNumber: 1 });
+    expect(ctx.randomCalls()).toBe(0);
+    expect(ctx.adapter.map.get(VISITOR_ID_FALLBACK_KEY)).toBe('host-visitor-0001');
+    expect(ctx.adapter.map.get(SESSION_ID_FALLBACK_KEY)).toBe('host-session-0001');
+    expect(JSON.parse(ctx.adapter.map.get(SESSION_STATE_KEY)!)).toEqual({
+      session_id: 'host-session-0001',
+      session_number: 1,
+      session_started_at: T0 - HOUR,
+      last_event_ts: T0 - HOUR,
+    });
+    // Adopted, not merely shown: the idle clock keeps counting from the seed.
+    expect(ctx.store.current()).toEqual({ visitorId: 'host-visitor-0001', sessionId: 'host-session-0001', sessionNumber: 1 });
+    ctx.advance(HOUR);
+    expect(ctx.store.peek()).toEqual({ visitorId: 'host-visitor-0001', sessionId: '', sessionNumber: null });
+    expect(ctx.seedCalls()).toBe(1);
+  });
+
+  it('peek() with an expired seeded session returns the visitor only and writes nothing', () => {
+    const ctx = store({
+      timeoutMs: 2 * HOUR,
+      seed: () => ({ visitorId: 'host-visitor-0001', sessionId: 'host-session-0001', lastActivityAt: T0 - 3 * HOUR }),
+    });
+    expect(ctx.store.peek()).toEqual({ visitorId: 'host-visitor-0001', sessionId: '', sessionNumber: null });
+    expect(ctx.store.peek()).toEqual({ visitorId: 'host-visitor-0001', sessionId: '', sessionNumber: null });
+    expect(ctx.adapter.map.size).toBe(0);
+    expect(ctx.randomCalls()).toBe(0);
+    // The first non-passive read adopts the pending seed as current() always did.
+    const snap = ctx.store.current();
+    expect(snap.visitorId).toBe('host-visitor-0001');
+    expect(snap.sessionNumber).toBe(2);
+    expect(ctx.seedCalls()).toBe(1);
+  });
+
+  it('peek() with a visitor-only seed returns the visitor and leaves the session to current()', () => {
+    const ctx = store({ seed: () => ({ visitorId: 'host-visitor-0001' }) });
+    expect(ctx.store.peek()).toEqual({ visitorId: 'host-visitor-0001', sessionId: '', sessionNumber: null });
+    expect(ctx.adapter.map.size).toBe(0);
+    expect(ctx.store.current()).toMatchObject({ visitorId: 'host-visitor-0001', sessionNumber: 1 });
+    expect(ctx.seedCalls()).toBe(1);
+  });
+
+  it('peek() with a session-only seed returns the session; current() mints only the visitor', () => {
+    const ctx = store({ seed: () => ({ sessionId: 'host-session-0001' }) });
+    expect(ctx.store.peek()).toEqual({ visitorId: '', sessionId: 'host-session-0001', sessionNumber: 1 });
+    expect(ctx.adapter.map.size).toBe(0);
+    expect(ctx.randomCalls()).toBe(0);
+    expect(ctx.store.current()).toMatchObject({ sessionId: 'host-session-0001', sessionNumber: 1 });
+    expect(ctx.randomCalls()).toBe(1);
+  });
+
+  it('a pending seed is dropped once another identity is stored, and by clear()', () => {
+    const ctx = store({ seed: () => ({ visitorId: 'host-visitor-0001' }) });
+    expect(ctx.store.peek().visitorId).toBe('host-visitor-0001');
+    ctx.adapter.set(SESSION_STATE_KEY, JSON.stringify({ session_id: 'tab-session-0001', session_number: 3, last_event_ts: T0 }));
+    ctx.adapter.set(VISITOR_ID_FALLBACK_KEY, 'tab-visitor-0001');
+    expect(ctx.store.peek()).toEqual({ visitorId: 'tab-visitor-0001', sessionId: 'tab-session-0001', sessionNumber: 3 });
+    expect(ctx.store.current().visitorId).toBe('tab-visitor-0001');
+
+    const withdrawn = store({ seed: () => ({ visitorId: 'host-visitor-0001' }) });
+    expect(withdrawn.store.peek().visitorId).toBe('host-visitor-0001');
+    withdrawn.store.clear();
+    expect(withdrawn.store.peek().visitorId).toBe('');
+    expect(withdrawn.store.current().visitorId).not.toBe('host-visitor-0001');
+    expect(withdrawn.seedCalls()).toBe(1);
+  });
+
+  it('peek() does not call the seed when an identity is already stored', () => {
+    const ctx = store({ seed: () => ({ visitorId: 'host-visitor-0001' }) });
+    ctx.adapter.set(SESSION_STATE_KEY, JSON.stringify({ session_id: 'ct-session-0001', session_number: 2, last_event_ts: T0 }));
+    ctx.adapter.set(VISITOR_ID_FALLBACK_KEY, 'ct-visitor-0001');
+    expect(ctx.store.peek().visitorId).toBe('ct-visitor-0001');
+    expect(ctx.seedCalls()).toBe(0);
   });
 
   it('a seed with lastActivityAt keeps its own idle clock (start defaults to it)', () => {
@@ -510,5 +593,115 @@ describe('createIdentityStore activity and passive reads', () => {
       session_started_at: seedAt,
       last_event_ts: seedAt,
     });
+  });
+});
+
+describe('createIdentityStore visitorMaxAgeMs', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const T0 = 1_700_000_000_000;
+  const VISITOR = '3f0b2c9e-6a1d-4b7e-9c2a-8d5e4f1a2b3c';
+
+  function store(opts: { visitorMaxAgeMs?: number; seed?: () => unknown; adapter?: ReturnType<typeof fakeAdapter> } = {}) {
+    let now = T0;
+    let n = 0;
+    const adapter = opts.adapter ?? fakeAdapter();
+    const s = createIdentityStore({
+      adapter,
+      randomBytes: () => new Uint8Array(16).fill(++n),
+      nowMs: () => now,
+      ...(opts.visitorMaxAgeMs !== undefined ? { visitorMaxAgeMs: opts.visitorMaxAgeMs } : {}),
+      ...(opts.seed !== undefined ? { seed: opts.seed as never } : {}),
+    });
+    const state = () => JSON.parse(adapter.map.get(SESSION_STATE_KEY)!) as Record<string, unknown>;
+    return { adapter, store: s, state, advance: (ms: number) => { now += ms; }, now: () => now };
+  }
+
+  it('is off by default: no visitor_created_at, and the visitor outlives any age', () => {
+    const ctx = store();
+    const first = ctx.store.current();
+    expect(ctx.state()).not.toHaveProperty('visitor_created_at');
+    for (let day = 1; day <= 400; day++) {
+      ctx.advance(DAY);
+      expect(ctx.store.touch().visitorId).toBe(first.visitorId);
+    }
+    expect(ctx.state()).not.toHaveProperty('visitor_created_at');
+  });
+
+  it('stores visitor_created_at, carries it across rolls, and mints a new visitor at the limit', () => {
+    const ctx = store({ visitorMaxAgeMs: 10 * DAY });
+    const first = ctx.store.touch();
+    expect(ctx.state()).toMatchObject({ visitor_created_at: T0, session_number: 1 });
+    ctx.advance(5 * DAY);
+    const rolled = ctx.store.touch();
+    expect(rolled).toMatchObject({ visitorId: first.visitorId, sessionNumber: 2 });
+    expect(ctx.state()).toMatchObject({ visitor_created_at: T0 });
+    ctx.advance(5 * DAY - 1);
+    expect(ctx.store.touch().visitorId).toBe(first.visitorId);
+    ctx.advance(1); // exactly 10 days after creation; activity never extended it
+    expect(ctx.store.peek()).toEqual({ visitorId: '', sessionId: '', sessionNumber: null });
+    const fresh = ctx.store.touch();
+    expect(fresh.visitorId).not.toBe(first.visitorId);
+    expect(fresh.sessionId).not.toBe(rolled.sessionId);
+    expect(fresh.sessionNumber).toBe(1);
+    expect(ctx.state()).toMatchObject({ visitor_created_at: T0 + 10 * DAY, session_number: 1 });
+    expect(ctx.adapter.map.get(VISITOR_ID_FALLBACK_KEY)).toBe(fresh.visitorId);
+  });
+
+  it('a visitor stored before the limit was enabled ages from the first non-passive read', () => {
+    const adapter = fakeAdapter();
+    adapter.set(SESSION_STATE_KEY, JSON.stringify({ session_id: 'ct-session-0001', session_number: 4, session_started_at: T0, last_event_ts: T0 }));
+    adapter.set(VISITOR_ID_FALLBACK_KEY, 'ct-visitor-0001');
+    const ctx = store({ visitorMaxAgeMs: 10 * DAY, adapter });
+    const before = adapter.map.get(SESSION_STATE_KEY);
+    expect(ctx.store.peek().visitorId).toBe('ct-visitor-0001');
+    expect(adapter.map.get(SESSION_STATE_KEY)).toBe(before);
+    expect(ctx.store.current()).toEqual({ visitorId: 'ct-visitor-0001', sessionId: 'ct-session-0001', sessionNumber: 4 });
+    expect(ctx.state()).toEqual({
+      session_id: 'ct-session-0001',
+      session_number: 4,
+      session_started_at: T0,
+      last_event_ts: T0,
+      visitor_created_at: T0,
+    });
+  });
+
+  it('keeps a seeded visitorCreatedAt even without the limit', () => {
+    const ctx = store({ seed: () => ({ visitorId: VISITOR, visitorCreatedAt: T0 - 30 * DAY }) });
+    expect(ctx.store.current().visitorId).toBe(VISITOR);
+    expect(ctx.state()).toMatchObject({ visitor_created_at: T0 - 30 * DAY });
+    ctx.advance(DAY); // session rolls; the creation time stays
+    expect(ctx.store.current().sessionNumber).toBe(2);
+    expect(ctx.state()).toMatchObject({ visitor_created_at: T0 - 30 * DAY });
+  });
+
+  it('a seeded visitor already past the limit is not adopted', () => {
+    const seed = () => ({ visitorId: VISITOR, sessionId: 'host-session-0001', visitorCreatedAt: T0 - 11 * DAY });
+    const passive = store({ visitorMaxAgeMs: 10 * DAY, seed });
+    expect(passive.store.peek()).toEqual({ visitorId: '', sessionId: '', sessionNumber: null });
+    expect(passive.adapter.map.size).toBe(0);
+
+    const active = store({ visitorMaxAgeMs: 10 * DAY, seed });
+    const snap = active.store.current();
+    expect(snap.visitorId).not.toBe(VISITOR);
+    expect(snap.sessionId).not.toBe('host-session-0001');
+    expect(snap.sessionNumber).toBe(1);
+    expect(active.state()).toMatchObject({ visitor_created_at: T0 });
+  });
+
+  it('a passive adoption stores visitor_created_at like the first non-passive read', () => {
+    const seed = () => ({ visitorId: VISITOR, sessionId: 'host-session-0001' });
+    const passive = store({ visitorMaxAgeMs: 10 * DAY, seed });
+    expect(passive.store.peek()).toEqual({ visitorId: VISITOR, sessionId: 'host-session-0001', sessionNumber: 1 });
+    const active = store({ visitorMaxAgeMs: 10 * DAY, seed });
+    active.store.current();
+    expect(passive.state()).toEqual(active.state());
+    expect(passive.state()).toMatchObject({ visitor_created_at: T0 });
+  });
+
+  it('clock skew (now before visitor_created_at) never expires the visitor', () => {
+    const ctx = store({ visitorMaxAgeMs: DAY });
+    const first = ctx.store.current();
+    ctx.advance(-2 * DAY);
+    expect(ctx.store.current().visitorId).toBe(first.visitorId);
   });
 });

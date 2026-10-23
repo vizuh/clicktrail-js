@@ -93,6 +93,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   placeholder instead of `ignored_referrer`; the merge still keeps any stored
   touch. The stored referrer of a touch with an ignored referrer is always
   blank, also under `referrerFormat: 'host'` (#65).
+- `@vizuh/clicktrail-browser`: `getSession({ passive: true })` consults
+  `identity.seed` under the same rules as the default read and never mints
+  IDs: a seed whose visitor and session are still valid is adopted and
+  stored; otherwise the read returns what is valid (e.g. the visitor alone)
+  and leaves the seed to the first non-passive read. Opt-in
+  `identity.visitorMaxAgeMs` gives the visitor a fixed lifetime from its
+  creation: `ct_session` then stores `visitor_created_at`
+  (`IdentitySeed.visitorCreatedAt` for seeded visitors), the next
+  non-passive read after the limit mints a new visitor and session 1, and
+  passive reads return no visitor. Default unchanged (#72).
 
 ### Fixed
 

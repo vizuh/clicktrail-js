@@ -199,9 +199,10 @@ describe('config.identity validation', () => {
   });
 
   for (const bad of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
-    it(`rejects sessionIdleMs/sessionMaxMs = ${bad}`, () => {
+    it(`rejects sessionIdleMs/sessionMaxMs/visitorMaxAgeMs = ${bad}`, () => {
       expect(() => createClickTrail({ ...base, identity: { sessionIdleMs: bad } })).toThrow(RangeError);
       expect(() => createClickTrail({ ...base, identity: { sessionMaxMs: bad } })).toThrow(RangeError);
+      expect(() => createClickTrail({ ...base, identity: { visitorMaxAgeMs: bad } })).toThrow(RangeError);
     });
   }
 });
