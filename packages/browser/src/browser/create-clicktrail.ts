@@ -9,7 +9,7 @@ import { DIAGNOSTIC_CODES, nullDiagnosticSink } from '@vizuh/clicktrail-core';
 import type { DiagnosticSink } from '@vizuh/clicktrail-core';
 import { emptyAttribution } from '@vizuh/clicktrail-core';
 import type { ParseAttributionInput, ParseResult, ParsedTouch } from '@vizuh/clicktrail-core';
-import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import type { AttributionPayload, MergeAttributionOptions } from '@vizuh/clicktrail-core';
 import {
   isIgnoredReferrerHost,
   mergeAttributionTouch,
@@ -156,6 +156,11 @@ export interface ClickTrailConfig {
    * does not change GA4: add the same hosts to GA4's unwanted referrals.
    */
   ignoredReferrerHosts?: readonly string[];
+  /**
+   * Options for every merge into the stored payload: `mergeParsedTouch` and
+   * cross-domain continuation. Default: the plugin contract.
+   */
+  mergeOptions?: MergeAttributionOptions;
 }
 
 export interface ClickTrailStorageConfig {
@@ -341,7 +346,11 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   }
   const now = config.now;
   const consentGate = config.consentGate;
-  const mergeOptions = { channelCodes: config.channelCodes === true };
+  // `channelCodes: true` and `mergeOptions` both reach every merge (#59, #71).
+  const mergeOptions: MergeAttributionOptions = {
+    ...config.mergeOptions,
+    channelCodes: config.channelCodes === true || config.mergeOptions?.channelCodes === true,
+  };
   const sink = resolveSink(config);
   // Snapshot + validate once: invalid options throw here, never inside capture.
   const ga4MeasurementId =

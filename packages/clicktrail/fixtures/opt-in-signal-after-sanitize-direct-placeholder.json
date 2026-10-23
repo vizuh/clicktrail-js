@@ -1,0 +1,27 @@
+{
+  "name": "opt-in-signal-after-sanitize-direct-placeholder",
+  "description": "signalAfterSanitize: a 70-char gclid dropped by maxClickIdLength 64 / overLengthPolicy 'drop' on an empty payload stores the recordDirectTouch Direct placeholder, without the dropped click ID.",
+  "quirk_decision": "CONTRACT (opt-in, #71): default counts a dropped value as a signal (plugin reads the raw query). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/pricing?gclid=A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "maxFieldLength": 120,
+    "maxClickIdLength": 64,
+    "overLengthPolicy": "drop",
+    "signalAfterSanitize": true,
+    "recordDirectTouch": true,
+    "landingPageFormat": "path"
+  },
+  "expected": {
+    "_channel": "direct",
+    "ft_source": "(direct)",
+    "ft_medium": "(none)",
+    "ft_channel": "Direct",
+    "ft_landing_page": "/pricing",
+    "lt_channel": "Direct",
+    "lt_touch_timestamp": "2026-10-23T10:00:00.000Z",
+    "gclid": ""
+  }
+}

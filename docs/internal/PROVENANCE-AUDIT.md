@@ -181,6 +181,19 @@ every fixture and the parity run keep their results):
 | `maxFieldLength` + `overLengthPolicy: 'drop'` for query-parameter values | sanitizeValue two-pass 128/256 truncation `:103-112` | hosts with shorter downstream limits drop instead of truncating |
 | `macroPolicy: 'keep'`, `controlCharPolicy: 'drop'` | sanitizeValue rejects macros, replaces control chars `:103-112` | hosts that keep macros or drop values with control characters keep their data |
 
+Opt-in signal rules (issue #71; defaults unchanged, so every fixture and the
+parity run keep their results). Plugin references are
+`assets/js/clicutcl-attribution.js` at the pinned parity commit:
+
+| Engine option (#71) | Plugin | Why |
+|---|---|---|
+| `signalAfterSanitize: true` counts only values that survive sanitizing; a landing whose signals were all dropped falls through to referrer inference / `recordDirectTouch` | resolveTouch `:1790-1800` also counts only sanitized values (`Object.keys(mapQueryFields(params)).length`), but a query whose values were all dropped stores nothing and never reaches the referrer path | hosts that drop over-long or macro values must not record an empty measured touch |
+| `maxClickIdLength` (click IDs only; default `maxFieldLength`) | mapQueryFields uses one limit (128) for UTMs and click IDs `:1850-1873` | hosts with a shorter click-ID limit (e.g. 64 vs 120) |
+| `clearLastTouchClickIds` (merge option) blanks `lt_<cid>` absent from a new last touch | applyTouch writes only non-empty fields `:1821-1825`, so older `lt_<cid>` survive | hosts whose last touch is one record, not a field-wise overlay |
+| `signalKeys: { utm, clickIds }` reads only the listed keys | every TOUCH_QUERY_KEYS / CLICK_ID_SIGNAL_KEYS entry is a signal `:25-32`, `:1785-1788` | hosts that measure a smaller key set (e.g. five UTMs, six click IDs) |
+| `internalReferrer: 'same-host'` treats only the current host as internal | symmetric areRelatedHosts `:220-227` (ruling #8) | hosts that classify sibling subdomains as referrals |
+| `caseSensitiveParams: true` matches UTM / click-ID keys exactly | sanitizeKey lowercases every key `:86-90` (ruling #9) | hosts reading `URLSearchParams.get('utm_source')`; duplicate keys stay last-wins (ruling #11) |
+
 ### 2.5 Explicitly NOT derived (checked, cleared)
 
 - **`conversation/chatwoot.ts` attribute naming**: there is NO Chatwoot

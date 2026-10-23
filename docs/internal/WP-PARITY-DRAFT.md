@@ -79,17 +79,17 @@ Consent gating, pending-capture promotion (sessionStorage `ct_pending_v1`), cros
 | 5 | Search matching | Explicit domain-suffix rules incl. intl TLDs (yahoo.co.jp etc.). No label regex. |
 | 6 | Brave/Startpage | ENGINE addition kept; pin with fixtures at freeze. |
 | 7 | Social breadth | ENGINE list kept; pin each host with its own fixture at freeze. |
-| 8 | Related-host symmetry | FIX ENGINE: symmetric check (either host subdomain-of other) + http(s)-only referrer protocol. |
-| 9 | Query-key casing | FIX ENGINE: lowercase all query keys before lookup. |
+| 8 | Related-host symmetry | FIX ENGINE: symmetric check (either host subdomain-of other) + http(s)-only referrer protocol. Default kept; hosts that treat only their own host as internal opt into `internalReferrer: 'same-host'` (#71). |
+| 9 | Query-key casing | FIX ENGINE: lowercase all query keys before lookup. Default kept; opt-in `caseSensitiveParams` matches UTM and click-ID keys exactly (#71). |
 | 10 | '+' decoding | ENGINE kept (URL standard). Plugin literal-'+' = accident. |
 | 11 | Duplicate params | LAST-wins (plugin + server-parser convention). Fix engine. |
 | 12 | Landing page | PLUGIN contract: full href incl. query string. Privacy note: consent already gates storage; revisit redaction if PII patterns observed. Default kept; hosts that must not store the query opt into `landingPageFormat` `'path'` / `'path+allowlisted-query'` and `referrerFormat: 'host'` (#56). |
 | 13 | Timestamps | Millisecond ISO ('...T10:00:00.000Z') frozen — plugin + ISO standard. |
-| 14+16 | Length caps / control chars | ENGINE uniform 512 kept; plugin two-pass 128/256 = accident. Control-char deletion kept. Documented deviation. Defaults kept; opt-in `maxFieldLength`, `overLengthPolicy: 'drop'` and `controlCharPolicy: 'drop'` for query-parameter values (#64). |
+| 14+16 | Length caps / control chars | ENGINE uniform 512 kept; plugin two-pass 128/256 = accident. Control-char deletion kept. Documented deviation. Defaults kept; opt-in `maxFieldLength`, `overLengthPolicy: 'drop'` and `controlCharPolicy: 'drop'` for query-parameter values (#64), `maxClickIdLength` for click IDs, and `signalAfterSanitize` so a dropped value is no signal (#71). |
 | 15 | Macro rejection | FIX ENGINE: reject '{{...}}' values outright. Default kept; opt-in `macroPolicy: 'keep'` (#64). |
 | 17 | First-touch guard | FIX ENGINE: emptiness check must include ft_ click-ID keys. |
 
-Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing payload merged via the engine's own merge path). Approved.
+Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing payload merged via the engine's own merge path). Approved. Optional top-level `mergeOptions` (`MergeAttributionOptions`) feeds the same merge (#71).
 
 
 ---
@@ -99,7 +99,7 @@ Harness: fixture schema EXTENDED with top-level `stored` key (pre-existing paylo
 | Finding | Ruling |
 |---|---|
 | Browser-ID collection missing | SPLIT: (a) URL-param browser IDs (fbc, fbp, ttp, li_gc, ga_* as query params) populate top-level payload keys in CORE parse — deterministic, fixture-pinnable. (b) Cookie-derived IDs (fbp/ttp/li_gc cookies, GA ids) collected by the /browser adapter behind consent gate and merged top-level. Core never touches cookies. |
-| ft_<cid>/lt_<cid> click-ID mirror | PLUGIN is CONTRACT: merge mirrors each captured click ID into the touch fields at first- AND last-touch write time (matches applyTouch(mapQueryFields)). Redundant but required for WP-swap field-for-field parity; downstream consumers may read them. |
+| ft_<cid>/lt_<cid> click-ID mirror | PLUGIN is CONTRACT: merge mirrors each captured click ID into the touch fields at first- AND last-touch write time (matches applyTouch(mapQueryFields)). Redundant but required for WP-swap field-for-field parity; downstream consumers may read them. Default kept; opt-in merge option `clearLastTouchClickIds` blanks `lt_<cid>` for click IDs absent from a new last touch (#71). |
 
 Target after implementation: runtime harness diffs shrink to approved standing deviations (#1/#2/#6/#7/#10/#14), plus explicit Hugo gate D2/D3 fields.
 

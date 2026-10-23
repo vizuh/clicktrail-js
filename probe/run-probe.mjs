@@ -59,6 +59,7 @@ const PAGE_SCRIPT = () => {
       destinations: [dest],
       now: () => fx.input.now,
       ...(ignoredReferrerHosts ? { ignoredReferrerHosts } : {}),
+      ...(fx.mergeOptions ? { mergeOptions: fx.mergeOptions } : {}),
     });
     ct.start();
     // Stored-state fixtures (Phase 2 harness extension): hydrate the visitor's

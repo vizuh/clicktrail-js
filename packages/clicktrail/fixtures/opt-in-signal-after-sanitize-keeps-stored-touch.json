@@ -1,0 +1,47 @@
+{
+  "name": "opt-in-signal-after-sanitize-keeps-stored-touch",
+  "description": "signalAfterSanitize: a 70-char gclid dropped by maxClickIdLength 64 / overLengthPolicy 'drop' is no signal, so the landing follows the no-signal path and the stored paid touch is unchanged.",
+  "quirk_decision": "CONTRACT (opt-in, #71): default counts a dropped value as a signal (plugin reads the raw query). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "stored": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "ft_landing_page": "/lp",
+    "ft_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "ft_gclid": "A1",
+    "lt_source": "google",
+    "lt_medium": "cpc",
+    "lt_channel": "Google Ads",
+    "lt_landing_page": "/lp",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "lt_gclid": "A1",
+    "gclid": "A1"
+  },
+  "input": {
+    "url": "https://example.com/pricing?gclid=A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5A1B2C3D4E5",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "maxFieldLength": 120,
+    "maxClickIdLength": 64,
+    "overLengthPolicy": "drop",
+    "signalAfterSanitize": true,
+    "recordDirectTouch": true,
+    "landingPageFormat": "path"
+  },
+  "expected": {
+    "_channel": "direct",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "ft_gclid": "A1",
+    "lt_source": "google",
+    "lt_medium": "cpc",
+    "lt_campaign": "",
+    "lt_channel": "Google Ads",
+    "lt_landing_page": "/lp",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "lt_gclid": "A1",
+    "gclid": "A1"
+  }
+}

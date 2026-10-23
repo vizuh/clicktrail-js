@@ -1,0 +1,22 @@
+{
+  "name": "opt-in-internal-referrer-same-host",
+  "description": "internalReferrer 'same-host': a sibling subdomain referrer (blog.example.com -> www.example.com) is a referral with referrer host blog.example.com.",
+  "quirk_decision": "CONTRACT (opt-in, #71): default 'related' keeps the symmetric related-host check (ruling #8). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://www.example.com/",
+    "referrer": "https://blog.example.com/post",
+    "currentHost": "www.example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "internalReferrer": "same-host",
+    "referrerFormat": "host"
+  },
+  "expected": {
+    "_channel": "referral",
+    "ft_source": "blog.example.com",
+    "ft_medium": "referral",
+    "ft_referrer": "blog.example.com",
+    "lt_source": "blog.example.com",
+    "lt_medium": "referral",
+    "lt_referrer": "blog.example.com"
+  }
+}

@@ -71,19 +71,21 @@ interface QueryValues {
  * Minimal deterministic query reader over a URL string.
  *
  * Contract (rulings #9/#11/#10):
- * - ALL query keys are lowercased before lookup (mixed-case UTMs work).
+ * - ALL query keys are lowercased before lookup (mixed-case UTMs work),
+ *   unless `caseSensitive` is set: keys then match exactly (opt-in, #71).
  * - The LAST occurrence of a duplicate parameter wins.
  * - '+' decodes as space (URL standard; kept per ruling #10).
  */
-export function readQuery(url: string): QueryValues | null {
+export function readQuery(url: string, options: { caseSensitive?: boolean } = {}): QueryValues | null {
+  const fold = options.caseSensitive ? (k: string) => k : (k: string) => k.toLowerCase();
   try {
     const flat = new Map<string, string>();
     for (const [rawKey, rawValue] of new URL(url).searchParams.entries()) {
-      flat.set(rawKey.toLowerCase(), rawValue);
+      flat.set(fold(rawKey), rawValue);
     }
     const sortedKeys = Array.from(flat.keys()).sort();
     return {
-      get: (k) => flat.get(k.toLowerCase()),
+      get: (k) => flat.get(fold(k)),
       keys: () => sortedKeys,
     };
   } catch {
@@ -114,12 +116,27 @@ export function readQuery(url: string): QueryValues | null {
  * - Opt-in `inferSourceMedium: false` keeps `source` / `medium` as received
  *   from the URL; inferred values then feed only `channel` / `channelLabel`.
  * - Query-parameter values follow the caller's `SanitizeFieldOptions`
- *   (length limit, over-length / macro / control-character policies).
+ *   (length limit, over-length / macro / control-character policies);
+ *   `maxClickIdLength` sets a separate limit for click IDs.
+ * - Opt-in signal rules (#71): `signalAfterSanitize` counts only values that
+ *   survive sanitizing, `signalKeys` limits which UTM keys and click IDs are
+ *   read, `caseSensitiveParams` matches their keys exactly, and
+ *   `internalReferrer: 'same-host'` treats sibling subdomains as external.
  */
 export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const inferSourceMedium = input.inferSourceMedium !== false;
+  const signalAfterSanitize = input.signalAfterSanitize === true;
   const now = input.now ? input.now : '';
   const query = readQuery(input.url);
+  // UTM and click-ID keys only; browser IDs keep `query` (case-insensitive).
+  const signalQuery = input.caseSensitiveParams ? readQuery(input.url, { caseSensitive: true }) : query;
+  const utmAllowed = allowedKeys(input.signalKeys?.utm);
+  const clickIdAllowed = allowedKeys(input.signalKeys?.clickIds);
+  const maxClickIdLength = input.maxClickIdLength;
+  const clickIdOptions =
+    typeof maxClickIdLength === 'number' && Number.isInteger(maxClickIdLength) && maxClickIdLength > 0
+      ? { ...input, maxFieldLength: maxClickIdLength }
+      : input;
   const landingPage = landingPageOf(
     input.url,
     input.landingPageFormat ?? 'url',
@@ -129,25 +146,28 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   // --- collect UTM fields ---
   let hasUtm = false;
   const touch = emptyTouch(now, landingPage);
-  if (query) {
+  if (signalQuery) {
     for (const [param, field] of Object.entries(UTM_PARAM_TO_FIELD)) {
-      const raw = query.get(param);
+      if (utmAllowed && !utmAllowed.has(param)) continue;
+      const raw = signalQuery.get(param);
       if (raw != null && raw !== '') {
         touch[field] = sanitizeField(raw, input);
-        hasUtm = true;
+        if (!signalAfterSanitize || touch[field] !== '') hasUtm = true;
       }
     }
   }
 
   // --- collect click IDs ---
   const clickIds: Record<string, string> = {};
-  if (query) {
-    for (const key of query.keys()) {
+  if (signalQuery) {
+    for (const key of signalQuery.keys()) {
       const canonical = PARAM_ALIASES[key] ?? key;
-      if ((CLICK_ID_KEYS as readonly string[]).includes(canonical)) {
-        const value = query.get(key);
-        if (value) clickIds[canonical] = sanitizeField(value, input);
-      }
+      if (!(CLICK_ID_KEYS as readonly string[]).includes(canonical)) continue;
+      if (clickIdAllowed && !clickIdAllowed.has(canonical)) continue;
+      const value = signalQuery.get(key);
+      if (!value) continue;
+      const cleaned = sanitizeField(value, clickIdOptions);
+      if (!signalAfterSanitize || cleaned !== '') clickIds[canonical] = cleaned;
     }
   }
   const hasClickId = Object.keys(clickIds).length > 0;
@@ -196,7 +216,10 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
         : { kind: 'none', reason: 'no_signal' };
     }
     const pageHost = input.currentHost ? normalizeHost(input.currentHost) : '';
-    if (pageHost && areRelatedHosts(rHost, pageHost)) {
+    const internal = input.internalReferrer === 'same-host'
+      ? rHost === pageHost
+      : areRelatedHosts(rHost, pageHost);
+    if (pageHost && internal) {
       return input.recordDirectTouch
         ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'before_capture', inferSourceMedium) }
         : { kind: 'none', reason: 'internal_referrer' };
@@ -279,6 +302,21 @@ function classifyUtmChannel(medium: string): Channel {
   if (m === 'organic') return 'organic_search';
   if (m === 'social' || m.includes('social')) return 'organic_social';
   return 'unknown';
+}
+
+/**
+ * Caller allowlist from `signalKeys` as canonical keys (lowercased, aliases
+ * folded), or `null` when the list is absent and every known key applies.
+ */
+function allowedKeys(list: readonly string[] | undefined): Set<string> | null {
+  if (!Array.isArray(list)) return null;
+  const out = new Set<string>();
+  for (const entry of list) {
+    if (typeof entry !== 'string') continue;
+    const key = entry.trim().toLowerCase();
+    out.add(PARAM_ALIASES[key] ?? key);
+  }
+  return out;
 }
 
 /**

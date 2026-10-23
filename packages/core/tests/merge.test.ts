@@ -166,6 +166,46 @@ describe('click-ID ft_/lt_ mirror (ruling B, runtime findings 2026-08-23)', () =
   });
 });
 
+describe('clearLastTouchClickIds (#71, opt-in)', () => {
+  const paid = () => mergeAttributionTouch(
+    emptyAttribution(),
+    makeTouch({ source: 'google', medium: 'cpc', clickIds: { gclid: 'A1', fbclid: 'F1' } }),
+  );
+  const organic = makeTouch({ source: 'google', medium: 'organic', referrer: 'www.google.com' });
+
+  it('clears lt_<cid> absent from the new last touch; ft_<cid>, top-level IDs and history are kept', () => {
+    const seeded = paid();
+    const stored = mergeAttributionTouch(seeded, organic, { clearLastTouchClickIds: true });
+    expect(stored.lt_gclid).toBe('');
+    expect(stored.lt_fbclid).toBe('');
+    expect(stored.lt_referrer).toBe('www.google.com');
+    expect(stored.ft_gclid).toBe('A1');
+    expect(stored.ft_fbclid).toBe('F1');
+    expect(stored.gclid).toBe('A1');
+    expect(stored.click_id_history).toBe(seeded.click_id_history);
+    expect(stored.attribution_selected_click_id).toBe(seeded.attribution_selected_click_id);
+  });
+
+  it('keeps the click IDs the new touch carries', () => {
+    const stored = mergeAttributionTouch(paid(), makeTouch({ clickIds: { gclid: 'A2' } }), { clearLastTouchClickIds: true });
+    expect(stored.lt_gclid).toBe('A2');
+    expect(stored.lt_fbclid).toBe('');
+    expect(stored.fbclid).toBe('F1');
+  });
+
+  it('an unmeasured placeholder never clears a stored touch', () => {
+    const seeded = paid();
+    const stored = mergeAttributionTouch(seeded, makeTouch({ unmeasured: true, channelLabel: 'Direct' }), { clearLastTouchClickIds: true });
+    expect(stored).toEqual(seeded);
+  });
+
+  it('is off by default', () => {
+    const seeded = paid();
+    expect(mergeAttributionTouch(seeded, organic, { clearLastTouchClickIds: false })).toEqual(mergeAttributionTouch(seeded, organic));
+    expect(mergeAttributionTouch(seeded, organic).lt_gclid).toBe('A1');
+  });
+});
+
 describe('browser IDs top-level (ruling A part a, runtime findings 2026-08-23)', () => {
   it('writes touch browserIds top-level, newest non-empty wins', () => {
     let stored = mergeAttributionTouch(

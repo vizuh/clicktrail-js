@@ -103,6 +103,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`IdentitySeed.visitorCreatedAt` for seeded visitors), the next
   non-passive read after the limit mints a new visitor and session 1, and
   passive reads return no visitor. Default unchanged (#72).
+- `@vizuh/clicktrail-core`: opt-in signal rules for hosts that keep their own
+  first/last-touch contract. `signalAfterSanitize` counts only UTM and
+  click-ID values that survive the value policies; `maxClickIdLength` sets a
+  separate click-ID length limit; `signalKeys` limits which UTM keys and
+  click IDs are read; `internalReferrer: 'same-host'` classifies sibling
+  subdomains as referrals; `caseSensitiveParams` matches UTM and click-ID
+  keys exactly (`readQuery` accepts `{ caseSensitive }`). `mergeAttributionTouch`
+  takes `{ clearLastTouchClickIds }` to clear `lt_<clickid>` for click IDs a
+  new last touch lacks; `@vizuh/clicktrail-browser` passes it through
+  `createClickTrail({ mergeOptions })`. Defaults match the WordPress plugin
+  and are unchanged, as are `CLASSIFIER_VERSION`, `SCHEMA_VERSION` and
+  `CHANNEL_LABELS_VERSION` (#71).
 
 ### Fixed
 
