@@ -21,6 +21,7 @@ import type { IdentitySnapshot } from './identity.js';
 import {
   applyBrowserIdentifiers,
   collectBrowserIdsFromCookies,
+  gaSessionCookieNames,
   parseCookieMap,
 } from './browser-ids.js';
 import {
@@ -93,6 +94,14 @@ export interface ClickTrailConfig {
   diagnosticsLevel?: DiagnosticsLevel;
   /** Where diagnostics go when level is 'warn'. Default: console.warn sink. */
   diagnosticSink?: DiagnosticSink;
+  /**
+   * GA4 measurement ID(s) (`'G-ABC123'`) that own `ga_session_id` /
+   * `ga_session_number`. When set, only `_ga_ABC123` is read; other
+   * properties' `_ga_*` cookies on the domain are ignored. When unset, the
+   * first usable `_ga_*` cookie wins and `ga_session_property_unpinned` is
+   * reported (once per instance) if several are present. Invalid IDs throw.
+   */
+  ga4MeasurementId?: string | readonly string[];
   /**
    * First-party persistence. When present, start() hydrates the stored
    * payload, owns visitor/session identity, and persists every merge.
@@ -228,6 +237,25 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const now = config.now;
   const consentGate = config.consentGate;
   const sink = resolveSink(config);
+  // Snapshot + validate once: invalid IDs throw here, never inside capture.
+  const ga4MeasurementId =
+    config.ga4MeasurementId === undefined || typeof config.ga4MeasurementId === 'string'
+      ? config.ga4MeasurementId
+      : Object.freeze([...config.ga4MeasurementId]);
+  if (ga4MeasurementId !== undefined) gaSessionCookieNames(ga4MeasurementId);
+  // The unpinned-GA diagnostic fires once per instance, not on every capture.
+  let gaUnpinnedReported = false;
+  const gaSessionSink: DiagnosticSink = {
+    report: (diagnostic) => {
+      if (gaUnpinnedReported) return;
+      gaUnpinnedReported = true;
+      try {
+        sink.report(diagnostic);
+      } catch {
+        // Host diagnostics are best effort and must not drop browser IDs.
+      }
+    },
+  };
   let eventSequence = 0;
 
   let destinationCleanupFailed = false;
@@ -315,7 +343,10 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     let ids: Record<string, string>;
     try {
       const jar = storageCfg?.browserIdCookieJar ?? defaultCookieJar();
-      ids = collectBrowserIdsFromCookies(parseCookieMap(jar.read()));
+      ids = collectBrowserIdsFromCookies(parseCookieMap(jar.read()), {
+        ...(ga4MeasurementId !== undefined ? { ga4MeasurementId } : {}),
+        sink: gaSessionSink,
+      });
     } catch {
       return; // Deterministic no-op: cookie reads must never break capture.
     }

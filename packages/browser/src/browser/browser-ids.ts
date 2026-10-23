@@ -14,11 +14,17 @@
  * - ttp   <- `_ttp` | `ttp` cookie            (:869-872)
  * - li_gc <- `li_gc` cookie                   (:874-877)
  * - ga_client_id <- parsed from `_ga`         (:826-846, :879-882)
- * - ga_session_id / ga_session_number <- parsed from the first usable
- *   `_ga*` cookie                             (:848-887, :884-897)
+ * - ga_session_id / ga_session_number <- parsed from the configured
+ *   property's `_ga_<ID>` cookie, or the first usable `_ga_*` cookie when
+ *   no measurement ID is configured            (:848-887, :884-897)
+ *
+ * Deliberate deviations from the plugin (issue #47): the measurement-ID pin,
+ * GS2 tokens read after the `GS2.<n>.` prefix, and no numeric-token fallback
+ * for non-GS1/GS2 values. A wrong session ID splits the GA4 session; a
+ * missing one does not.
  */
-import { BROWSER_ID_KEYS, parseGaClientIdValue } from '@vizuh/clicktrail-core';
-import type { AttributionPayload } from '@vizuh/clicktrail-core';
+import { BROWSER_ID_KEYS, DIAGNOSTIC_CODES, parseGaClientIdValue } from '@vizuh/clicktrail-core';
+import type { AttributionPayload, DiagnosticSink } from '@vizuh/clicktrail-core';
 
 /** Parse a raw document.cookie header into a name->value map (lowercased names). */
 export function parseCookieMap(raw: string): Record<string, string> {
@@ -42,41 +48,83 @@ export function parseCookieMap(raw: string): Record<string, string> {
   return out;
 }
 
+/** GA session IDs are Unix-second timestamps; six digits matches the plugin's GS2 floor. */
+const GA_SESSION_ID = /^\d{6,}$/;
+const GA_SESSION_NUMBER = /^\d+$/;
+
 /**
- * Extract GA session id/number from a `_ga<property>` cookie value
- * (port of parseGaSessionData, clicutcl-attribution.js:848-887):
- * GS2 `$s<id>$o<num>` tokens first, then GS1. dot format, then the first
- * two numeric tokens as a fallback. Pure function of the string.
+ * Extract GA session id/number from a `_ga_<property>` cookie value
+ * (port of parseGaSessionData, clicutcl-attribution.js:848-887, minus the
+ * numeric-token fallback). Recognized formats:
+ * - GS2 `GS2.1.s<id>$o<num>$g…`: `$`-separated tokens after the `GS2.<n>.` prefix.
+ * - GS1 `GS1.1.<id>.<num>.…`: dot-separated fields.
+ * Anything else yields `{}`. Pure function of the string.
  */
 export function parseGaSessionDataValue(rawValue: string): {
   ga_session_id?: string;
   ga_session_number?: string;
 } {
   const value = rawValue.trim();
-  if (!value) return {};
   const out: { ga_session_id?: string; ga_session_number?: string } = {};
 
-  const gs2SessionId = value.match(/(?:^|\$)s(\d{6,})(?:\$|$)/);
-  const gs2SessionNumber = value.match(/(?:^|\$)o(\d+)(?:\$|$)/);
-  const gs2Id = gs2SessionId?.[1];
-  const gs2Num = gs2SessionNumber?.[1];
-  if (gs2Id) out.ga_session_id = gs2Id;
-  if (gs2Num) out.ga_session_number = gs2Num;
-  if (out.ga_session_id || out.ga_session_number) return out;
+  const gs2 = /^GS2\.\d+\.(.*)$/.exec(value);
+  if (gs2) {
+    for (const token of gs2[1]!.split('$')) {
+      const field = token.slice(1);
+      if (token[0] === 's' && !out.ga_session_id && GA_SESSION_ID.test(field)) {
+        out.ga_session_id = field;
+      } else if (token[0] === 'o' && !out.ga_session_number && GA_SESSION_NUMBER.test(field)) {
+        out.ga_session_number = field;
+      }
+    }
+    return out;
+  }
 
   if (value.startsWith('GS1.')) {
     const parts = value.split('.');
-    const gs1SessionId = parts[2];
-    const gs1SessionNumber = parts[3];
-    if (gs1SessionId) out.ga_session_id = gs1SessionId;
-    if (gs1SessionNumber) out.ga_session_number = gs1SessionNumber;
-    if (out.ga_session_id || out.ga_session_number) return out;
+    const gs1SessionId = parts[2] ?? '';
+    const gs1SessionNumber = parts[3] ?? '';
+    if (GA_SESSION_ID.test(gs1SessionId)) out.ga_session_id = gs1SessionId;
+    if (GA_SESSION_NUMBER.test(gs1SessionNumber)) out.ga_session_number = gs1SessionNumber;
   }
-
-  const numericTokens = value.match(/\d+/g) ?? [];
-  if (numericTokens[0]) out.ga_session_id = numericTokens[0];
-  if (numericTokens[1]) out.ga_session_number = numericTokens[1];
   return out;
+}
+
+/** Pins the GA session cookie to one or more GA4 properties. */
+export interface CollectBrowserIdsOptions {
+  /**
+   * GA4 measurement ID(s), e.g. `'G-ABC123'`. When set, `ga_session_id` /
+   * `ga_session_number` come only from `_ga_ABC123` (first listed ID with a
+   * usable cookie wins); other properties' `_ga_*` cookies are ignored.
+   */
+  ga4MeasurementId?: string | readonly string[];
+  /**
+   * Receives `ga_session_property_unpinned` when no measurement ID is set
+   * and more than one `_ga_*` cookie is present.
+   */
+  sink?: DiagnosticSink;
+}
+
+const GA4_MEASUREMENT_ID = /^G-([A-Z0-9]+)$/i;
+
+/**
+ * Validate GA4 measurement IDs and map them to lowercased `_ga_<suffix>`
+ * cookie names (parseCookieMap lowercases names). Throws on an empty list or
+ * a value that is not `G-<alphanumeric>`, so a typo cannot silently drop
+ * the session ID.
+ */
+export function gaSessionCookieNames(ga4MeasurementId: string | readonly string[]): string[] {
+  const ids = typeof ga4MeasurementId === 'string' ? [ga4MeasurementId] : [...ga4MeasurementId];
+  if (ids.length === 0) {
+    throw new TypeError('clicktrail: ga4MeasurementId must list at least one GA4 measurement ID.');
+  }
+  return ids.map((id) => {
+    const match = typeof id === 'string' ? GA4_MEASUREMENT_ID.exec(id.trim()) : null;
+    if (!match) {
+      throw new TypeError(`clicktrail: invalid GA4 measurement ID '${String(id)}'; expected 'G-XXXXXXX'.`);
+    }
+    return `_ga_${match[1]!.toLowerCase()}`;
+  });
 }
 
 function firstCookie(cookies: Record<string, string>, names: readonly string[]): string {
@@ -96,6 +144,7 @@ function firstCookie(cookies: Record<string, string>, names: readonly string[]):
  */
 export function collectBrowserIdsFromCookies(
   cookies: Record<string, string>,
+  options: CollectBrowserIdsOptions = {},
 ): Record<string, string> {
   const out: Record<string, string> = {};
 
@@ -114,13 +163,34 @@ export function collectBrowserIdsFromCookies(
   const gaClientId = parseGaClientIdValue(firstCookie(cookies, ['_ga']));
   if (gaClientId) out.ga_client_id = gaClientId;
 
-  // First `_ga*` cookie carrying session data wins (plugin .some() loop,
-  // :884-897); `_ga` itself is excluded (client-id source, not sessions).
-  for (const [name, value] of Object.entries(cookies)) {
-    if (name === '_ga' || !name.startsWith('_ga_')) continue;
+  // `_ga` itself is the client-id source, never session data. A session
+  // number without its session ID cannot join a GA4 session, so it is skipped.
+  const sessionCookies = Object.entries(cookies).filter(([name]) =>
+    name.toLowerCase().startsWith('_ga_'),
+  );
+  let candidates: string[];
+  if (options.ga4MeasurementId !== undefined) {
+    // Pinned: configured property order, other properties ignored.
+    const byName = new Map(sessionCookies.map(([name, value]) => [name.toLowerCase(), value]));
+    candidates = gaSessionCookieNames(options.ga4MeasurementId).map((name) => byName.get(name) ?? '');
+  } else {
+    // Unpinned: first `_ga_*` cookie with a session ID wins (plugin .some()
+    // loop, :884-897); flag the ambiguity when several properties write here.
+    candidates = sessionCookies.map(([, value]) => value);
+    if (sessionCookies.length > 1) {
+      options.sink?.report({
+        code: DIAGNOSTIC_CODES.GA_SESSION_PROPERTY_UNPINNED,
+        level: 'warn',
+        message:
+          'Several _ga_* cookies found and no ga4MeasurementId configured; ga_session_id may belong to another GA4 property.',
+        context: { ga_session_cookie_count: sessionCookies.length },
+      });
+    }
+  }
+  for (const value of candidates) {
     const session = parseGaSessionDataValue(value);
-    if (!session.ga_session_id && !session.ga_session_number) continue;
-    if (session.ga_session_id) out.ga_session_id = session.ga_session_id;
+    if (!session.ga_session_id) continue;
+    out.ga_session_id = session.ga_session_id;
     if (session.ga_session_number) out.ga_session_number = session.ga_session_number;
     break;
   }

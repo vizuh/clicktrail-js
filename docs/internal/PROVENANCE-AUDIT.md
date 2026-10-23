@@ -107,13 +107,25 @@ Port of the cookie-derived half of `BrowserIdentifiers`:
 | Function | Plugin evidence |
 |---|---|
 | `parseCookieMap()` (semicolon split, lowercase names, decodeURIComponent with fallback) | getCookieMap, `clicutcl-attribution.js:792-810` |
-| `parseGaSessionDataValue()` (GS2 `$s..$o..` regex, GS1. dot format, numeric-token fallback — regexes match verbatim) | parseGaSessionData, `:848-887` |
+| `parseGaSessionDataValue()` (GS2 `$s..$o..` tokens, GS1. dot format; see deviations below) | parseGaSessionData, `:848-887` |
 | `collectBrowserIdsFromCookies()` branch order (_fbp/_fbc/_ttp/li_gc/_ga/_ga*) | collect, `:859-907` incl. `.some()` loop `:884-897` |
 | `applyBrowserIdentifiers()` newest-non-empty law | mergeTopLevelIdentifiers `:1797-1811` |
 
 Deliberate non-ports (documented in-file): the `fbc = 'fb.1.'+Date.now()+fbclid`
 derivation stays core-side (query param path); sanitizeValue length caps
 differ per ruling #14.
+
+Deliberate deviations from the plugin's GA session read (issue #47; plugin
+1.11.0 `parseGaSessionData`/`collect` still has all three behaviours):
+
+| Engine (#47) | Plugin | Why |
+|---|---|---|
+| Optional `ga4MeasurementId` pins the read to `_ga_<ID without G->`; unpinned multi-cookie reads report `ga_session_property_unpinned` | first `_ga_*` cookie with session data wins, no property filter | A session ID from another GA4 property cannot join the receiving property's session. |
+| GS2 tokens read after the `GS2.<n>.` prefix, so the leading `s<id>` counts | `(?:^\|\$)s(\d{6,})` misses `GS2.1.s<id>`; real GS2 cookies yield only `ga_session_number` | Without this, real GS2 cookies carry no `ga_session_id`. |
+| No numeric-token fallback; non-GS1/GS2 values and malformed fields yield nothing; a cookie needs a session ID to be chosen | first two digit runs of any value become id/number | A wrong session ID splits the GA4 session; a missing one does not. |
+
+The parity harness does not exercise cookie-derived IDs, so `PARITY-RUN.md`
+is unaffected. The fix should be ported to the plugin.
 
 ### 2.4 Other plugin-derived items (smaller surface)
 
