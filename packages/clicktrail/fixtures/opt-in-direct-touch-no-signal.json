@@ -1,0 +1,24 @@
+{
+  "name": "opt-in-direct-touch-no-signal",
+  "description": "recordDirectTouch: a landing with no campaign parameters and no referrer fills an empty payload with an unmeasured direct first and last touch.",
+  "quirk_decision": "CONTRACT (opt-in, #56): default still returns { kind: 'none', reason: 'no_signal' } and stores nothing (plugin contract). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/search?from=home",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "recordDirectTouch": true,
+    "landingPageFormat": "path"
+  },
+  "expected": {
+    "_channel": "direct",
+    "ft_source": "(direct)",
+    "ft_medium": "(none)",
+    "ft_channel": "Direct",
+    "ft_referrer": "",
+    "ft_landing_page": "/search",
+    "ft_touch_timestamp": "2026-10-23T10:00:00.000Z",
+    "lt_channel": "Direct",
+    "lt_landing_page": "/search"
+  }
+}

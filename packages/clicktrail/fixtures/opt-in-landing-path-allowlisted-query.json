@@ -1,0 +1,20 @@
+{
+  "name": "opt-in-landing-path-allowlisted-query",
+  "description": "landingPageFormat 'path+allowlisted-query' keeps UTM and click-ID keys (case-insensitive, URL order) and drops every other query key and the fragment.",
+  "quirk_decision": "CONTRACT (opt-in, #56): keeps the gclid-on-landing evidence ruling #12 cared about without other query values. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/lp?email=person%40example.org&UTM_Source=google&utm_medium=cpc&gclid=EAIaTEST#top",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "landingPageFormat": "path+allowlisted-query"
+  },
+  "expected": {
+    "_channel": "paid_search",
+    "ft_source": "google",
+    "ft_channel": "Google Ads",
+    "ft_landing_page": "/lp?UTM_Source=google&utm_medium=cpc&gclid=EAIaTEST",
+    "lt_landing_page": "/lp?UTM_Source=google&utm_medium=cpc&gclid=EAIaTEST",
+    "ft_gclid": "EAIaTEST"
+  }
+}

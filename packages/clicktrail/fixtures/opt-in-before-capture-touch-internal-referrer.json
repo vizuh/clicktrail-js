@@ -1,0 +1,21 @@
+{
+  "name": "opt-in-before-capture-touch-internal-referrer",
+  "description": "recordDirectTouch: a same-site referrer on an empty payload means the visit began before capture (for example before consent), so the placeholder is 'Unknown (before capture)', not direct.",
+  "quirk_decision": "CONTRACT (opt-in, #56): default still returns { kind: 'none', reason: 'internal_referrer' }. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/checkout",
+    "referrer": "https://www.example.com/pricing",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:05:00.000Z",
+    "recordDirectTouch": true
+  },
+  "expected": {
+    "_channel": "unknown",
+    "ft_source": "",
+    "ft_medium": "",
+    "ft_channel": "Unknown (before capture)",
+    "ft_referrer": "",
+    "ft_landing_page": "https://example.com/checkout",
+    "lt_channel": "Unknown (before capture)"
+  }
+}

@@ -1,9 +1,18 @@
 import type { Channel } from '../conventions/stable.js';
-import type { AttributionTouch, ParseAttributionInput, ParseResult, ParsedTouch } from './types.js';
+import type {
+  AttributionTouch,
+  LandingPageFormat,
+  ParseAttributionInput,
+  ParseResult,
+  ParsedTouch,
+  ReferrerFormat,
+} from './types.js';
 import {
   BROWSER_ID_PARAMS,
+  CHANNEL_LABELS,
   CLICK_ID_KEYS,
   CLICK_ID_PLATFORMS,
+  LANDING_PAGE_QUERY_ALLOWLIST,
   PARAM_ALIASES,
   SEARCH_REFERRER_RULES,
   SOCIAL_REFERRER_RULES,
@@ -96,12 +105,20 @@ export function readQuery(url: string): QueryValues | null {
  * - A click ID without UTMs still yields a paid touch via its platform map.
  * - Browser-ID query params (fbc/fbp/ttp/li_gc/ga_*) ride along on the parsed
  *   touch and land top-level at merge time; bare fbclid derives an fbc.
- * - The landing page stores the FULL href including query string (ruling #12).
+ * - The landing page stores the FULL href including query string (ruling #12)
+ *   and the referrer the full URL, unless the caller opts into
+ *   `landingPageFormat` / `referrerFormat`. Classification reads raw values.
+ * - Opt-in `recordDirectTouch` turns `no_signal` / `internal_referrer` into an
+ *   unmeasured placeholder touch (see {@link ParsedTouch.unmeasured}).
  */
 export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const now = input.now ? input.now : '';
   const query = readQuery(input.url);
-  const landingPage = landingPageOf(input.url);
+  const landingPage = landingPageOf(
+    input.url,
+    input.landingPageFormat ?? 'url',
+    input.landingPageQueryAllowlist ?? LANDING_PAGE_QUERY_ALLOWLIST,
+  );
 
   // --- collect UTM fields ---
   let hasUtm = false;
@@ -163,15 +180,20 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const referrerIgnored =
     rHost !== '' && isIgnoredReferrerHost(rHost, input.ignoredReferrerHosts);
   const referrer = referrerIgnored ? '' : input.referrer ?? '';
+  const storedReferrer = referrerOf(referrer, input.referrerFormat ?? 'url');
 
   if (!hasUtm && !hasClickId) {
     // --- referrer inference path ---
     if (!rHost) {
-      return { kind: 'none', reason: 'no_signal' };
+      return input.recordDirectTouch
+        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'direct') }
+        : { kind: 'none', reason: 'no_signal' };
     }
     const pageHost = input.currentHost ? normalizeHost(input.currentHost) : '';
     if (pageHost && areRelatedHosts(rHost, pageHost)) {
-      return { kind: 'none', reason: 'internal_referrer' };
+      return input.recordDirectTouch
+        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'before_capture') }
+        : { kind: 'none', reason: 'internal_referrer' };
     }
     if (referrerIgnored) {
       return { kind: 'none', reason: 'ignored_referrer' };
@@ -182,7 +204,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
       inferred.channel === 'organic_search' ? 'organic'
       : inferred.channel === 'organic_social' ? 'social'
       : 'referral';
-    touch.referrer = sanitizeField(referrer);
+    touch.referrer = storedReferrer;
     const channelLabel = resolveChannelLabel({
       source: touch.source, medium: touch.medium, clickIds: {}, referrer,
     });
@@ -220,7 +242,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     channel = classifyUtmChannel(touch.medium);
   }
 
-  touch.referrer = sanitizeField(referrer);
+  touch.referrer = storedReferrer;
   const channelLabel = resolveChannelLabel({
     source: touch.source, medium: touch.medium, clickIds, referrer,
   });
@@ -240,13 +262,63 @@ function classifyUtmChannel(medium: string): Channel {
 }
 
 /**
- * Landing page stores the FULL href including query string (ruling #12).
- * Privacy note: consent already gates storage upstream; revisit redaction
- * if PII patterns are observed in query strings.
+ * Placeholder for a landing without signal (opt-in `recordDirectTouch`).
+ * `direct`: no usable referrer; source/medium follow the GA convention
+ * `(direct)` / `(none)`. `before_capture`: a same-site referrer, so the visit
+ * began before capture and its origin is unknown.
  */
-function landingPageOf(url: string): string {
+function unmeasuredTouch(
+  now: string,
+  landingPage: string,
+  browserIds: Record<string, string>,
+  kind: 'direct' | 'before_capture',
+): ParsedTouch {
+  const touch = emptyTouch(now, landingPage);
+  if (kind === 'direct') {
+    touch.source = '(direct)';
+    touch.medium = '(none)';
+  }
+  return {
+    ...touch,
+    browserIds,
+    channel: kind === 'direct' ? 'direct' : 'unknown',
+    channelLabel: kind === 'direct' ? CHANNEL_LABELS.DIRECT : CHANNEL_LABELS.BEFORE_CAPTURE,
+    unmeasured: true,
+  };
+}
+
+/**
+ * Stored landing page. `'url'` keeps the FULL href including query string
+ * (ruling #12, plugin contract). Privacy note: consent already gates storage
+ * upstream; hosts that must not store the query opt into a path format.
+ * Path formats drop the fragment; allowlisted keys match case-insensitively
+ * (ruling #9) and keep their URL order.
+ */
+function landingPageOf(url: string, format: LandingPageFormat, allowlist: readonly string[]): string {
+  let u: URL;
   try {
-    return sanitizeField(new URL(url).href);
+    u = new URL(url);
+  } catch {
+    return '';
+  }
+  if (format === 'url') return sanitizeField(u.href);
+  if (format === 'path') return sanitizeField(u.pathname);
+  const allowed = new Set(allowlist.map((key) => key.toLowerCase()));
+  const kept = new URLSearchParams();
+  for (const [key, value] of u.searchParams) {
+    if (allowed.has(key.toLowerCase())) kept.append(key, value);
+  }
+  const search = kept.toString();
+  return sanitizeField(search ? `${u.pathname}?${search}` : u.pathname);
+}
+
+/** Stored referrer: the full URL (`'url'`) or its http(s) hostname (`'host'`). */
+function referrerOf(referrer: string, format: ReferrerFormat): string {
+  if (format === 'url' || !referrer) return sanitizeField(referrer);
+  try {
+    const u = new URL(referrer);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+    return sanitizeField(u.hostname);
   } catch {
     return '';
   }

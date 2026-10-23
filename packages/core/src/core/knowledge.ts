@@ -93,8 +93,12 @@ export const PAYMENT_REFERRER_HOSTS: readonly string[] = [
 
 // --- human-readable channel-label layer (WP parity, ruling #3) ---------------
 
-/** Version of the CHANNEL_LABELS table; bump when any label or trigger changes. */
-export const CHANNEL_LABELS_VERSION = '1';
+/**
+ * Version of the CHANNEL_LABELS table; bump when any label or trigger changes.
+ * 2: adds DIRECT and BEFORE_CAPTURE, written only by the opt-in
+ * `recordDirectTouch` placeholders (no existing trigger changed).
+ */
+export const CHANNEL_LABELS_VERSION = '2';
 
 /**
  * Human-readable channel labels written to `ft_channel` / `lt_channel`.
@@ -161,6 +165,9 @@ export const CHANNEL_LABELS = {
   TWITTER_X: 'X',
   SNAPCHAT: 'Snapchat',
   PINTEREST: 'Pinterest',
+  // Opt-in `recordDirectTouch` placeholders (no URL or referrer signal)
+  DIRECT: 'Direct',
+  BEFORE_CAPTURE: 'Unknown (before capture)',
   // Fallback
   UNKNOWN: 'Unknown',
 } as const;
@@ -461,6 +468,16 @@ export const UTM_PARAM_TO_FIELD: Readonly<Record<string, keyof TouchFieldMap>> =
 export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   sc_click_id: 'sccid',
 };
+
+/**
+ * Default query keys kept by `landingPageFormat: 'path+allowlisted-query'`:
+ * the attribution parameters the parser reads (UTMs, click IDs, aliases).
+ */
+export const LANDING_PAGE_QUERY_ALLOWLIST: readonly string[] = [
+  ...Object.keys(UTM_PARAM_TO_FIELD),
+  ...CLICK_ID_KEYS,
+  ...Object.keys(PARAM_ALIASES),
+];
 
 /** Field-name -> flat payload key mapping for one touch. */
 export interface TouchFieldMap {

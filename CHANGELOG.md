@@ -30,6 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@vizuh/clicktrail-browser`: `createClickTrail({ ignoredReferrerHosts })`
   and `captureLanding()`, which parses with that list, reports
   `ignored_referrer_host`, and merges the touch (#43).
+- `@vizuh/clicktrail-core`: opt-in `parseAttributionUrl` options for stored
+  touch fields. `landingPageFormat` (`'path'`, `'path+allowlisted-query'`
+  with `landingPageQueryAllowlist` / `LANDING_PAGE_QUERY_ALLOWLIST`) and
+  `referrerFormat: 'host'` shorten `ft_/lt_landing_page` and `ft_/lt_referrer`.
+  `recordDirectTouch` stores a `Direct` or `Unknown (before capture)`
+  placeholder when a landing has no signal. `mergeAttributionTouch` writes
+  placeholders only into an empty payload and lets the first measured touch
+  replace one. Defaults match the WordPress plugin and are unchanged, as are
+  `CLASSIFIER_VERSION` and `SCHEMA_VERSION`. `CHANNEL_LABELS_VERSION` moves to
+  `2` for the two new labels (#56).
 
 ### Fixed
 

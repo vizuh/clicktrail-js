@@ -1,0 +1,33 @@
+{
+  "name": "opt-in-direct-touch-keeps-stored-touch",
+  "description": "recordDirectTouch never overwrites a stored touch: a later direct visit leaves the measured first and last touch untouched.",
+  "quirk_decision": "CONTRACT (opt-in, #56): placeholders fill an empty payload only. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "stored": {
+    "ft_source": "newsletter",
+    "ft_medium": "email",
+    "ft_channel": "Unknown",
+    "ft_landing_page": "https://example.com/",
+    "ft_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "lt_source": "newsletter",
+    "lt_medium": "email",
+    "lt_channel": "Unknown",
+    "lt_landing_page": "https://example.com/",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z"
+  },
+  "input": {
+    "url": "https://example.com/account",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "recordDirectTouch": true
+  },
+  "expected": {
+    "_channel": "direct",
+    "ft_source": "newsletter",
+    "ft_channel": "Unknown",
+    "lt_source": "newsletter",
+    "lt_channel": "Unknown",
+    "lt_landing_page": "https://example.com/",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z"
+  }
+}
