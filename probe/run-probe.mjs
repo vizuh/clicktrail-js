@@ -42,7 +42,7 @@ const jsonForScriptTag = (value) =>
 const PAGE_SCRIPT = () => {
     const fx = window.__FIXTURE__;
     const { createClickTrail, createLegacyGlobal, dataLayerDestination,
-            parseAttributionUrl } = window.ClickTrail;
+            parseAttributionUrl, GOOGLE_TAG_RESERVED_FIELDS } = window.ClickTrail;
 
     // --- SSR/start() ordering side-check (deterministic, isolated instance):
     // track() BEFORE start() must be ignored (no delivery, no throw).
@@ -72,6 +72,7 @@ const PAGE_SCRIPT = () => {
       data: api.getData(),
       session: api.getSession(),
       events: dest.getArray(),
+      reservedFields: [...GOOGLE_TAG_RESERVED_FIELDS],
     };
 };
 
@@ -179,15 +180,26 @@ try {
           if (evt.event_name !== 'page_view') {
             failures.push(`event_name: expected page_view, got ${String(evt.event_name)}`);
           }
+          if (evt.event !== 'ct_page_view') {
+            failures.push(`event: expected ct_page_view, got ${String(evt.event)}`);
+          }
+          if (evt.datalayer_version !== '2.0.0') {
+            failures.push(`datalayer_version: expected 2.0.0, got ${String(evt.datalayer_version)}`);
+          }
           if (typeof evt.schema_version !== 'string' || evt.schema_version === '') {
             failures.push('schema_version stamp missing on dataLayer event');
           }
           if (typeof evt.classifier_version !== 'string' || evt.classifier_version === '') {
             failures.push('classifier_version stamp missing on dataLayer event');
           }
+          const reserved = new Set(actual.reservedFields);
+          for (const key of reserved) {
+            if (key in evt) failures.push(`event.${key} is a reserved Google tag field`);
+          }
           for (const key of Object.keys(actual.data)) {
-            if (evt[key] !== actual.data[key]) {
-              failures.push(`event.${key} does not match payload (${JSON.stringify(evt[key])})`);
+            const pushedKey = reserved.has(key) ? `ct_${key}` : key;
+            if (evt[pushedKey] !== actual.data[key]) {
+              failures.push(`event.${pushedKey} does not match payload (${JSON.stringify(evt[pushedKey])})`);
             }
           }
         }

@@ -104,21 +104,74 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   };
 }
 
+/**
+ * Version of the dataLayer push shape (the GTM bridge contract), stamped on
+ * every push as `datalayer_version`. Independent of `schema_version` (the
+ * canonical payload, unchanged) and `classifier_version`.
+ *
+ * 1.0.0 (unstamped): every canonical key pushed flat, `event` = `event_name`.
+ * 2.0.0: Google tag field names are prefixed and the canonical `page_view`
+ * is pushed as `event: 'ct_page_view'` (see GOOGLE_TAG_RESERVED_FIELDS).
+ */
+export const DATALAYER_VERSION = '2.0.0' as const;
+
+/**
+ * Flat keys the Google tag (gtag.js / GA4) interprets as its own fields
+ * rather than free event parameters. A GA4 Event tag that maps one of these
+ * from the dataLayer overrides Google's value — e.g. `session_id` replaces
+ * the `_ga_<property>` session (`sid`) and splits sessions.
+ */
+export const GOOGLE_TAG_RESERVED_FIELDS = [
+  'session_id',
+  'client_id',
+  'user_id',
+  'session_number',
+  'engagement_time_msec',
+  'timestamp_micros',
+  'page_location',
+  'page_referrer',
+] as const;
+
+/** Default prefix applied to GOOGLE_TAG_RESERVED_FIELDS in dataLayer pushes. */
+export const DEFAULT_RESERVED_FIELD_PREFIX = 'ct_';
+
+/** Default GTM `event` value for the canonical `page_view`. */
+export const DEFAULT_DATALAYER_PAGE_VIEW_EVENT = 'ct_page_view';
+
 export interface DataLayerDestinationConfig {
   /**
    * Injected target array (e.g. an existing window.dataLayer). When omitted,
    * the array is created inside start()/first deliver — never on import.
    */
   dataLayer?: unknown[];
+  /**
+   * Prefix for flat keys listed in GOOGLE_TAG_RESERVED_FIELDS
+   * (`session_id` -> `ct_session_id`). Default `'ct_'`; must not be empty.
+   * The nested `marketing_trail` envelope is never renamed.
+   */
+  reservedFieldPrefix?: string;
+  /**
+   * GTM `event` value pushed for the canonical `page_view`. Default
+   * `'ct_page_view'`, so a catch-all GA4 Event tag cannot duplicate the
+   * Google tag's own page_view. `event_name` stays `'page_view'`.
+   */
+  pageViewEvent?: string;
 }
 
 /**
  * Pushes stamped payloads into a dataLayer array (tag-manager bridge).
+ * Push shape: DATALAYER_VERSION.
  */
 export function dataLayerDestination(
   config: DataLayerDestinationConfig = {},
 ): Destination & { getArray(): unknown[] } {
   let arr: unknown[] | undefined = config.dataLayer;
+  const prefix = config.reservedFieldPrefix ?? DEFAULT_RESERVED_FIELD_PREFIX;
+  const pageViewEvent = config.pageViewEvent ?? DEFAULT_DATALAYER_PAGE_VIEW_EVENT;
+  if (prefix === '') {
+    // An empty prefix would push the Google tag field names unchanged.
+    throw new TypeError('dataLayerDestination: reservedFieldPrefix must not be empty');
+  }
 
   return {
     name: 'dataLayer',
@@ -126,7 +179,16 @@ export function dataLayerDestination(
       arr ??= [];
     },
     deliver(event) {
-      (arr ??= []).push({ ...event, event: event.event_name });
+      const push: Record<string, unknown> = { ...event };
+      for (const key of GOOGLE_TAG_RESERVED_FIELDS) {
+        if (!Object.prototype.hasOwnProperty.call(push, key)) continue;
+        // The renamed value wins over a caller key of the same name.
+        push[prefix + key] = push[key];
+        delete push[key];
+      }
+      push['event'] = event.event_name === 'page_view' ? pageViewEvent : event.event_name;
+      push['datalayer_version'] = DATALAYER_VERSION;
+      (arr ??= []).push(push);
     },
     clear() {},
     getArray() {

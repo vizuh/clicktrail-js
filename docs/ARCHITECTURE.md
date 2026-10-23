@@ -92,6 +92,12 @@ Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DR
 - **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.2.0` for the
   `0.1.0` package line; these bumps record semantic decisions, not published
   breaking releases.
+- **dataLayer push shape**: the browser `dataLayerDestination()` projection
+  has its own stamp, `datalayer_version` (`DATALAYER_VERSION`, `2.0.0`),
+  independent of the payload stamps above. 2.0.0 pushes Google tag field
+  names as `ct_<name>` and the canonical `page_view` as `ct_page_view`
+  (#48); a change to which keys or `event` values reach the dataLayer bumps
+  its major.
 
 ## Fixture policy
 

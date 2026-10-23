@@ -110,8 +110,17 @@ const destination = dataLayerDestination({ dataLayer });
 Start the ClickTrail instance, then inspect the array in the host's test
 environment. The bridge keeps canonical fields flat for GTM data-layer
 variables, publishes both `event` (the GTM custom-event key) and `event_name`,
-and carries `event_id` for deduplication wiring. ClickTrail does not inject
-Meta, Google, TikTok, LinkedIn, Pinterest, or Reddit pixel SDKs.
+and carries `event_id` for deduplication wiring. Each push is stamped
+`datalayer_version: '2.0.0'`. Keys the Google tag reads as its own fields
+(`GOOGLE_TAG_RESERVED_FIELDS`: `session_id`, `client_id`, `user_id`,
+`session_number`, `engagement_time_msec`, `timestamp_micros`,
+`page_location`, `page_referrer`) are pushed as `ct_<name>`, and the
+canonical `page_view` is pushed as `event: 'ct_page_view'`, so a catch-all
+GA4 Event tag cannot override GA4's session or duplicate its page views.
+Change either with `reservedFieldPrefix` and `pageViewEvent`; see
+[`examples/gtm-datalayer/`](../examples/gtm-datalayer/README.md) for GTM
+trigger exclusions. ClickTrail does not inject Meta, Google, TikTok, LinkedIn,
+Pinterest, or Reddit pixel SDKs.
 
 ## Approved cross-domain continuity
 

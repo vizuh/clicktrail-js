@@ -17,7 +17,14 @@ export type {
   MarketingTrailEnvelope,
   StampedClickTrailEvent,
 } from './serialize.js';
-export { httpDestination, dataLayerDestination } from './transport.js';
+export {
+  httpDestination,
+  dataLayerDestination,
+  DATALAYER_VERSION,
+  DEFAULT_DATALAYER_PAGE_VIEW_EVENT,
+  DEFAULT_RESERVED_FIELD_PREFIX,
+  GOOGLE_TAG_RESERVED_FIELDS,
+} from './transport.js';
 export type {
   Destination,
   SendFn,
