@@ -34,6 +34,7 @@ function makeInstance(): ClickTrailInstance {
     getField: vi.fn(() => 'google'),
     clearData: vi.fn(),
     getSession: vi.fn(() => ({ sessionId: 's-1' }) as unknown as SessionSnapshot),
+    touchSession: vi.fn(() => ({ sessionId: 's-1' }) as unknown as SessionSnapshot),
   };
 }
 

@@ -56,6 +56,7 @@ export type {
   ClickTrailInstance,
   ClickTrailStorageConfig,
   DiagnosticsLevel,
+  GetSessionOptions,
 } from './create-clicktrail.js';
 export { generateId, rollSession, uuidV4FromBytes, SESSION_TIMEOUT_MS } from './identity.js';
 export type {
@@ -64,6 +65,7 @@ export type {
   IdentitySnapshot,
   IdentityStore,
   IdentityStoreConfig,
+  PassiveIdentitySnapshot,
   RandomBytesFn,
   StoredSessionState,
 } from './identity.js';

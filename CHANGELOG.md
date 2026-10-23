@@ -73,6 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_fbp` or `_fbc` repeats with different values.
   `createClickTrail({ browserIdCookieDuplicates })` passes the policy to its
   browser-ID read and reports the diagnostic once per instance (#66).
+- `@vizuh/clicktrail-browser`: `ClickTrailInstance.touchSession()` records
+  session activity (consent-gated); `getSession({ passive: true })` reads
+  identity without creating, rolling or writing a session and returns an
+  empty session once it expired; `IdentitySeed.lastActivityAt` keeps a
+  seeded session's idle clock; `identity.activityOnTrack` (default true)
+  controls whether `track()` counts as activity (#63).
 
 ### Fixed
 
@@ -85,6 +91,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `createClickTrail` now uses the first occurrence in `document.cookie`, as
   gtag does for `_ga`, instead of the last. Set
   `browserIdCookieDuplicates: 'last'` to keep the previous result (#66).
+- `@vizuh/clicktrail-browser`: the session idle timeout counts from the last
+  activity instead of the session start. `track()` now refreshes
+  `last_event_ts` by default, so continuous activity keeps one `session_id`
+  until `sessionMaxMs`, which is now reachable. `IdentityStore.touch()`
+  rolls an expired session instead of extending it and returns the snapshot
+  (#63).
 
 ### Security
 

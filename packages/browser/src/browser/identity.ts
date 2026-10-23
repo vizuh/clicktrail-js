@@ -105,6 +105,13 @@ export interface IdentitySeed {
   sessionId?: string;
   /** Start of the seeded session, ms since epoch; not in the future. Requires `sessionId`. */
   sessionStartedAt?: number;
+  /**
+   * Last activity in the seeded session, ms since epoch; not in the future
+   * and not before `sessionStartedAt`. Requires `sessionId`. The idle
+   * timeout counts from here instead of from adoption. When
+   * `sessionStartedAt` is omitted the session is taken to start here.
+   */
+  lastActivityAt?: number;
 }
 
 /** Called at most once per store, only when no identity is stored. */
@@ -116,6 +123,16 @@ export interface IdentitySnapshot {
   visitorId: string;
   sessionId: string;
   sessionNumber: number;
+}
+
+/** Read-only view of stored identity (see IdentityStore.peek). */
+export interface PassiveIdentitySnapshot {
+  /** '' when no identity is stored. */
+  visitorId: string;
+  /** '' when no session is stored or the stored session has expired. */
+  sessionId: string;
+  /** null whenever `sessionId` is ''. */
+  sessionNumber: number | null;
 }
 
 export interface IdentityStoreConfig {
@@ -138,11 +155,21 @@ export interface IdentityStore {
    * Load-or-roll current identity and refresh the stored snapshot.
    * Adopts the host seed when no identity is stored; rolls when there is no
    * stored state, the inactivity timeout elapsed, or the maximum session
-   * length was reached; otherwise keeps session_id/session_number.
+   * length was reached; otherwise keeps session_id/session_number. Does not
+   * count as activity.
    */
   current(): IdentitySnapshot;
-  /** Record activity now (extends the inactivity window without rolling). */
-  touch(): void;
+  /**
+   * Record activity now: load-or-roll exactly like current(), then move
+   * `last_event_ts` to now so the inactivity window counts from this call.
+   * Never extends a session that already expired (that one rolls first).
+   */
+  touch(): IdentitySnapshot;
+  /**
+   * Passive read: never writes storage, never mints IDs, never consults the
+   * seed. Returns an empty session when none is stored or it has expired.
+   */
+  peek(): PassiveIdentitySnapshot;
   /** Remove every persisted identity key (consent denial / withdrawal). */
   clear(): void;
 }
@@ -200,33 +227,38 @@ function acceptSeed(
     reject('identity seed must return an object or null.');
     return null;
   }
-  const { visitorId, sessionId, sessionStartedAt } = raw as Record<string, unknown>;
+  const { visitorId, sessionId, sessionStartedAt, lastActivityAt } = raw as Record<string, unknown>;
   for (const [name, value] of [['visitorId', visitorId], ['sessionId', sessionId]] as const) {
     if (value !== undefined && (typeof value !== 'string' || !SEED_ID_PATTERN.test(value))) {
       reject(`identity seed ${name} is not 8-128 chars of [A-Za-z0-9_.:-].`);
       return null;
     }
   }
-  if (sessionStartedAt !== undefined) {
+  for (const [name, value] of [['sessionStartedAt', sessionStartedAt], ['lastActivityAt', lastActivityAt]] as const) {
+    if (value === undefined) continue;
     if (sessionId === undefined) {
-      reject('identity seed sessionStartedAt requires sessionId.');
+      reject(`identity seed ${name} requires sessionId.`);
       return null;
     }
-    if (
-      typeof sessionStartedAt !== 'number' ||
-      !Number.isFinite(sessionStartedAt) ||
-      sessionStartedAt < 0 ||
-      sessionStartedAt > now
-    ) {
-      reject('identity seed sessionStartedAt must be epoch ms, not in the future.');
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > now) {
+      reject(`identity seed ${name} must be epoch ms, not in the future.`);
       return null;
     }
+  }
+  if (
+    sessionStartedAt !== undefined &&
+    lastActivityAt !== undefined &&
+    (lastActivityAt as number) < (sessionStartedAt as number)
+  ) {
+    reject('identity seed lastActivityAt must not be before sessionStartedAt.');
+    return null;
   }
   if (visitorId === undefined && sessionId === undefined) return null;
   return {
     ...(visitorId !== undefined ? { visitorId: visitorId as string } : {}),
     ...(sessionId !== undefined ? { sessionId: sessionId as string } : {}),
     ...(sessionStartedAt !== undefined ? { sessionStartedAt: sessionStartedAt as number } : {}),
+    ...(lastActivityAt !== undefined ? { lastActivityAt: lastActivityAt as number } : {}),
   };
 }
 
@@ -262,62 +294,76 @@ export function createIdentityStore(config: IdentityStoreConfig): IdentityStore 
     return cachedVisitorId;
   };
 
-  return {
-    current(): IdentitySnapshot {
-      const now = nowMs();
-      let stored = readStoredSession(adapter);
-      let seeded = false;
-      // Only the first identity read may seed: once this store has seen or
-      // minted an identity, a later clear() must not bring host IDs back.
-      if (!seedConsulted) {
-        seedConsulted = true;
-        const empty =
-          stored === null &&
-          cachedVisitorId === null &&
-          adapter.get(VISITOR_ID_FALLBACK_KEY) === null;
-        const accepted = empty ? acceptSeed(seed!, now, onSeedRejected) : null;
-        if (accepted !== null) {
-          seeded = true;
-          if (accepted.visitorId !== undefined) cachedVisitorId = accepted.visitorId;
-          if (accepted.sessionId !== undefined) {
-            stored = {
-              session_id: accepted.sessionId,
-              session_number: 1,
-              session_started_at: accepted.sessionStartedAt ?? now,
-              last_event_ts: now,
-            };
-          }
+  const expired = (stored: StoredSessionState, now: number): boolean =>
+    rollSession({
+      lastEventTs: stored.last_event_ts,
+      now,
+      timeoutMs,
+      sessionStartedAt: stored.session_started_at,
+      ...(maxMs !== undefined ? { maxMs } : {}),
+    });
+
+  /** Shared load-or-roll; `activity` also moves last_event_ts to now. */
+  const resolve = (activity: boolean): IdentitySnapshot => {
+    const now = nowMs();
+    let stored = readStoredSession(adapter);
+    let seeded = false;
+    // Only the first identity read may seed: once this store has seen or
+    // minted an identity, a later clear() must not bring host IDs back.
+    if (!seedConsulted) {
+      seedConsulted = true;
+      const empty =
+        stored === null &&
+        cachedVisitorId === null &&
+        adapter.get(VISITOR_ID_FALLBACK_KEY) === null;
+      const accepted = empty ? acceptSeed(seed!, now, onSeedRejected) : null;
+      if (accepted !== null) {
+        seeded = true;
+        if (accepted.visitorId !== undefined) cachedVisitorId = accepted.visitorId;
+        if (accepted.sessionId !== undefined) {
+          stored = {
+            session_id: accepted.sessionId,
+            session_number: 1,
+            session_started_at: accepted.sessionStartedAt ?? accepted.lastActivityAt ?? now,
+            last_event_ts: accepted.lastActivityAt ?? now,
+          };
         }
       }
-      const visitorId = resolveVisitorId(stored);
-      if (
-        stored === null ||
-        rollSession({
-          lastEventTs: stored.last_event_ts,
-          now,
-          timeoutMs,
-          sessionStartedAt: stored.session_started_at,
-          ...(maxMs !== undefined ? { maxMs } : {}),
-        })
-      ) {
-        const next: StoredSessionState = {
-          session_id: generateId(randomBytes),
-          session_number: (stored?.session_number ?? 0) + 1,
-          session_started_at: now,
-          last_event_ts: now,
-        };
-        persist(adapter, next, visitorId);
-        return { visitorId, sessionId: next.session_id, sessionNumber: next.session_number };
-      }
-      if (seeded) persist(adapter, stored, visitorId);
-      return { visitorId, sessionId: stored.session_id, sessionNumber: stored.session_number };
-    },
+    }
+    const visitorId = resolveVisitorId(stored);
+    if (stored === null || expired(stored, now)) {
+      const next: StoredSessionState = {
+        session_id: generateId(randomBytes),
+        session_number: (stored?.session_number ?? 0) + 1,
+        session_started_at: now,
+        last_event_ts: now,
+      };
+      persist(adapter, next, visitorId);
+      return { visitorId, sessionId: next.session_id, sessionNumber: next.session_number };
+    }
+    if (activity) {
+      // Clock skew never moves the idle clock backwards.
+      persist(adapter, { ...stored, last_event_ts: Math.max(stored.last_event_ts, now) }, visitorId);
+    } else if (seeded) {
+      persist(adapter, stored, visitorId);
+    }
+    return { visitorId, sessionId: stored.session_id, sessionNumber: stored.session_number };
+  };
 
-    touch(): void {
+  return {
+    current: () => resolve(false),
+
+    touch: () => resolve(true),
+
+    peek(): PassiveIdentitySnapshot {
       const stored = readStoredSession(adapter);
-      if (stored === null) return;
-      const visitorId = resolveVisitorId(stored);
-      persist(adapter, { ...stored, last_event_ts: nowMs() }, visitorId);
+      // Mirrors resolveVisitorId without minting or caching.
+      const visitorId =
+        cachedVisitorId ?? (stored !== null ? adapter.get(VISITOR_ID_FALLBACK_KEY) ?? '' : '');
+      if (stored === null || expired(stored, nowMs())) {
+        return { visitorId, sessionId: '', sessionNumber: null };
+      }
+      return { visitorId, sessionId: stored.session_id, sessionNumber: stored.session_number };
     },
 
     clear(): void {
