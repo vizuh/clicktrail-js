@@ -124,6 +124,14 @@ Deliberate deviations from the plugin's GA session read (issue #47; plugin
 | GS2 tokens read after the `GS2.<n>.` prefix, so the leading `s<id>` counts | `(?:^\|\$)s(\d{6,})` misses `GS2.1.s<id>`; real GS2 cookies yield only `ga_session_number` | Without this, real GS2 cookies carry no `ga_session_id`. |
 | No numeric-token fallback; non-GS1/GS2 values and malformed fields yield nothing; a cookie needs a session ID to be chosen | first two digit runs of any value become id/number | A wrong session ID splits the GA4 session; a missing one does not. |
 
+Deliberate deviation from the plugin's cookie map (issue #66; plugin 1.11.0
+`getCookieMap`, `clicutcl-attribution.js:923-940`, keeps the last duplicate):
+
+| Engine (#66) | Plugin | Why |
+|---|---|---|
+| `createClickTrail` reads browser-ID cookies with `parseCookieMap(raw, { duplicates: 'first' })`; `browserIdCookieDuplicates: 'last'` restores the plugin rule. `parseCookieMap` itself still defaults to `'last'`, so server reads of ClickTrail's own cookies keep matching the storage adapter | `reduce` overwrites, so the last duplicate wins | In Chrome 155 with live gtag.js (2026-10-23, synthetic `G-` ID, hits intercepted locally), `document.cookie` listed longer paths first and, for equal paths, older cookies first. gtag sent `cid` from the first `_ga` among those whose `GA1.<n>` domain level matched its cookie domain, in both creation orders and for a `/shop` cookie. Last-wins reported the other client ID. |
+| Differing duplicates of `_ga`, `_ga_<property>`, `_fbp` or `_fbc` report `browser_id_cookie_duplicate` once per instance | silent | For `_ga_<property>`, the same run showed gtag continuing the duplicate with the latest `$t` timestamp regardless of order, so neither policy is guaranteed to match its session. |
+
 The parity harness does not exercise cookie-derived IDs, so `PARITY-RUN.md`
 is unaffected. The fix should be ported to the plugin.
 

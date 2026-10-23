@@ -108,6 +108,12 @@ const clickTrail = createClickTrail({
   `page_referrer`); it pushes `ct_<name>` and sends the canonical `page_view`
   as `event: 'ct_page_view'` (`datalayer_version` 2.0.0). Configure with
   `reservedFieldPrefix` and `pageViewEvent`.
+- A browser-ID cookie can appear twice in `document.cookie`, one per domain or
+  path. Browser IDs use the first occurrence by default, the one gtag reads for
+  `_ga`. Set `browserIdCookieDuplicates: 'last'` to keep the previous rule.
+  Differing duplicates of `_ga`, `_ga_<property>`, `_fbp` or `_fbc` report
+  `browser_id_cookie_duplicate` once per instance. `parseCookieMap(raw,
+  { duplicates })` still keeps the last occurrence unless told otherwise.
 - HTTP delivery is at-most-once; monitor the `onDropped` callback when using
   the HTTP destination. The fetch fallback reports non-2xx responses there;
   sendBeacon only confirms browser queue acceptance, not collector delivery.

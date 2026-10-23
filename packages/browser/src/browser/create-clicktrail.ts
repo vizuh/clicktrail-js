@@ -29,6 +29,7 @@ import {
   gaSessionCookieNames,
   parseCookieMap,
 } from './browser-ids.js';
+import type { CookieDuplicatePolicy } from './browser-ids.js';
 import {
   clearAttributionStorage,
   cookieStorage,
@@ -119,6 +120,17 @@ export interface ClickTrailConfig {
    * fresh IDs, 30-minute idle timeout, no maximum session length.
    */
   identity?: ClickTrailIdentityConfig;
+  /**
+   * Which value browser-ID collection uses when `_ga`, `_ga_<property>`,
+   * `_fbp`, … appear more than once in `document.cookie` (one cookie per
+   * domain or path). Default `'first'`: browsers list longer paths, then
+   * older cookies, first, and gtag takes the first `_ga` whose `GA1.<n>`
+   * domain level matches its cookie domain. `'last'` is the plugin
+   * getCookieMap behaviour. Differing duplicates of `_ga`, `_ga_<property>`,
+   * `_fbp` or `_fbc` report `browser_id_cookie_duplicate` once per instance.
+   * Invalid values throw.
+   */
+  browserIdCookieDuplicates?: CookieDuplicatePolicy;
   /**
    * First-party persistence. When present, start() hydrates the stored
    * payload, owns visitor/session identity, and persists every merge.
@@ -290,18 +302,20 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const consentGate = config.consentGate;
   const mergeOptions = { channelCodes: config.channelCodes === true };
   const sink = resolveSink(config);
-  // Snapshot + validate once: invalid IDs throw here, never inside capture.
+  // Snapshot + validate once: invalid options throw here, never inside capture.
   const ga4MeasurementId =
     config.ga4MeasurementId === undefined || typeof config.ga4MeasurementId === 'string'
       ? config.ga4MeasurementId
       : Object.freeze([...config.ga4MeasurementId]);
   if (ga4MeasurementId !== undefined) gaSessionCookieNames(ga4MeasurementId);
-  // The unpinned-GA diagnostic fires once per instance, not on every capture.
-  let gaUnpinnedReported = false;
-  const gaSessionSink: DiagnosticSink = {
+  const browserIdCookieDuplicates = config.browserIdCookieDuplicates ?? 'first';
+  parseCookieMap('', { duplicates: browserIdCookieDuplicates }); // throws on an unknown policy
+  // Browser-ID cookie diagnostics fire once per code per instance, not on every capture.
+  const reportedBrowserIdCodes = new Set<string>();
+  const browserIdSink: DiagnosticSink = {
     report: (diagnostic) => {
-      if (gaUnpinnedReported) return;
-      gaUnpinnedReported = true;
+      if (reportedBrowserIdCodes.has(diagnostic.code)) return;
+      reportedBrowserIdCodes.add(diagnostic.code);
       try {
         sink.report(diagnostic);
       } catch {
@@ -417,9 +431,13 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     let ids: Record<string, string>;
     try {
       const jar = storageCfg?.browserIdCookieJar ?? defaultCookieJar();
-      ids = collectBrowserIdsFromCookies(parseCookieMap(jar.read()), {
+      const cookies = parseCookieMap(jar.read(), {
+        duplicates: browserIdCookieDuplicates,
+        sink: browserIdSink,
+      });
+      ids = collectBrowserIdsFromCookies(cookies, {
         ...(ga4MeasurementId !== undefined ? { ga4MeasurementId } : {}),
-        sink: gaSessionSink,
+        sink: browserIdSink,
       });
     } catch {
       return; // Deterministic no-op: cookie reads must never break capture.
