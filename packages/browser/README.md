@@ -52,6 +52,38 @@ change. The label-to-code table is in
 Add the keys to `forms.fields` to inject them as hidden inputs; they are not
 in the default form field list.
 
+## Keeping existing visitor and session IDs
+
+A site that already has its own first-party visitor/session IDs can keep them
+when it adopts ClickTrail. `identity` requires `storage`:
+
+```ts
+const clickTrail = createClickTrail({
+  destinations: [dataLayerDestination()],
+  consentGate: () => hasMarketingConsent(),
+  storage: {},
+  identity: {
+    seed: () => readLegacyIds(), // { visitorId?, sessionId?, sessionStartedAt? } | null
+    sessionIdleMs: 2 * 60 * 60 * 1000, // default: 30 minutes
+    sessionMaxMs: 24 * 60 * 60 * 1000, // default: no maximum
+  },
+});
+```
+
+- ClickTrail calls `seed` once, on the first identity read after `start()`. It
+  only calls it while consent allows and when ClickTrail storage has no
+  identity yet. It never replaces an existing ClickTrail identity.
+- IDs must be 8-128 characters of `A-Z a-z 0-9 _ . : -`, starting with a letter
+  or digit (UUIDs pass). `sessionStartedAt` is epoch milliseconds, not in the
+  future, and needs `sessionId`. If any field is invalid, ClickTrail rejects
+  the whole seed, reports `identity_seed_rejected`, and creates fresh IDs.
+- Only seed a session that your site still treats as active. A seeded session
+  that is already older than `sessionMaxMs` becomes session 2 for the same
+  visitor.
+- After consent is withdrawn, the seed is not used again for that instance.
+  Delete your legacy IDs when consent is withdrawn, or the next page load
+  will seed them again.
+
 ## Boundaries
 
 - Storage and transmission are consent-gated.

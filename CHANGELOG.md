@@ -47,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Off by default; the default payload, fixtures and `marketing_trail` are
   unchanged. New exports: `CHANNEL_CODE_KEYS`, `MergeAttributionOptions`. The
   label-to-code table is in `docs/ARCHITECTURE.md` (#58).
+- `@vizuh/clicktrail-browser`: opt-in `createClickTrail({ identity })`.
+  `identity.seed` adopts a host's existing first-party visitor/session IDs
+  once, only while consent allows and only when ClickTrail storage holds no
+  identity. `identity.sessionIdleMs` (default 30 min) and
+  `identity.sessionMaxMs` (default none) set session timing. `ct_session`
+  now stores `session_started_at`; states written earlier backfill it from
+  `last_event_ts` (#53).
 
 ### Fixed
 

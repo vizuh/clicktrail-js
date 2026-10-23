@@ -5,7 +5,10 @@
  * - stable visitor identity, maintained separately from attribution
  * - session identity is browser-owned: session_id always originates here,
  *   never derived from a server-side cookie
- * - 30-minute inactivity timeout rolls a new session
+ * - 30-minute inactivity timeout rolls a new session (host-configurable),
+ *   plus an optional maximum session length
+ * - a host may seed its existing first-party IDs once, before ClickTrail
+ *   mints any identity (migration); an existing identity is never replaced
  *
  * Determinism seams: randomness and the clock enter as injected functions.
  * `rollSession` is a PURE function exported for table-driven tests.
@@ -42,21 +45,37 @@ export function generateId(randomBytes: RandomBytesFn): string {
 }
 
 /**
- * PURE: should inactivity roll a new session?
+ * PURE: should this session roll?
  *
  * Rules:
  * - no prior activity (`lastEventTs === null`) => roll (fresh session)
+ * - max length reached (`maxMs` set and
+ *   now - sessionStartedAt >= maxMs)            => roll (boundary rolls)
  * - elapsed >= timeoutMs            => roll (inactivity timeout reached;
  *                                      the boundary instant rolls)
- * - clock skew (now < lastEventTs)  => do NOT roll; the visitor is active
+ * - clock skew (now < lastEventTs / now < sessionStartedAt) => do NOT roll
+ *   on that rule; the visitor is active
  */
 export function rollSession(input: {
   lastEventTs: number | null;
   now: number;
   timeoutMs: number;
+  /** Session start in ms since epoch; required for the max-length rule. */
+  sessionStartedAt?: number | null;
+  /** Maximum session length. Default: none. */
+  maxMs?: number;
 }): boolean {
-  const { lastEventTs, now, timeoutMs } = input;
+  const { lastEventTs, now, timeoutMs, sessionStartedAt, maxMs } = input;
   if (lastEventTs === null) return true;
+  if (
+    maxMs !== undefined &&
+    sessionStartedAt !== undefined &&
+    sessionStartedAt !== null &&
+    now >= sessionStartedAt &&
+    now - sessionStartedAt >= maxMs
+  ) {
+    return true;
+  }
   if (now < lastEventTs) return false;
   return now - lastEventTs >= timeoutMs;
 }
@@ -65,9 +84,33 @@ export function rollSession(input: {
 export interface StoredSessionState {
   session_id: string;
   session_number: number;
+  /**
+   * Session start in ms since epoch (plugin field name). States written
+   * before this field existed backfill it from `last_event_ts` on read.
+   */
+  session_started_at: number;
   /** Last observed activity in ms since epoch. */
   last_event_ts: number;
 }
+
+/**
+ * Host-owned identity to adopt instead of minting fresh IDs (migration from
+ * the plugin or a host tracker). Every field is optional; a provided field
+ * must be valid or the whole seed is rejected.
+ */
+export interface IdentitySeed {
+  /** 8-128 chars of `[A-Za-z0-9_.:-]`, starting alphanumeric (UUIDs pass). */
+  visitorId?: string;
+  /** Same format as `visitorId`. */
+  sessionId?: string;
+  /** Start of the seeded session, ms since epoch; not in the future. Requires `sessionId`. */
+  sessionStartedAt?: number;
+}
+
+/** Called at most once per store, only when no identity is stored. */
+export type IdentitySeedFn = () => IdentitySeed | null | undefined;
+
+const SEED_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/;
 
 export interface IdentitySnapshot {
   visitorId: string;
@@ -82,13 +125,20 @@ export interface IdentityStoreConfig {
   nowMs: () => number;
   /** Inactivity timeout. Default: 30 minutes. */
   timeoutMs?: number;
+  /** Maximum session length since `session_started_at`. Default: none. */
+  maxMs?: number;
+  /** Host identity adopted when storage holds no identity (see IdentitySeed). */
+  seed?: IdentitySeedFn;
+  /** Receives the reason when a seed is rejected (threw or failed validation). */
+  onSeedRejected?: (reason: string) => void;
 }
 
 export interface IdentityStore {
   /**
    * Load-or-roll current identity and refresh the stored snapshot.
-   * Rolls when there is no stored state or the inactivity timeout elapsed;
-   * otherwise keeps session_id/session_number and only advances activity.
+   * Adopts the host seed when no identity is stored; rolls when there is no
+   * stored state, the inactivity timeout elapsed, or the maximum session
+   * length was reached; otherwise keeps session_id/session_number.
    */
   current(): IdentitySnapshot;
   /** Record activity now (extends the inactivity window without rolling). */
@@ -107,10 +157,17 @@ function readStoredSession(adapter: StorageAdapter): StoredSessionState | null {
     const sessionId = rec['session_id'];
     const sessionNumber = rec['session_number'];
     const lastEventTs = rec['last_event_ts'];
+    const startedAt = rec['session_started_at'];
     if (typeof sessionId !== 'string' || sessionId === '') return null;
     if (typeof sessionNumber !== 'number' || !Number.isInteger(sessionNumber)) return null;
     if (typeof lastEventTs !== 'number') return null;
-    return { session_id: sessionId, session_number: sessionNumber, last_event_ts: lastEventTs };
+    return {
+      session_id: sessionId,
+      session_number: sessionNumber,
+      session_started_at:
+        typeof startedAt === 'number' && Number.isFinite(startedAt) ? startedAt : lastEventTs,
+      last_event_ts: lastEventTs,
+    };
   } catch {
     return null;
   }
@@ -123,17 +180,73 @@ function persist(adapter: StorageAdapter, state: StoredSessionState, visitorId: 
 }
 
 /**
+ * Validate a host seed. Returns null when there is nothing to adopt; calls
+ * `reject` (and returns null) when the seed threw or a field is invalid.
+ */
+function acceptSeed(
+  seed: IdentitySeedFn,
+  now: number,
+  reject: (reason: string) => void,
+): IdentitySeed | null {
+  let raw: unknown;
+  try {
+    raw = seed();
+  } catch {
+    reject('identity seed threw; minting fresh identity.');
+    return null;
+  }
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw !== 'object') {
+    reject('identity seed must return an object or null.');
+    return null;
+  }
+  const { visitorId, sessionId, sessionStartedAt } = raw as Record<string, unknown>;
+  for (const [name, value] of [['visitorId', visitorId], ['sessionId', sessionId]] as const) {
+    if (value !== undefined && (typeof value !== 'string' || !SEED_ID_PATTERN.test(value))) {
+      reject(`identity seed ${name} is not 8-128 chars of [A-Za-z0-9_.:-].`);
+      return null;
+    }
+  }
+  if (sessionStartedAt !== undefined) {
+    if (sessionId === undefined) {
+      reject('identity seed sessionStartedAt requires sessionId.');
+      return null;
+    }
+    if (
+      typeof sessionStartedAt !== 'number' ||
+      !Number.isFinite(sessionStartedAt) ||
+      sessionStartedAt < 0 ||
+      sessionStartedAt > now
+    ) {
+      reject('identity seed sessionStartedAt must be epoch ms, not in the future.');
+      return null;
+    }
+  }
+  if (visitorId === undefined && sessionId === undefined) return null;
+  return {
+    ...(visitorId !== undefined ? { visitorId: visitorId as string } : {}),
+    ...(sessionId !== undefined ? { sessionId: sessionId as string } : {}),
+    ...(sessionStartedAt !== undefined ? { sessionStartedAt: sessionStartedAt as number } : {}),
+  };
+}
+
+/**
  * Browser-owned identity store over one adapter. The visitor_id survives
  * session rolls and even mirror expiry via the lightweight `ct_visitor_id`
  * fallback (DATA-MODEL.md:233/:245); it is regenerated only when both are
  * gone. Identifiers exist only after first use and vanish on clear()
- * (consent denial), per DATA-MODEL.md:246.
+ * (consent denial), per DATA-MODEL.md:246. A host seed is consulted only on
+ * the first identity read, so a later clear() cannot resurrect host IDs.
  */
 export function createIdentityStore(config: IdentityStoreConfig): IdentityStore {
   const adapter = config.adapter;
   const randomBytes = config.randomBytes;
   const nowMs = config.nowMs;
   const timeoutMs = config.timeoutMs ?? SESSION_TIMEOUT_MS;
+  const maxMs = config.maxMs;
+  const seed = config.seed;
+  const onSeedRejected = config.onSeedRejected ?? (() => undefined);
+  let seedConsulted = seed === undefined;
 
   let cachedVisitorId: string | null = null;
 
@@ -152,17 +265,51 @@ export function createIdentityStore(config: IdentityStoreConfig): IdentityStore 
   return {
     current(): IdentitySnapshot {
       const now = nowMs();
-      const stored = readStoredSession(adapter);
+      let stored = readStoredSession(adapter);
+      let seeded = false;
+      // Only the first identity read may seed: once this store has seen or
+      // minted an identity, a later clear() must not bring host IDs back.
+      if (!seedConsulted) {
+        seedConsulted = true;
+        const empty =
+          stored === null &&
+          cachedVisitorId === null &&
+          adapter.get(VISITOR_ID_FALLBACK_KEY) === null;
+        const accepted = empty ? acceptSeed(seed!, now, onSeedRejected) : null;
+        if (accepted !== null) {
+          seeded = true;
+          if (accepted.visitorId !== undefined) cachedVisitorId = accepted.visitorId;
+          if (accepted.sessionId !== undefined) {
+            stored = {
+              session_id: accepted.sessionId,
+              session_number: 1,
+              session_started_at: accepted.sessionStartedAt ?? now,
+              last_event_ts: now,
+            };
+          }
+        }
+      }
       const visitorId = resolveVisitorId(stored);
-      if (stored === null || rollSession({ lastEventTs: stored.last_event_ts, now, timeoutMs })) {
+      if (
+        stored === null ||
+        rollSession({
+          lastEventTs: stored.last_event_ts,
+          now,
+          timeoutMs,
+          sessionStartedAt: stored.session_started_at,
+          ...(maxMs !== undefined ? { maxMs } : {}),
+        })
+      ) {
         const next: StoredSessionState = {
           session_id: generateId(randomBytes),
           session_number: (stored?.session_number ?? 0) + 1,
+          session_started_at: now,
           last_event_ts: now,
         };
         persist(adapter, next, visitorId);
         return { visitorId, sessionId: next.session_id, sessionNumber: next.session_number };
       }
+      if (seeded) persist(adapter, stored, visitorId);
       return { visitorId, sessionId: stored.session_id, sessionNumber: stored.session_number };
     },
 

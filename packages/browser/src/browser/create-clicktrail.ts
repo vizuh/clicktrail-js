@@ -17,7 +17,7 @@ import {
   referrerHostOf,
 } from '@vizuh/clicktrail-core';
 import { createIdentityStore } from './identity.js';
-import type { IdentityStore, RandomBytesFn } from './identity.js';
+import type { IdentitySeedFn, IdentityStore, RandomBytesFn } from './identity.js';
 import {
   loadAttributionPayload,
   saveAttributionPayload,
@@ -115,6 +115,11 @@ export interface ClickTrailConfig {
    */
   ga4MeasurementId?: string | readonly string[];
   /**
+   * Visitor/session identity options (requires `storage`). Default: mint
+   * fresh IDs, 30-minute idle timeout, no maximum session length.
+   */
+  identity?: ClickTrailIdentityConfig;
+  /**
    * First-party persistence. When present, start() hydrates the stored
    * payload, owns visitor/session identity, and persists every merge.
    * Nothing touches storage before start() (zero side effects).
@@ -203,6 +208,21 @@ export type ClickTrailCrossDomainConfig = {
   observer?: ObserverFactory | null;
 } | false;
 
+export interface ClickTrailIdentityConfig {
+  /**
+   * Host first-party identity to adopt instead of minting fresh IDs
+   * (migration). Called lazily on the first identity read after start(),
+   * at most once per instance, only while consent allows and only when
+   * ClickTrail storage holds no identity; never replaces an existing one.
+   * Invalid values are rejected whole (`identity_seed_rejected`).
+   */
+  seed?: IdentitySeedFn;
+  /** Inactivity timeout in ms (positive integer). Default: 30 minutes. */
+  sessionIdleMs?: number;
+  /** Maximum session length in ms from session start (positive integer). Default: none. */
+  sessionMaxMs?: number;
+}
+
 export interface ClickTrailInstance {
   /** Begin delivering events to destinations. Idempotent. */
   start(): void;
@@ -255,6 +275,12 @@ const defaultRandomBytes: RandomBytesFn = (byteLength) => {
   return crypto.getRandomValues(new Uint8Array(byteLength));
 };
 
+function assertPositiveMs(name: string, value: number | undefined): void {
+  if (value !== undefined && (!Number.isSafeInteger(value) || value <= 0)) {
+    throw new RangeError(`clicktrail: identity.${name} must be a positive integer of milliseconds.`);
+  }
+}
+
 export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
   const destinations = [...config.destinations];
   if (destinations.some((destination) => !destination || typeof destination.clear !== 'function')) {
@@ -283,6 +309,17 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       }
     },
   };
+  const identityCfg = config.identity;
+  if (identityCfg !== undefined) {
+    if (!config.storage) {
+      throw new TypeError('clicktrail: config.identity requires config.storage.');
+    }
+    if (identityCfg.seed !== undefined && typeof identityCfg.seed !== 'function') {
+      throw new TypeError('clicktrail: identity.seed must be a function.');
+    }
+    assertPositiveMs('sessionIdleMs', identityCfg.sessionIdleMs);
+    assertPositiveMs('sessionMaxMs', identityCfg.sessionMaxMs);
+  }
   let eventSequence = 0;
 
   let destinationCleanupFailed = false;
@@ -348,6 +385,16 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       adapter: mirror,
       randomBytes: storageCfg.randomBytes ?? defaultRandomBytes,
       nowMs,
+      ...(identityCfg?.sessionIdleMs !== undefined ? { timeoutMs: identityCfg.sessionIdleMs } : {}),
+      ...(identityCfg?.sessionMaxMs !== undefined ? { maxMs: identityCfg.sessionMaxMs } : {}),
+      ...(identityCfg?.seed !== undefined ? { seed: identityCfg.seed } : {}),
+      onSeedRejected: (reason) => {
+        try {
+          sink.report({ code: 'identity_seed_rejected', level: 'warn', message: reason });
+        } catch (error) {
+          void error;
+        }
+      },
     });
   };
 
