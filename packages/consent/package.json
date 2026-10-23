@@ -10,6 +10,7 @@
   "exports": {
     ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
     "./cmp": { "types": "./dist/cmp/index.d.ts", "default": "./dist/cmp/index.js" },
+    "./google-consent-mode": { "types": "./dist/google-consent-mode.d.ts", "default": "./dist/google-consent-mode.js" },
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],

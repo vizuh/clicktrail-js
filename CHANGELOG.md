@@ -54,6 +54,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `identity.sessionMaxMs` (default none) set session timing. `ct_session`
   now stores `session_started_at`; states written earlier backfill it from
   `last_event_ts` (#53).
+- `@vizuh/clicktrail-consent/google-consent-mode`: opt-in Google Consent Mode
+  v2 bridge. `consentModeDefaultScript` returns an inline script for before GTM
+  that issues `consent default` from the stored `ConsentRecord`;
+  `applyConsentModeUpdate` sends `consent update` on a decision and nothing
+  while pending; `consentModeSignals` maps analytics and advertising
+  separately; `loadConsentRecord` / `saveConsentRecord` keep pending (`null`)
+  apart from denied (#54).
 
 ### Fixed
 
