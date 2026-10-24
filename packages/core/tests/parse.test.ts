@@ -366,6 +366,19 @@ describe('ignoredReferrerHosts (payment returns, WP plugin 1.11.0 parity)', () =
     expect(r.touch.channel).toBe('email');
   });
 
+  it('keeps the ignored referrer blank in referrerFormat host', () => {
+    const r = parseAttributionUrl({
+      url: 'https://shop.example.com/thanks/?utm_source=newsletter',
+      referrer: 'https://checkout.stripe.com/c/pay/cs_test_synthetic',
+      currentHost: 'shop.example.com',
+      ignoredReferrerHosts: ['checkout.stripe.com'],
+      referrerFormat: 'host',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch.referrer).toBe('');
+  });
+
   it('matches host or subdomain only, never look-alike hosts', () => {
     const parse = (referrer: string) => parseAttributionUrl({
       url: 'https://shop.example.com/', referrer, currentHost: 'shop.example.com', ignoredReferrerHosts,
