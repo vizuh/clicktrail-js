@@ -32,6 +32,8 @@ export const DIAGNOSTIC_CODES = {
   INTERNAL_REFERRER_IGNORED: 'internal_referrer_ignored',
   CONSENT_DENIED_CAPTURE_ATTEMPTED: 'consent_denied_capture_attempted',
   FIELD_TRUNCATED: 'field_truncated',
+  /** Unpinned GA session read while several `_ga_<property>` cookies exist. */
+  GA_SESSION_PROPERTY_UNPINNED: 'ga_session_property_unpinned',
 } as const;
 
 /** A sink that discards everything — the default. Deterministic and silent. */

@@ -53,6 +53,11 @@ Do not start capture before that source grants the required purpose.
   prevent physical deletion, so hosts must still persist and enforce withdrawal.
 - Cross-domain continuity needs shared signing state or explicit `sign` and
   `verify` functions.
+- Set `ga4MeasurementId: 'G-XXXXXXX'` (or an array) when the domain may carry
+  more than one GA4 property. `ga_session_id` then comes only from that
+  property's `_ga_<ID>` cookie, so server-side events can join its session.
+  Without it, the first `_ga_*` cookie wins and `ga_session_property_unpinned`
+  is reported when several exist.
 - HTTP delivery is at-most-once; monitor the `onDropped` callback when using
   the HTTP destination. The fetch fallback reports non-2xx responses there;
   sendBeacon only confirms browser queue acceptance, not collector delivery.

@@ -21,17 +21,42 @@ describe('parseCookieMap', () => {
   });
 });
 
-describe('parseGaSessionDataValue (plugin parseGaSessionData port)', () => {
-  it('reads GS2 tokens, GS1 dot format, then numeric fallback', () => {
+// Synthetic GA4 cookie values in the shapes gtag writes (no real property IDs).
+const GS1_VALUE = 'GS1.1.1111111111.5.1.1111111200.0.0.0';
+const GS2_OTHER = 'GS2.1.s1111111111$o4$g1$t1111111200$j60$l0$h0';
+const GS2_PINNED = 'GS2.1.s2222222222$o7$g0$t2222222300$j60$l0$h0';
+
+describe('parseGaSessionDataValue (plugin parseGaSessionData port, #47 deviations)', () => {
+  it('reads GS1 dot fields', () => {
+    expect(parseGaSessionDataValue(GS1_VALUE)).toEqual({
+      ga_session_id: '1111111111',
+      ga_session_number: '5',
+    });
     expect(parseGaSessionDataValue('GS1.1.1111111111.5')).toEqual({
       ga_session_id: '1111111111',
       ga_session_number: '5',
     });
-    expect(parseGaSessionDataValue('other$s123456789$o3')).toEqual({
-      ga_session_id: '123456789',
-      ga_session_number: '3',
+  });
+
+  it('reads GS2 tokens after the GS2.<n>. prefix, including the leading s token', () => {
+    expect(parseGaSessionDataValue(GS2_PINNED)).toEqual({
+      ga_session_id: '2222222222',
+      ga_session_number: '7',
     });
+    expect(parseGaSessionDataValue('GS2.1.s2222222222')).toEqual({ ga_session_id: '2222222222' });
+  });
+
+  it('yields nothing for non-GS values (numeric-token fallback removed)', () => {
+    expect(parseGaSessionDataValue('foo123bar456')).toEqual({});
+    expect(parseGaSessionDataValue('other$s123456789$o3')).toEqual({});
+    expect(parseGaSessionDataValue('GS3.1.s2222222222$o7')).toEqual({});
     expect(parseGaSessionDataValue('')).toEqual({});
+  });
+
+  it('rejects malformed GS1/GS2 fields instead of guessing', () => {
+    expect(parseGaSessionDataValue('GS1.1')).toEqual({});
+    expect(parseGaSessionDataValue('GS1.1.abc.5')).toEqual({ ga_session_number: '5' });
+    expect(parseGaSessionDataValue('GS2.1.s12$o3')).toEqual({ ga_session_number: '3' });
   });
 });
 
@@ -53,6 +78,66 @@ describe('collectBrowserIdsFromCookies (ruling A part b)', () => {
 
   it('returns nothing without relevant cookies', () => {
     expect(collectBrowserIdsFromCookies(parseCookieMap('other=x'))).toEqual({});
+  });
+
+  it('reads a GS2 session cookie', () => {
+    expect(collectBrowserIdsFromCookies(parseCookieMap(`_ga_ABC123=${GS2_PINNED}`))).toEqual({
+      ga_session_id: '2222222222',
+      ga_session_number: '7',
+    });
+  });
+
+  it('reads only the configured property cookie when ga4MeasurementId is set', () => {
+    const cookies = parseCookieMap(`_ga_OTHER=${GS2_OTHER}; _ga_ABC123=${GS2_PINNED}`);
+    const reported: string[] = [];
+    const ids = collectBrowserIdsFromCookies(cookies, {
+      ga4MeasurementId: 'G-ABC123',
+      sink: { report: (d) => reported.push(d.code) },
+    });
+    expect(ids).toEqual({ ga_session_id: '2222222222', ga_session_number: '7' });
+    expect(reported).toEqual([]);
+  });
+
+  it('uses configured order across several measurement IDs and never falls back to others', () => {
+    const cookies = parseCookieMap(`_ga_OTHER=${GS2_OTHER}; _ga_ABC123=${GS2_PINNED}`);
+    expect(
+      collectBrowserIdsFromCookies(cookies, { ga4MeasurementId: ['G-MISSING1', 'g-abc123'] }),
+    ).toEqual({ ga_session_id: '2222222222', ga_session_number: '7' });
+    expect(collectBrowserIdsFromCookies(cookies, { ga4MeasurementId: 'G-MISSING1' })).toEqual({});
+  });
+
+  it('rejects invalid measurement IDs', () => {
+    const cookies = parseCookieMap(`_ga_ABC123=${GS2_PINNED}`);
+    expect(() => collectBrowserIdsFromCookies(cookies, { ga4MeasurementId: 'ABC123' })).toThrow(TypeError);
+    expect(() => collectBrowserIdsFromCookies(cookies, { ga4MeasurementId: 'G-' })).toThrow(TypeError);
+    expect(() => collectBrowserIdsFromCookies(cookies, { ga4MeasurementId: [] })).toThrow(TypeError);
+  });
+
+  it('reports ga_session_property_unpinned when unpinned with several _ga_* cookies', () => {
+    const reported: Array<{ code: string; context?: Record<string, unknown> }> = [];
+    const sink = { report: (d: { code: string; context?: Record<string, unknown> }) => reported.push(d) };
+    const ids = collectBrowserIdsFromCookies(
+      parseCookieMap(`_ga_OTHER=${GS2_OTHER}; _ga_ABC123=${GS2_PINNED}`),
+      { sink },
+    );
+    // Unpinned behaviour is unchanged: first usable cookie wins.
+    expect(ids).toEqual({ ga_session_id: '1111111111', ga_session_number: '4' });
+    expect(reported).toEqual([
+      expect.objectContaining({
+        code: 'ga_session_property_unpinned',
+        context: { ga_session_cookie_count: 2 },
+      }),
+    ]);
+
+    collectBrowserIdsFromCookies(parseCookieMap(`_ga_ABC123=${GS2_PINNED}`), { sink });
+    expect(reported).toHaveLength(1);
+  });
+
+  it('skips non-GS and session-number-only values when choosing the unpinned cookie', () => {
+    expect(collectBrowserIdsFromCookies(parseCookieMap('_ga_X=foo123bar456'))).toEqual({});
+    expect(
+      collectBrowserIdsFromCookies(parseCookieMap(`_ga_X=foo123bar456; _ga_Y=GS2.1.$o3; _ga_ABC123=${GS1_VALUE}`)),
+    ).toEqual({ ga_session_id: '1111111111', ga_session_number: '5' });
   });
 });
 
@@ -103,5 +188,56 @@ describe('createClickTrail cookie browser-ID gating', () => {
       channel: 'email' as never, channelLabel: 'Unknown', clickIds: {},
     });
     expect(ct.getField('fbp')).toBe('second');
+  });
+
+  const TWO_PROPERTIES = `_ga_OTHER=${GS2_OTHER}; _ga_ABC123=${GS2_PINNED}`;
+  const touch = {
+    source: 'nl', medium: 'email', campaign: '', term: '', content: '',
+    utmId: '', utmSourcePlatform: '', utmCreativeFormat: '', utmMarketingTactic: '',
+    referrer: '', landingPage: '', touchTimestamp: '2026-08-23T10:00:00.000Z',
+    channel: 'email' as never, channelLabel: 'Unknown', clickIds: {},
+  };
+
+  it('threads ga4MeasurementId to the GA session cookie read', () => {
+    const reported: string[] = [];
+    const ct = createClickTrail({
+      destinations: NO_DEST,
+      ga4MeasurementId: 'G-ABC123',
+      diagnosticSink: { report: (d) => reported.push(d.code) },
+      storage: { browserIdCookieJar: fakeJar(TWO_PROPERTIES) },
+    });
+    ct.start();
+    expect(ct.getField('ga_session_id')).toBe('2222222222');
+    expect(ct.getField('ga_session_number')).toBe('7');
+    expect(reported).toEqual([]);
+  });
+
+  it('reports the unpinned ambiguity once per instance', () => {
+    const reported: string[] = [];
+    const ct = createClickTrail({
+      destinations: NO_DEST,
+      diagnosticSink: { report: (d) => reported.push(d.code) },
+      storage: { browserIdCookieJar: fakeJar(TWO_PROPERTIES) },
+    });
+    ct.start();
+    ct.mergeParsedTouch(touch);
+    expect(ct.getField('ga_session_id')).toBe('1111111111');
+    expect(reported).toEqual(['ga_session_property_unpinned']);
+  });
+
+  it('keeps browser IDs when the diagnostic sink throws', () => {
+    const ct = createClickTrail({
+      destinations: NO_DEST,
+      diagnosticSink: { report: () => { throw new Error('sink failed'); } },
+      storage: { browserIdCookieJar: fakeJar(`_fbp=fbp-cookie; ${TWO_PROPERTIES}`) },
+    });
+    ct.start();
+    expect(ct.getField('fbp')).toBe('fbp-cookie');
+    expect(ct.getField('ga_session_id')).toBe('1111111111');
+  });
+
+  it('throws at construction for an invalid ga4MeasurementId', () => {
+    expect(() => createClickTrail({ destinations: NO_DEST, ga4MeasurementId: 'UA-1234-1' })).toThrow(TypeError);
+    expect(() => createClickTrail({ destinations: NO_DEST, ga4MeasurementId: [] })).toThrow(TypeError);
   });
 });

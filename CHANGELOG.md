@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `connectComplianz` forward CMP decisions to a `ConsentHub`, never emit while
   consent is pending, deduplicate repeated events, and observe in-page
   withdrawals (#39).
+- `createClickTrail({ ga4MeasurementId })` and the matching
+  `collectBrowserIdsFromCookies(cookies, { ga4MeasurementId })` option pin
+  `ga_session_id`/`ga_session_number` to the configured property's
+  `_ga_<ID>` cookie. Without it, several `_ga_*` cookies report the
+  `ga_session_property_unpinned` diagnostic once per instance (#47).
+
+### Fixed
+
+- Browser GA session parsing reads the session ID from real GS2 cookies
+  (`GS2.1.s<id>$o<n>…`). Previously only the session number was captured.
+- Values that are neither GS1 nor GS2 no longer produce a `ga_session_id`
+  from the first digits found. A cookie without a session ID is skipped when
+  choosing the unpinned session cookie (#47).
 
 ### Security
 
