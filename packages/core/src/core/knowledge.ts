@@ -502,3 +502,15 @@ export function touchKeys(prefix: 'ft' | 'lt') {
     touchTimestamp: `${prefix}_touch_timestamp`,
   };
 }
+
+/**
+ * Opt-in flat keys carrying the machine `Channel` code next to the
+ * `ft_channel` / `lt_channel` labels. Written only by
+ * `mergeAttributionTouch(stored, touch, { channelCodes: true })`. They are not
+ * part of `touchKeys()`, so `emptyAttribution()` and the default payload
+ * shape stay unchanged.
+ */
+export const CHANNEL_CODE_KEYS = {
+  ft: 'ft_channel_code',
+  lt: 'lt_channel_code',
+} as const;

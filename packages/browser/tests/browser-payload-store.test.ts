@@ -88,6 +88,20 @@ describe('load/save round-trip through adapters', () => {
     expect(loadAttributionPayload(adapter)).toEqual(payload);
   });
 
+  it('keeps opt-in channel codes across a round-trip', () => {
+    const adapter = fakeAdapter();
+    const payload = {
+      ...emptyAttribution(),
+      ft_channel: 'Google Ads',
+      ft_channel_code: 'paid_search',
+      lt_channel: 'Google Organic',
+      lt_channel_code: 'organic_search',
+    };
+    saveAttributionPayload(adapter, payload);
+    expect(loadAttributionPayload(adapter)).toEqual(payload);
+    expect(CANONICAL_PAYLOAD_KEYS).toEqual(expect.arrayContaining(['ft_channel_code', 'lt_channel_code']));
+  });
+
   it('returns {} on missing, corrupt, or non-object stored values', () => {
     const missing = fakeAdapter();
     expect(loadAttributionPayload(missing)).toEqual({});

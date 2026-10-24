@@ -3,6 +3,7 @@ import {
   ATTRIBUTION_SELECTED_CLICK_ID_KEY,
   ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
   BROWSER_ID_KEYS,
+  CHANNEL_CODE_KEYS,
   CHANNEL_LABELS,
   CLICK_ID_HISTORY_KEY,
   CLICK_ID_HISTORY_LIMIT,
@@ -10,7 +11,7 @@ import {
   touchKeys,
 } from './knowledge.js';
 import { sanitizeField } from './sanitize.js';
-import type { AttributionPayload, ParsedTouch } from './types.js';
+import type { AttributionPayload, MergeAttributionOptions, ParsedTouch } from './types.js';
 
 const FT = touchKeys('ft');
 const LT = touchKeys('lt');
@@ -109,11 +110,16 @@ function hasUnmeasuredFirstTouch(payload: AttributionPayload): boolean {
  *   lt_ only when both are empty and never overwrite a stored touch. A
  *   stored placeholder first touch is the one exception to write-once: the
  *   first measured touch replaces it.
+ * - `options.channelCodes` (opt-in) writes the machine `Channel` code to
+ *   `ft_channel_code` / `lt_channel_code` under the same first/last rules
+ *   as the labels. When off, a write of ft_/lt_ drops that side's code key
+ *   so a code left from an earlier opt-in never contradicts a fresh label.
  * - The input is never mutated; a new object is returned.
  */
 export function mergeAttributionTouch(
   stored: AttributionPayload,
   touch: ParsedTouch,
+  options: MergeAttributionOptions = {},
 ): AttributionPayload {
   const next: AttributionPayload = { ...stored };
 
@@ -137,6 +143,7 @@ export function mergeAttributionTouch(
     next[FT.utmCreativeFormat] = touch.utmCreativeFormat;
     next[FT.utmMarketingTactic] = touch.utmMarketingTactic;
     next[FT.channel] = touch.channelLabel;
+    writeChannelCode(next, CHANNEL_CODE_KEYS.ft, touch, options);
     next[FT.referrer] = touch.referrer;
     next[FT.landingPage] = touch.landingPage;
     next[FT.touchTimestamp] = touch.touchTimestamp;
@@ -161,6 +168,7 @@ export function mergeAttributionTouch(
   next[LT.utmCreativeFormat] = touch.utmCreativeFormat;
   next[LT.utmMarketingTactic] = touch.utmMarketingTactic;
   next[LT.channel] = touch.channelLabel;
+  writeChannelCode(next, CHANNEL_CODE_KEYS.lt, touch, options);
   next[LT.referrer] = touch.referrer;
   next[LT.landingPage] = touch.landingPage;
   next[LT.touchTimestamp] = touch.touchTimestamp;
@@ -198,6 +206,16 @@ function mergeBrowserIds(next: AttributionPayload, touch: ParsedTouch): void {
     const value = touch.browserIds?.[key];
     if (value) next[key] = value;
   }
+}
+
+function writeChannelCode(
+  next: AttributionPayload,
+  key: string,
+  touch: ParsedTouch,
+  options: MergeAttributionOptions,
+): void {
+  if (options.channelCodes) next[key] = touch.channel;
+  else delete next[key];
 }
 
 /**

@@ -1,6 +1,8 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { CHANNEL_CODE_KEYS } from '../src/core/knowledge.js';
 import { emptyAttribution, extractClickIds, mergeAttributionTouch, stampVersions } from '../src/core/merge.js';
+import { parseAttributionUrl } from '../src/core/parse.js';
 import type { ParsedTouch } from '../src/core/types.js';
 
 function makeTouch(overrides: Partial<ParsedTouch> = {}): ParsedTouch {
@@ -187,6 +189,85 @@ describe('browser IDs top-level (ruling A part a, runtime findings 2026-08-23)',
     );
     const stored = mergeAttributionTouch(seeded, makeTouch({ source: 'nl', medium: 'email' }));
     expect(stored.ttp).toBe('T1');
+  });
+});
+
+describe('opt-in channel codes (ft_channel_code / lt_channel_code)', () => {
+  function touchFor(url: string, referrer?: string): ParsedTouch {
+    const r = parseAttributionUrl({ url, ...(referrer ? { referrer } : {}), now: '2026-01-01T00:00:00.000Z' });
+    if (r.kind !== 'touch') throw new Error(`expected a touch for ${url}`);
+    return r.touch;
+  }
+
+  it('exposes the two key names', () => {
+    expect(CHANNEL_CODE_KEYS).toEqual({ ft: 'ft_channel_code', lt: 'lt_channel_code' });
+  });
+
+  it('is off by default: no code keys, labels unchanged', () => {
+    const out = mergeAttributionTouch(emptyAttribution(), touchFor('https://e.com/?gclid=G1'));
+    expect(out).not.toHaveProperty('ft_channel_code');
+    expect(out).not.toHaveProperty('lt_channel_code');
+    expect(out.ft_channel).toBe('Google Ads');
+    expect(Object.keys(emptyAttribution())).not.toContain('ft_channel_code');
+  });
+
+  it('writes the enum next to the label without changing the label', () => {
+    const t = touchFor('https://e.com/?gclid=G1');
+    const off = mergeAttributionTouch(emptyAttribution(), t);
+    const on = mergeAttributionTouch(emptyAttribution(), t, { channelCodes: true });
+    expect(on.ft_channel_code).toBe('paid_search');
+    expect(on.lt_channel_code).toBe('paid_search');
+    const rest = { ...on };
+    delete rest.ft_channel_code;
+    delete rest.lt_channel_code;
+    expect(rest).toEqual(off);
+  });
+
+  it('follows first-touch write-once and last-touch overwrite', () => {
+    let stored = mergeAttributionTouch(
+      emptyAttribution(),
+      touchFor('https://e.com/', 'https://www.google.com/'),
+      { channelCodes: true },
+    );
+    stored = mergeAttributionTouch(
+      stored,
+      touchFor('https://e.com/?utm_source=news&utm_medium=email'),
+      { channelCodes: true },
+    );
+    expect(stored.ft_channel).toBe('Google Organic');
+    expect(stored.ft_channel_code).toBe('organic_search');
+    expect(stored.lt_channel_code).toBe('email');
+  });
+
+  it('records the current classification edges as-is (not changed here)', () => {
+    const codeOf = (url: string) =>
+      mergeAttributionTouch(emptyAttribution(), touchFor(url), { channelCodes: true }).lt_channel_code;
+    // utm_medium=cpc without a click ID: paid_other, while the label says 'Google Ads'.
+    expect(codeOf('https://e.com/?utm_source=google&utm_medium=cpc')).toBe('paid_other');
+    // gclid alone: paid_search (source google / medium cpc filled in).
+    expect(codeOf('https://e.com/?gclid=G1')).toBe('paid_search');
+    // fbclid alone: unknown (surface proven, payment not; label 'Facebook').
+    expect(codeOf('https://e.com/?fbclid=F1')).toBe('unknown');
+  });
+
+  it('when off, a fresh write drops a code left by an earlier opt-in', () => {
+    const optedIn = mergeAttributionTouch(
+      emptyAttribution(),
+      touchFor('https://e.com/?gclid=G1'),
+      { channelCodes: true },
+    );
+    const later = mergeAttributionTouch(optedIn, touchFor('https://e.com/?utm_source=news&utm_medium=email'));
+    expect(later).not.toHaveProperty('lt_channel_code');
+    // First touch was not rewritten, so its code still matches its label.
+    expect(later.ft_channel_code).toBe('paid_search');
+    expect(later.ft_channel).toBe('Google Ads');
+  });
+
+  it('never mutates the stored payload', () => {
+    const stored = emptyAttribution();
+    const snapshot = { ...stored };
+    mergeAttributionTouch(stored, touchFor('https://e.com/?gclid=G1'), { channelCodes: true });
+    expect(stored).toEqual(snapshot);
   });
 });
 

@@ -40,6 +40,18 @@ clickTrail.start();
 Replace `hasMarketingConsent()` with the host application's consent source.
 Do not start capture before that source grants the required purpose.
 
+## Channel codes
+
+`ft_channel` / `lt_channel` hold display labels such as `Google Ads`. Set
+`channelCodes: true` to also store the machine value (`paid_search`,
+`organic_search`, …) as `ft_channel_code` / `lt_channel_code`. Use the code
+for CRM fields and warehouse columns. It is off by default; the labels do not
+change. The label-to-code table is in
+[docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md#channel-codes-opt-in).
+
+Add the keys to `forms.fields` to inject them as hidden inputs; they are not
+in the default form field list.
+
 ## Boundaries
 
 - Storage and transmission are consent-gated.
