@@ -10,7 +10,8 @@
  *   touch, so merge-level scenarios (first-touch guard) are deterministic.
  * - `expected`: subset of payload keys asserted after replay; `_channel`
  *   asserts the machine enum on the parsed touch; `_no_touch_reason` asserts
- *   a non-touch result instead.
+ *   a non-touch result instead, and its other keys assert the untouched
+ *   `stored` payload (e.g. lt_* kept on an ignored payment referrer).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -50,6 +51,11 @@ describe.each(cases)('fixture: $name', ({ input, stored, expected }) => {
 
     if (expected._no_touch_reason) {
       expect(parsed).toEqual({ kind: 'none', reason: expected._no_touch_reason });
+      const kept: Record<string, string> = { ...emptyAttribution(), ...stored };
+      for (const [key, value] of Object.entries(expected)) {
+        if (key.startsWith('_')) continue;
+        expect(kept[key], `${key}`).toBe(value);
+      }
       return;
     }
 

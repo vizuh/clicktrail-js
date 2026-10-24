@@ -3,7 +3,7 @@
  * WP runtime-parity harness (work queue item #6, live-validation stage).
  *
  * Executes the REAL plugin engine (click-trail-handler/assets/js/clicutcl-attribution.js)
- * inside a minimal Node `vm` sandbox against the 23 draft fixtures in
+ * inside a minimal Node `vm` sandbox against the draft fixtures in
  * packages/clicktrail/fixtures/wp-parity-drafts/, runs OUR TS engine on the same
  * inputs, and diffs field-by-field into PARITY-RUN.md.
  *
@@ -27,7 +27,7 @@ const PLUGIN_ROOT = process.env.CLICKTRAIL_WP_PLUGIN_ROOT
   : resolve(ROOT, '../click-trail-handler');
 const PLUGIN_SRC = join(PLUGIN_ROOT, 'assets/js/clicutcl-attribution.js');
 const FIXTURE_DIR = resolve(ROOT, 'packages/clicktrail/fixtures/wp-parity-drafts');
-const PINNED_PLUGIN_COMMIT = 'ead6682d6433c4f27309b7ee412e2dfc1fd50de4';
+const PINNED_PLUGIN_COMMIT = 'bee00d96bd9da1c848a8b6225f8592a961b21fd3'; // WP plugin v1.11.0 (vizuh/click-trail-handler#133)
 
 function readPluginCommit() {
   return execFileSync('git', ['-C', PLUGIN_ROOT, 'rev-parse', '--verify', 'HEAD'], {
@@ -61,7 +61,7 @@ function bundleEngine() {
 //    | Shim                       | Plugin line(s) requiring it                     |
 //    |----------------------------|--------------------------------------------------|
 //    | window.location            | CONFIG boot :6; getQueryParams :431; applyTouch :1793; setCookie Secure flag :468; parseUrlSafely :215; getExternalReferrerDetails :389 |
-//    | window.clicutcl_config     | :6 (we set requireConsent:false so attribution runs without a consent bridge) |
+//    | window.clicutcl_config     | :6 (we set requireConsent:false so attribution runs without a consent bridge); ignoredReferrerHosts :343 (1.11.0) from fixture input |
 //    | window.dataLayer           | :1732-1744 (ct_page_view push — our result reader) |
 //    | window.crypto.randomUUID   | Identity :1306-1309                              |
 //    | document.readyState        | boot :1927-1931 ('complete' → sync constructor) |
@@ -134,7 +134,7 @@ function makePinnedDate(fixedIso) {
 
 const SILENT_CONSOLE = { log() {}, info() {}, warn() {}, error() {}, debug() {} };
 
-function runPluginOnce({ url, referrer, currentHost, stored, now }) {
+function runPluginOnce({ url, referrer, currentHost, stored, now, ignoredReferrerHosts }) {
   const source = readFileSync(PLUGIN_SRC, 'utf8');
   const u = new URL(url);
   const jar = makeCookieJar();
@@ -152,6 +152,9 @@ function runPluginOnce({ url, referrer, currentHost, stored, now }) {
       cookieDays: 90,
       consentCookieName: 'ct_consent',
       requireConsent: false,
+      // 1.11.0 payment/checkout referrer list; PHP normally injects the
+      // filtered default (class-clicutcl-core.php:425). Fixture-driven here.
+      ...(Array.isArray(ignoredReferrerHosts) ? { ignoredReferrerHosts } : {}),
     },
     location: {
       href: url,
@@ -386,6 +389,7 @@ async function main() {
         currentHost: fx.input.currentHost,
         stored: fx.stored,
         now: fx.input.now,
+        ignoredReferrerHosts: fx.input.ignoredReferrerHosts,
       });
       const engineRun = runEngine({ input: fx.input, stored: fx.stored });
       const { diffs, plugin: pSum, engine: eSum } = diffPayloads(pluginRun.payload, engineRun.payload);
@@ -396,7 +400,9 @@ async function main() {
         const expected = fx.expected || {};
         let ok = true;
         if (expected._no_touch_reason) {
-          ok = engineRun.parsedKind === 'none' && Object.keys(nonEmpty(engineRun.payload)).length === 0;
+          // No touch: the payload must be exactly the stored state (empty without `stored`).
+          const sorted = (obj) => JSON.stringify(Object.entries(nonEmpty(obj)).sort());
+          ok = engineRun.parsedKind === 'none' && sorted(engineRun.payload) === sorted(fx.stored || {});
         } else {
           if (expected._channel && engineRun.enumChannel !== expected._channel) ok = false;
           const ne = nonEmpty(engineRun.payload);
@@ -510,7 +516,7 @@ async function main() {
   lines.push('');
   lines.push('| Shim | Why (clicutcl-attribution.js line refs) | Notes / limits |');
   lines.push('|---|---|---|');
-  lines.push('| `window.clicutcl_config` | :6 CONFIG boot | `requireConsent:false` so attribution runs without the consent bridge; consent gating itself is out of scope (draft "out of scope" list) |');
+  lines.push('| `window.clicutcl_config` | :6 CONFIG boot; :343 ignoredReferrerHosts | `requireConsent:false` so attribution runs without the consent bridge; consent gating itself is out of scope (draft "out of scope" list). `ignoredReferrerHosts` is copied from the fixture input (PHP injects the filtered list in production) |');
   lines.push('| `window.location` | :431 query parse, :468 Secure flag, :1790-1794 landing page, :389 related-host check, :215 base URL | href/search/hostname built from fixture `url`; hostname overridden with fixture `currentHost` to mirror engine input |');
   lines.push('| `window.dataLayer` array | :1732-1744 ct_page_view push | result read back from the push\'s `ct_attribution`; also :932 API install |');
   lines.push('| `window.crypto.randomUUID` | :1306-1309 Identity | deterministic stub; identity/session fields are not part of the diff |');

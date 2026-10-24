@@ -1,0 +1,47 @@
+{
+  "name": "payment-referrer-stripe-subdomain-keeps-last-touch",
+  "description": "Stripe Checkout return from checkout.stripe.com (subdomain of a listed host) over a stored paid-social touch: no touch, stored last touch kept.",
+  "quirk_decision": "CONTRACT (WP plugin 1.11.0 parity, issue #43): subdomains of listed hosts match. Semver: additive opt-in input (minor); no default list ships, so CLASSIFIER_VERSION is unchanged.",
+  "stored": {
+    "ft_source": "facebook",
+    "ft_medium": "paid_social",
+    "ft_campaign": "retargeting",
+    "ft_landing_page": "https://shop.example.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=retargeting",
+    "ft_touch_timestamp": "2026-10-23T09:00:00.000Z",
+    "ft_channel": "Facebook Ads",
+    "lt_source": "facebook",
+    "lt_medium": "paid_social",
+    "lt_campaign": "retargeting",
+    "lt_landing_page": "https://shop.example.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=retargeting",
+    "lt_touch_timestamp": "2026-10-23T09:00:00.000Z",
+    "lt_channel": "Facebook Ads"
+  },
+  "input": {
+    "url": "https://shop.example.com/checkout/success/?session=synthetic",
+    "referrer": "https://checkout.stripe.com/c/pay/cs_test_synthetic",
+    "currentHost": "shop.example.com",
+    "now": "2026-10-23T10:10:00.000Z",
+    "ignoredReferrerHosts": [
+      "paypal.com",
+      "stripe.com",
+      "mollie.com",
+      "squareup.com",
+      "square.link",
+      "klarna.com",
+      "adyen.com",
+      "checkout.com",
+      "mercadopago.com",
+      "mercadopago.com.br",
+      "pagseguro.uol.com.br"
+    ]
+  },
+  "expected": {
+    "_no_touch_reason": "ignored_referrer",
+    "lt_source": "facebook",
+    "lt_medium": "paid_social",
+    "lt_campaign": "retargeting",
+    "lt_landing_page": "https://shop.example.com/?utm_source=facebook&utm_medium=paid_social&utm_campaign=retargeting",
+    "lt_touch_timestamp": "2026-10-23T09:00:00.000Z",
+    "lt_channel": "Facebook Ads"
+  }
+}

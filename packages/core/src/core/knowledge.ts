@@ -77,6 +77,20 @@ export const SOCIAL_REFERRER_RULES: readonly ReferrerRule[] = [
   { source: 'discord', domains: ['discord.com'] },
 ];
 
+/**
+ * Payment and hosted-checkout hosts that the WordPress plugin (1.11.0) ignores
+ * as referrers by default (`clicutcl_ignored_referrer_hosts`). OPT-IN here:
+ * the engine applies only what the caller passes in
+ * `ParseAttributionInput.ignoredReferrerHosts`, so classification of existing
+ * inputs and CLASSIFIER_VERSION are unchanged. Pass this list (optionally
+ * extended with issuer 3-D Secure hosts) to match the plugin.
+ */
+export const PAYMENT_REFERRER_HOSTS: readonly string[] = [
+  'paypal.com', 'stripe.com', 'mollie.com', 'squareup.com', 'square.link',
+  'klarna.com', 'adyen.com', 'checkout.com', 'mercadopago.com',
+  'mercadopago.com.br', 'pagseguro.uol.com.br',
+];
+
 // --- human-readable channel-label layer (WP parity, ruling #3) ---------------
 
 /** Version of the CHANNEL_LABELS table; bump when any label or trigger changes. */

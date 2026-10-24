@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseAttributionUrl } from '../src/core/parse.js';
-import { areRelatedHosts } from '../src/core/sanitize.js';
-import { resolveChannelLabel } from '../src/core/knowledge.js';
+import { areRelatedHosts, isIgnoredReferrerHost, normalizeReferrerHosts } from '../src/core/sanitize.js';
+import { PAYMENT_REFERRER_HOSTS, resolveChannelLabel } from '../src/core/knowledge.js';
 
 describe('parseAttributionUrl', () => {
   it('parses Google Ads UTMs + gclid into a paid_search touch', () => {
@@ -228,5 +228,94 @@ describe('resolveChannelLabel (ruling #3)', () => {
 
   it('falls back to Unknown without signals', () => {
     expect(resolveChannelLabel({ source: '', medium: '', clickIds: {} })).toBe('Unknown');
+  });
+});
+
+describe('ignoredReferrerHosts (payment returns, WP plugin 1.11.0 parity)', () => {
+  const ignoredReferrerHosts = PAYMENT_REFERRER_HOSTS;
+
+  it('returns ignored_referrer for a referrer-only payment return', () => {
+    for (const referrer of [
+      'https://www.paypal.com/checkoutnow?token=SYNTHETIC',
+      'https://checkout.stripe.com/c/pay/cs_test_synthetic',
+      'https://www.mercadopago.com.br/checkout/v1/redirect',
+    ]) {
+      expect(parseAttributionUrl({
+        url: 'https://shop.example.com/checkout/order-received/',
+        referrer,
+        currentHost: 'shop.example.com',
+        ignoredReferrerHosts,
+      })).toEqual({ kind: 'none', reason: 'ignored_referrer' });
+    }
+  });
+
+  it('keeps referral classification when no list is passed (config-only, no default)', () => {
+    const r = parseAttributionUrl({
+      url: 'https://shop.example.com/checkout/order-received/',
+      referrer: 'https://www.paypal.com/checkoutnow',
+      currentHost: 'shop.example.com',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch.source).toBe('paypal.com');
+    expect(r.touch.medium).toBe('referral');
+  });
+
+  it('still forms a URL-parameter touch with the referrer blanked', () => {
+    const r = parseAttributionUrl({
+      url: 'https://shop.example.com/thanks/?utm_source=newsletter&utm_medium=email&utm_campaign=spring',
+      referrer: 'https://checkout.stripe.com/c/pay/cs_test_synthetic',
+      currentHost: 'shop.example.com',
+      ignoredReferrerHosts,
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch.source).toBe('newsletter');
+    expect(r.touch.referrer).toBe('');
+    expect(r.touch.channel).toBe('email');
+  });
+
+  it('matches host or subdomain only, never look-alike hosts', () => {
+    const parse = (referrer: string) => parseAttributionUrl({
+      url: 'https://shop.example.com/', referrer, currentHost: 'shop.example.com', ignoredReferrerHosts,
+    });
+    expect(parse('https://paypal.com/')).toEqual({ kind: 'none', reason: 'ignored_referrer' });
+    expect(parse('https://notpaypal.com/').kind).toBe('touch');
+    expect(parse('https://paypal.com.example.net/').kind).toBe('touch');
+  });
+
+  it('keeps internal_referrer precedence over the ignore list', () => {
+    expect(parseAttributionUrl({
+      url: 'https://pay.example.com/', referrer: 'https://example.com/', currentHost: 'pay.example.com',
+      ignoredReferrerHosts: ['example.com'],
+    })).toEqual({ kind: 'none', reason: 'internal_referrer' });
+  });
+});
+
+describe('normalizeReferrerHosts / isIgnoredReferrerHost', () => {
+  it('normalizes like the plugin filter: lowercase, URL to host, www., trailing dot, dedupe', () => {
+    expect(normalizeReferrerHosts([
+      ' PayPal.com ', 'https://www.stripe.com/path', 'acs.examplebank.com/3ds', 'www.mollie.com.',
+      'paypal.com', 'localhost', 'not a host', 'paypal.com:443', 42, null,
+    ])).toEqual(['paypal.com', 'stripe.com', 'acs.examplebank.com', 'mollie.com']);
+    expect(normalizeReferrerHosts(undefined)).toEqual([]);
+    expect(normalizeReferrerHosts('paypal.com')).toEqual([]);
+  });
+
+  it('matches the host itself and its subdomains', () => {
+    expect(isIgnoredReferrerHost('checkout.stripe.com', ['stripe.com'])).toBe(true);
+    expect(isIgnoredReferrerHost('WWW.PAYPAL.COM.', ['paypal.com'])).toBe(true);
+    expect(isIgnoredReferrerHost('stripe.com', ['checkout.stripe.com'])).toBe(false);
+    expect(isIgnoredReferrerHost('', ['stripe.com'])).toBe(false);
+    expect(isIgnoredReferrerHost('stripe.com', [])).toBe(false);
+  });
+
+  it('strips trailing dots in linear time on long dot runs', () => {
+    const dots = '.'.repeat(100_000);
+    const started = performance.now();
+    expect(normalizeReferrerHosts([`a${dots}b`, `paypal.com${dots}`])).toEqual(['paypal.com']);
+    expect(isIgnoredReferrerHost(`a${dots}b`, ['paypal.com'])).toBe(false);
+    expect(isIgnoredReferrerHost(`checkout.stripe.com${dots}`, ['stripe.com'])).toBe(true);
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 });

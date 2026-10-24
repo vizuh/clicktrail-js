@@ -1,0 +1,50 @@
+{
+  "name": "payment-referrer-utm-return-blanks-referrer",
+  "description": "Return URL from checkout.stripe.com that carries UTMs: URL parameters still form a touch, and the ignored referrer is blanked (no lt_referrer).",
+  "quirk_decision": "CONTRACT (WP plugin 1.11.0 parity, issue #43): only the referrer is ignored; UTMs and click IDs on the return URL still form a touch. Semver: additive opt-in input (minor); no default list ships, so CLASSIFIER_VERSION is unchanged.",
+  "stored": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_campaign": "brand",
+    "ft_landing_page": "https://shop.example.com/?utm_source=google&utm_medium=cpc&utm_campaign=brand&gclid=GSYNTH-PAID",
+    "ft_touch_timestamp": "2026-10-23T09:00:00.000Z",
+    "ft_channel": "Google Ads",
+    "ft_gclid": "GSYNTH-PAID",
+    "lt_source": "google",
+    "lt_medium": "cpc",
+    "lt_campaign": "brand",
+    "lt_landing_page": "https://shop.example.com/?utm_source=google&utm_medium=cpc&utm_campaign=brand&gclid=GSYNTH-PAID",
+    "lt_touch_timestamp": "2026-10-23T09:00:00.000Z",
+    "lt_channel": "Google Ads",
+    "lt_gclid": "GSYNTH-PAID",
+    "gclid": "GSYNTH-PAID"
+  },
+  "input": {
+    "url": "https://shop.example.com/checkout/order-received/1002/?utm_source=newsletter&utm_medium=email&utm_campaign=spring",
+    "referrer": "https://checkout.stripe.com/c/pay/cs_test_synthetic",
+    "currentHost": "shop.example.com",
+    "now": "2026-10-23T10:15:00.000Z",
+    "ignoredReferrerHosts": [
+      "paypal.com",
+      "stripe.com",
+      "mollie.com",
+      "squareup.com",
+      "square.link",
+      "klarna.com",
+      "adyen.com",
+      "checkout.com",
+      "mercadopago.com",
+      "mercadopago.com.br",
+      "pagseguro.uol.com.br"
+    ]
+  },
+  "expected": {
+    "_channel": "email",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "lt_source": "newsletter",
+    "lt_medium": "email",
+    "lt_campaign": "spring",
+    "lt_referrer": ""
+  }
+}

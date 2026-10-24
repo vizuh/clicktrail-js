@@ -42,7 +42,7 @@ const jsonForScriptTag = (value) =>
 const PAGE_SCRIPT = () => {
     const fx = window.__FIXTURE__;
     const { createClickTrail, createLegacyGlobal, dataLayerDestination,
-            parseAttributionUrl, GOOGLE_TAG_RESERVED_FIELDS } = window.ClickTrail;
+            GOOGLE_TAG_RESERVED_FIELDS } = window.ClickTrail;
 
     // --- SSR/start() ordering side-check (deterministic, isolated instance):
     // track() BEFORE start() must be ignored (no delivery, no throw).
@@ -54,13 +54,18 @@ const PAGE_SCRIPT = () => {
 
     // --- main replay ---
     const dest = dataLayerDestination();
-    const ct = createClickTrail({ destinations: [dest], now: () => fx.input.now });
+    const { ignoredReferrerHosts, ...landing } = fx.input;
+    const ct = createClickTrail({
+      destinations: [dest],
+      now: () => fx.input.now,
+      ...(ignoredReferrerHosts ? { ignoredReferrerHosts } : {}),
+    });
     ct.start();
-    const parsed = parseAttributionUrl(fx.input);
     // Stored-state fixtures (Phase 2 harness extension): hydrate the visitor's
     // pre-existing payload BEFORE applying the new landing touch.
     if (fx.stored) ct.hydrateStoredPayload(fx.stored);
-    if (parsed.kind === 'touch') ct.mergeParsedTouch(parsed.touch);
+    // captureLanding = parseAttributionUrl with config.ignoredReferrerHosts + merge.
+    const parsed = ct.captureLanding(landing);
     const api = createLegacyGlobal(ct); // legacy global shape (getData/...)
     ct.track('page_view', { event_time: fx.input.now });
 
@@ -147,12 +152,15 @@ try {
           failures.push(`reason: expected ${noTouchReason}, got ${actual.noTouchReason}`);
         }
         // D3 audit keys are STRUCTURAL (initialized by emptyAttribution),
-        // not attribution signal: excluded from the emptiness assertion.
+        // not attribution signal: excluded from the comparison. A no-touch
+        // landing leaves the payload exactly as stored (empty without `stored`).
         const AUDIT_KEYS = new Set(['click_id_history', 'attribution_selected_click_id', 'attribution_selected_click_id_reason']);
         const nonEmpty = Object.entries(actual.data)
           .filter(([k, v]) => !AUDIT_KEYS.has(k) && v !== '');
-        if (nonEmpty.length > 0) {
-          failures.push(`payload should be empty for no-touch, got ${JSON.stringify(nonEmpty)}`);
+        const storedNonEmpty = Object.entries(fixture.stored ?? {})
+          .filter(([k, v]) => !AUDIT_KEYS.has(k) && v !== '');
+        if (JSON.stringify(Object.fromEntries(nonEmpty.sort())) !== JSON.stringify(Object.fromEntries(storedNonEmpty.sort()))) {
+          failures.push(`payload should equal stored state for no-touch, got ${JSON.stringify(nonEmpty)}`);
         }
         if (actual.events.length !== 1) {
           failures.push(`expected exactly 1 dataLayer event (page_view), got ${actual.events.length}`);

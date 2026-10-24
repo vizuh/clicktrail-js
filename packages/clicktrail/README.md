@@ -139,6 +139,60 @@ signer/verifier. Separate origins need a shared signing key or matching
 explicit `sign` and `verify` functions. The HTTP destination exposes
 `onDropped` for host-owned alerting or bounded recovery; it does not retry.
 
+### Payment and sign-in returns (`ignoredReferrerHosts`)
+
+A buyer who pays on PayPal or Stripe, or a visitor who signs in with Google,
+comes back with that provider as the referrer. Without a list, the return is
+classified as a new touch (`paypal.com / referral`, or `google / organic` for
+`accounts.google.com`) and replaces the paid last touch on the page where
+conversions fire. List those hosts so the return counts like a same-site
+referrer:
+
+```ts
+import { PAYMENT_REFERRER_HOSTS } from '@vizuh/clicktrail';
+import { createClickTrail, dataLayerDestination } from '@vizuh/clicktrail/browser';
+
+const clickTrail = createClickTrail({
+  destinations: [dataLayerDestination()],
+  ignoredReferrerHosts: [
+    ...PAYMENT_REFERRER_HOSTS,
+    // Identity-provider returns (recommended when the site offers social sign-in):
+    'accounts.google.com',
+    'appleid.apple.com',
+    'login.microsoftonline.com',
+  ],
+});
+clickTrail.start();
+clickTrail.captureLanding({
+  url: location.href,
+  referrer: document.referrer,
+  currentHost: location.hostname,
+  now: new Date().toISOString(),
+});
+```
+
+`parseAttributionUrl` takes the same list as `ignoredReferrerHosts`.
+
+- A listed host or any subdomain matches (`checkout.stripe.com` matches
+  `stripe.com`); look-alikes such as `notpaypal.com` do not. Entries are
+  lowercased, a URL is reduced to its host, a leading `www.` is dropped, and
+  anything that is not a dotted hostname is discarded.
+- A referrer-only return yields `{ kind: 'none', reason: 'ignored_referrer' }`
+  and the stored `ft_*` / `lt_*` fields stay as they were. UTMs or click IDs on
+  the return URL still form a touch, with the referrer left empty.
+- `captureLanding` reports the `ignored_referrer_host` diagnostic when it
+  ignores a referrer.
+- There is no default list. `PAYMENT_REFERRER_HOSTS` is the WordPress plugin
+  1.11.0 default (`clicutcl_ignored_referrer_hosts`); add issuer 3-D Secure
+  hosts or other hosted checkouts your store redirects through. Identity
+  providers are not in the plugin list. Paths are not matched, so a
+  `facebook.com/dialog` login cannot be listed without ignoring all of
+  `facebook.com`.
+- This list does not change GA4. GA4 starts its own session with the provider
+  as the source when the visitor returns after the session timeout. Add the
+  same domains in GA4 Admin › Data streams › Configure tag settings ›
+  List unwanted referrals.
+
 ### AI workflow boundary (`/agent` and `/conversation`)
 
 Agent events accept only fixed metadata fields. Prompts, completions, messages,

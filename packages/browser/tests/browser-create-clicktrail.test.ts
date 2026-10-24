@@ -276,4 +276,70 @@ describe('createClickTrail', () => {
       warnSpy.mockRestore();
     }
   });
+
+  describe('captureLanding with ignoredReferrerHosts', () => {
+    const landing = (referrer: string, query = '') => ({
+      url: `https://shop.example.com/checkout/order-received/${query}`,
+      referrer,
+      currentHost: 'shop.example.com',
+      now: '2026-10-23T10:05:00.000Z',
+    });
+    const paidTouch = {
+      url: 'https://shop.example.com/?utm_source=google&utm_medium=cpc&utm_campaign=brand&gclid=GSYNTH',
+      referrer: '',
+      currentHost: 'shop.example.com',
+      now: '2026-10-23T10:00:00.000Z',
+    };
+
+    it('keeps the stored last touch on a payment return and reports the diagnostic', () => {
+      const reported: unknown[] = [];
+      const ct = createClickTrail({
+        destinations: [],
+        ignoredReferrerHosts: ['paypal.com', 'stripe.com'],
+        diagnosticSink: { report: (d) => reported.push(d) },
+      });
+      expect(ct.captureLanding(paidTouch).kind).toBe('touch');
+      const before = ct.getData();
+
+      const result = ct.captureLanding(landing('https://www.paypal.com/checkoutnow?token=SYNTHETIC'));
+
+      expect(result).toEqual({ kind: 'none', reason: 'ignored_referrer' });
+      expect(ct.getData()).toEqual(before);
+      expect(ct.getField('lt_source')).toBe('google');
+      expect(reported).toEqual([{
+        code: 'ignored_referrer_host',
+        level: 'info',
+        message: 'Ignored referrer created no touch; stored attribution kept.',
+        context: { referrer_host: 'paypal.com', touch: false },
+      }]);
+    });
+
+    it('merges URL-parameter touches with the referrer blanked', () => {
+      const reported: string[] = [];
+      const ct = createClickTrail({
+        destinations: [],
+        ignoredReferrerHosts: ['stripe.com'],
+        diagnosticSink: { report: (d) => reported.push(d.code) },
+      });
+      const result = ct.captureLanding(
+        landing('https://checkout.stripe.com/c/pay/cs_test_synthetic', '?utm_source=newsletter&utm_medium=email'),
+      );
+      expect(result.kind).toBe('touch');
+      expect(ct.getField('lt_source')).toBe('newsletter');
+      expect(ct.getField('lt_referrer')).toBe('');
+      expect(reported).toEqual(['ignored_referrer_host']);
+    });
+
+    it('classifies payment hosts as referral when no list is configured', () => {
+      const reported: string[] = [];
+      const ct = createClickTrail({
+        destinations: [],
+        diagnosticSink: { report: (d) => reported.push(d.code) },
+      });
+      ct.captureLanding(landing('https://www.paypal.com/checkoutnow'));
+      expect(ct.getField('lt_source')).toBe('paypal.com');
+      expect(ct.getField('lt_medium')).toBe('referral');
+      expect(reported).toEqual([]);
+    });
+  });
 });

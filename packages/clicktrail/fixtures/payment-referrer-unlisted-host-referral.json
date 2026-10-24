@@ -1,0 +1,31 @@
+{
+  "name": "payment-referrer-unlisted-host-referral",
+  "description": "Look-alike host notpaypal.com is not a subdomain of paypal.com: with the payment list configured it still classifies as a plain referral.",
+  "quirk_decision": "CONTRACT (WP plugin 1.11.0 parity, issue #43): matching is host-or-subdomain, never substring. Semver: additive opt-in input (minor); no default list ships, so CLASSIFIER_VERSION is unchanged.",
+  "input": {
+    "url": "https://shop.example.com/offer",
+    "referrer": "https://www.notpaypal.com/deals",
+    "currentHost": "shop.example.com",
+    "now": "2026-10-23T10:20:00.000Z",
+    "ignoredReferrerHosts": [
+      "paypal.com",
+      "stripe.com",
+      "mollie.com",
+      "squareup.com",
+      "square.link",
+      "klarna.com",
+      "adyen.com",
+      "checkout.com",
+      "mercadopago.com",
+      "mercadopago.com.br",
+      "pagseguro.uol.com.br"
+    ]
+  },
+  "expected": {
+    "_channel": "referral",
+    "ft_source": "notpaypal.com",
+    "ft_medium": "referral",
+    "lt_source": "notpaypal.com",
+    "lt_medium": "referral"
+  }
+}
