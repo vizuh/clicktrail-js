@@ -108,8 +108,9 @@ export function readQuery(url: string): QueryValues | null {
  * - The landing page stores the FULL href including query string (ruling #12)
  *   and the referrer the full URL, unless the caller opts into
  *   `landingPageFormat` / `referrerFormat`. Classification reads raw values.
- * - Opt-in `recordDirectTouch` turns `no_signal` / `internal_referrer` into an
- *   unmeasured placeholder touch (see {@link ParsedTouch.unmeasured}).
+ * - Opt-in `recordDirectTouch` turns `no_signal` / `internal_referrer` /
+ *   `ignored_referrer` into an unmeasured placeholder touch (see
+ *   {@link ParsedTouch.unmeasured}).
  * - Opt-in `inferSourceMedium: false` keeps `source` / `medium` as received
  *   from the URL; inferred values then feed only `channel` / `channelLabel`.
  * - Query-parameter values follow the caller's `SanitizeFieldOptions`
@@ -201,7 +202,11 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
         : { kind: 'none', reason: 'internal_referrer' };
     }
     if (referrerIgnored) {
-      return { kind: 'none', reason: 'ignored_referrer' };
+      // Payment/sign-in return: the visit began before capture one hop
+      // earlier. The merge never lets this placeholder replace a stored touch.
+      return input.recordDirectTouch
+        ? { kind: 'touch', touch: unmeasuredTouch(now, landingPage, browserIds, 'before_capture', inferSourceMedium) }
+        : { kind: 'none', reason: 'ignored_referrer' };
     }
     const inferred = classifyReferrerHost(rHost);
     touch.source = sanitizeField(inferred.source);
