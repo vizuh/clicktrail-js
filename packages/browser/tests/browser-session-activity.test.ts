@@ -1,17 +1,19 @@
 /**
  * createClickTrail session activity (#63): touchSession(), identity.activityOnTrack,
  * getSession({ passive: true }) and IdentitySeed.lastActivityAt, replayed on
- * a fake clock.
+ * a fake clock. Passive seed adoption and identity.visitorMaxAgeMs (#72).
  */
 import { describe, expect, it } from 'vitest';
 import { createClickTrail } from '../src/browser/create-clicktrail.js';
 import type { ClickTrailIdentityConfig } from '../src/browser/create-clicktrail.js';
-import { SESSION_STATE_KEY } from '../src/browser/storage.js';
+import { SESSION_ID_FALLBACK_KEY, SESSION_STATE_KEY, VISITOR_ID_FALLBACK_KEY } from '../src/browser/storage.js';
 import type { StorageAdapter } from '../src/browser/storage.js';
 
 const MIN = 60 * 1000;
 const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
 const SESSION = '7c1d4e2f-0a9b-4c8d-8e7f-6a5b4c3d2e1f';
+const VISITOR = '3f0b2c9e-6a1d-4b7e-9c2a-8d5e4f1a2b3c';
 
 function recordingAdapter(): StorageAdapter & { map: Map<string, string>; writes: number } {
   const map = new Map<string, string>();
@@ -45,6 +47,7 @@ function setup(identity: ClickTrailIdentityConfig, opts: { consent?: () => boole
     mirror,
     now: () => now,
     advance: (ms: number) => { now += ms; },
+    randomCalls: () => n,
   };
 }
 
@@ -171,21 +174,105 @@ describe('getSession({ passive: true })', () => {
     expect(ct.getSession({ passive: true })).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
   });
 
-  it('does not consult the seed; the first active read adopts it', () => {
+  it('adopts a seed whose session is still valid on the first (passive) read', () => {
     let calls = 0;
-    const { ct } = setup({
+    let seedNow = 0;
+    const ctx = setup({
       ...TIMING,
       seed: () => {
         calls++;
-        return { sessionId: SESSION };
+        return { visitorId: VISITOR, sessionId: SESSION, sessionStartedAt: seedNow - HOUR, lastActivityAt: seedNow - 10 * MIN };
       },
     });
-    ct.start();
-    expect(ct.getSession({ passive: true }).sessionId).toBe('');
-    expect(calls).toBe(0);
-    expect(ct.touchSession().sessionId).toBe(SESSION);
-    expect(ct.getSession({ passive: true }).sessionId).toBe(SESSION);
+    seedNow = ctx.now();
+    ctx.ct.start();
+    expect(ctx.ct.getSession({ passive: true })).toEqual({ visitorId: VISITOR, sessionId: SESSION, sessionNumber: '1' });
+    expect(ctx.mirror.map.get(VISITOR_ID_FALLBACK_KEY)).toBe(VISITOR);
+    expect(ctx.mirror.map.get(SESSION_ID_FALLBACK_KEY)).toBe(SESSION);
+    expect(JSON.parse(ctx.mirror.map.get(SESSION_STATE_KEY)!)).toEqual({
+      session_id: SESSION,
+      session_number: 1,
+      session_started_at: seedNow - HOUR,
+      last_event_ts: seedNow - 10 * MIN,
+    });
+    expect(ctx.randomCalls()).toBe(0);
+    expect(ctx.ct.touchSession()).toEqual({ visitorId: VISITOR, sessionId: SESSION, sessionNumber: '1' });
     expect(calls).toBe(1);
+  });
+
+  it('with an expired seeded session returns the seeded visitor, no session, and writes none', () => {
+    let seedNow = 0;
+    const ctx = setup({
+      ...TIMING,
+      seed: () => ({ visitorId: VISITOR, sessionId: SESSION, lastActivityAt: seedNow - 3 * HOUR }),
+    });
+    seedNow = ctx.now();
+    ctx.ct.start();
+    const writes = ctx.mirror.writes;
+    expect(ctx.ct.getSession({ passive: true })).toEqual({ visitorId: VISITOR, sessionId: '', sessionNumber: '' });
+    expect(ctx.mirror.map.has(SESSION_STATE_KEY)).toBe(false);
+    expect(ctx.mirror.writes).toBe(writes);
+    expect(ctx.randomCalls()).toBe(0);
+    // First activity: the seeded visitor's session rolls, exactly as before #72.
+    const active = ctx.ct.touchSession();
+    expect(active.visitorId).toBe(VISITOR);
+    expect(active.sessionId).not.toBe(SESSION);
+    expect(active.sessionNumber).toBe('2');
+  });
+
+  it('is not called while consent is denied', () => {
+    let calls = 0;
+    let granted = false;
+    const ctx = setup(
+      { ...TIMING, seed: () => { calls++; return { visitorId: VISITOR, sessionId: SESSION }; } },
+      { consent: () => granted },
+    );
+    ctx.ct.start();
+    expect(ctx.ct.getSession({ passive: true })).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
+    expect(calls).toBe(0);
+    granted = true;
+    expect(ctx.ct.getSession({ passive: true })).toEqual({ visitorId: VISITOR, sessionId: SESSION, sessionNumber: '1' });
+    expect(calls).toBe(1);
+  });
+});
+
+describe('identity.visitorMaxAgeMs', () => {
+  it('a seeded visitor created 364 days ago stays through its active last day and is replaced at day 365', () => {
+    let seedNow = 0;
+    const ctx = setup({
+      ...TIMING,
+      visitorMaxAgeMs: 365 * DAY,
+      seed: () => ({ visitorId: VISITOR, visitorCreatedAt: seedNow - 364 * DAY }),
+    });
+    seedNow = ctx.now();
+    ctx.ct.start();
+    expect(ctx.ct.touchSession().visitorId).toBe(VISITOR);
+    for (let hour = 1; hour < 24; hour++) {
+      ctx.advance(HOUR);
+      ctx.ct.track('page_view');
+      expect(ctx.ct.getSession().visitorId).toBe(VISITOR);
+    }
+    ctx.advance(HOUR - 1);
+    expect(ctx.ct.touchSession().visitorId).toBe(VISITOR);
+    ctx.advance(1); // 365 days after visitorCreatedAt
+    expect(ctx.ct.getSession({ passive: true })).toEqual({ visitorId: '', sessionId: '', sessionNumber: '' });
+    const fresh = ctx.ct.touchSession();
+    expect(fresh.visitorId).not.toBe(VISITOR);
+    expect(fresh.visitorId).not.toBe('');
+    expect(fresh.sessionNumber).toBe('1');
+    expect(ctx.ct.getSession({ passive: true })).toEqual(fresh);
+    expect(JSON.parse(ctx.mirror.map.get(SESSION_STATE_KEY)!)).toMatchObject({ visitor_created_at: ctx.now() });
+  });
+
+  it('keeps the visitor past 365 days when unset (default)', () => {
+    const ctx = setup(TIMING);
+    ctx.ct.start();
+    const first = ctx.ct.touchSession();
+    for (let day = 1; day <= 400; day++) {
+      ctx.advance(DAY);
+      expect(ctx.ct.touchSession().visitorId).toBe(first.visitorId);
+    }
+    expect(JSON.parse(ctx.mirror.map.get(SESSION_STATE_KEY)!)).not.toHaveProperty('visitor_created_at');
   });
 });
 

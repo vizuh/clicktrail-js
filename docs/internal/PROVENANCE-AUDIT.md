@@ -157,6 +157,18 @@ ported. It deviates from the plugin's session refresh (plugin 1.11.0
 | `getSession({ passive: true })` reads without creating, rolling or writing | every read is load-or-roll | Hosts that open a session only after activity need a read that does not create one. |
 | A seed may carry `lastActivityAt` | no host seed | The seeded session keeps its real idle clock. |
 
+Passive seed adoption and the fixed visitor lifetime (`browser/identity.ts`,
+issue #72) are authored here, not ported. The plugin has no host seed and no
+visitor creation time (plugin commit `ead6682`,
+`clicutcl-attribution.js:1337-1351`: `visitorId()` keeps `ct_visitor_id` in
+localStorage indefinitely and only its cookie copy carries a 365-day expiry,
+set at creation):
+
+| Engine (#72) | Plugin | Why |
+|---|---|---|
+| `getSession({ passive: true })` consults the seed; stores it only when its visitor and session are both valid; never mints | no seed; every read creates | Pages that only read passively right after a host migrates must keep the host's IDs instead of sending none. |
+| Opt-in `identity.visitorMaxAgeMs` from `visitor_created_at` (in `ct_session`, from `IdentitySeed.visitorCreatedAt` when seeded); default none | localStorage visitor never expires; cookie copy fixed at 365 days | Hosts whose contract is "visitor ID expires N days after creation, even when active" keep it; the default stays the existing sliding behaviour. |
+
 The parity harness does not exercise identity, so `PARITY-RUN.md` is
 unaffected. Cookie-backed identity stays with #46.
 

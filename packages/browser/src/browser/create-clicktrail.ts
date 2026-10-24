@@ -234,6 +234,16 @@ export interface ClickTrailIdentityConfig {
   /** Maximum session length in ms from session start (positive integer). Default: none. */
   sessionMaxMs?: number;
   /**
+   * Fixed visitor lifetime in ms from the visitor's creation (positive
+   * integer); activity does not extend it. Once reached, the next
+   * non-passive read mints a new visitor and session, and passive reads
+   * return no visitor. `ct_session` then stores `visitor_created_at`
+   * (from `seed().visitorCreatedAt` for a seeded visitor). Keep
+   * `storage.retentionDays` long enough to hold an idle visitor that long.
+   * Default: none (the visitor lives while its storage does).
+   */
+  visitorMaxAgeMs?: number;
+  /**
    * Count every delivered `track()` as session activity (same as calling
    * `touchSession()` first), so `sessionIdleMs` measures inactivity.
    * Set false when the host decides what counts as activity and calls
@@ -244,9 +254,11 @@ export interface ClickTrailIdentityConfig {
 
 export interface GetSessionOptions {
   /**
-   * Read the stored identity without creating, rolling or touching it and
-   * without writing storage (or consulting `identity.seed`). The session
-   * fields are empty when no session is stored or it has expired.
+   * Read the stored identity without creating, rolling or touching it. The
+   * session fields are empty when no session is stored or it has expired;
+   * every field is empty once `visitorMaxAgeMs` is reached. Consults
+   * `identity.seed` like the default read, adopting (and storing) a seeded
+   * visitor and session only when both are still valid; it never mints IDs.
    * Default: false.
    */
   passive?: boolean;
@@ -362,6 +374,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     }
     assertPositiveMs('sessionIdleMs', identityCfg.sessionIdleMs);
     assertPositiveMs('sessionMaxMs', identityCfg.sessionMaxMs);
+    assertPositiveMs('visitorMaxAgeMs', identityCfg.visitorMaxAgeMs);
     if (identityCfg.activityOnTrack !== undefined && typeof identityCfg.activityOnTrack !== 'boolean') {
       throw new TypeError('clicktrail: identity.activityOnTrack must be a boolean.');
     }
@@ -434,6 +447,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       nowMs,
       ...(identityCfg?.sessionIdleMs !== undefined ? { timeoutMs: identityCfg.sessionIdleMs } : {}),
       ...(identityCfg?.sessionMaxMs !== undefined ? { maxMs: identityCfg.sessionMaxMs } : {}),
+      ...(identityCfg?.visitorMaxAgeMs !== undefined
+        ? { visitorMaxAgeMs: identityCfg.visitorMaxAgeMs }
+        : {}),
       ...(identityCfg?.seed !== undefined ? { seed: identityCfg.seed } : {}),
       onSeedRejected: (reason) => {
         try {
