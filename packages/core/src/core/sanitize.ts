@@ -59,6 +59,16 @@ export function areRelatedHosts(firstHost: string, secondHost: string): boolean 
 const LISTED_HOST_PATTERN = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 
 /**
+ * Drop trailing dots with a linear scan. `replace(/\.+$/, '')` backtracks
+ * quadratically on hosts with long interior dot runs.
+ */
+function stripTrailingDots(host: string): string {
+  let end = host.length;
+  while (end > 0 && host.charCodeAt(end - 1) === 0x2e) end--;
+  return end === host.length ? host : host.slice(0, end);
+}
+
+/**
  * Normalize a caller-supplied referrer host list (WordPress plugin 1.11.0
  * `get_ignored_referrer_hosts` parity): non-strings are skipped, entries are
  * trimmed and lowercased, a URL is reduced to its host, trailing dots and a
@@ -78,7 +88,7 @@ export function normalizeReferrerHosts(hosts: unknown): string[] {
         continue;
       }
     }
-    host = host.replace(/\.+$/, '').replace(/^www\./, '');
+    host = stripTrailingDots(host).replace(/^www\./, '');
     if (LISTED_HOST_PATTERN.test(host)) out.add(host);
   }
   return Array.from(out);
@@ -91,7 +101,7 @@ export function normalizeReferrerHosts(hosts: unknown): string[] {
  * reverse.
  */
 export function isIgnoredReferrerHost(host: string, ignoredHosts: unknown): boolean {
-  const h = normalizeHost(host).replace(/\.+$/, '');
+  const h = stripTrailingDots(normalizeHost(host));
   if (!h) return false;
   return normalizeReferrerHosts(ignoredHosts).some((d) => h === d || h.endsWith(`.${d}`));
 }

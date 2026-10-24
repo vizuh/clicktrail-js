@@ -309,4 +309,13 @@ describe('normalizeReferrerHosts / isIgnoredReferrerHost', () => {
     expect(isIgnoredReferrerHost('', ['stripe.com'])).toBe(false);
     expect(isIgnoredReferrerHost('stripe.com', [])).toBe(false);
   });
+
+  it('strips trailing dots in linear time on long dot runs', () => {
+    const dots = '.'.repeat(100_000);
+    const started = performance.now();
+    expect(normalizeReferrerHosts([`a${dots}b`, `paypal.com${dots}`])).toEqual(['paypal.com']);
+    expect(isIgnoredReferrerHost(`a${dots}b`, ['paypal.com'])).toBe(false);
+    expect(isIgnoredReferrerHost(`checkout.stripe.com${dots}`, ['stripe.com'])).toBe(true);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
 });
