@@ -80,6 +80,36 @@ metadata. For retryable webhooks, always pass the stable provider key as
 `eventId`; when it is omitted, the helper derives an ID from the conversion key
 or occurrence timestamp, which is not a retry guarantee if the timestamp changes.
 
+## GA4 Measurement Protocol purchase and refund
+
+`buildGa4MeasurementProtocolEvent` shapes a GA4 Measurement Protocol
+`purchase` or `refund` that joins the browser session captured at checkout
+start. It is pure: no clock, network, or secrets. It returns
+`{ payload, timestampSource }` for the host to POST, or `{ skip: reason }`
+when sending would create an unattributed event (no `_ga` client ID, no GA4
+session ID, or older than GA4's 72 h backdating limit). Late confirmations
+such as Pix are stamped at checkout start + 1 s so they stay in the session.
+
+```ts
+import { buildGa4MeasurementProtocolEvent } from '@vizuh/clicktrail-server';
+
+const result = buildGa4MeasurementProtocolEvent({
+  event: 'purchase',
+  snapshot: order.attributionSnapshot,
+  transactionId: order.checkoutSessionId,
+  value: order.amount,
+  currency: order.currency,
+  checkoutStartedAt: order.checkoutStartedAt,
+  paidAt,
+  now: new Date().toISOString(),
+  consent: order.adsConsent,
+});
+```
+
+Call it only for confirmed payments and use one `transaction_id` everywhere.
+Rules, Stripe events, and a webhook recipe are in
+[`docs/GA4-MEASUREMENT-PROTOCOL.md`](https://github.com/vizuh/clicktrail-js/blob/master/docs/GA4-MEASUREMENT-PROTOCOL.md).
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `@vizuh/clicktrail-server`: `buildGa4MeasurementProtocolEvent` builds a GA4
+  Measurement Protocol `purchase` or `refund` that joins the browser session
+  captured at checkout start. It never invents `client_id`, sends a numeric
+  `session_id`, moves late confirmations to checkout start + 1 s, skips events
+  past GA4's 72 h backdating limit, and mirrors the stored ads consent. Pure
+  and network-free; see `docs/GA4-MEASUREMENT-PROTOCOL.md` (#49).
 - `@vizuh/clicktrail-consent/cmp`: `connectCookiebot`, `connectOneTrust`, and
   `connectComplianz` forward CMP decisions to a `ConsentHub`, never emit while
   consent is pending, deduplicate repeated events, and observe in-page

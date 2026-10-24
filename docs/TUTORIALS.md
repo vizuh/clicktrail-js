@@ -179,6 +179,13 @@ host IDs, prices, or commission data in it. If the host cannot provision a
 shared parent-domain cookie, use the stable browser API with explicit matching
 sign/verify functions or disable the cross-domain path.
 
+## Delayed payment to GA4
+
+After a delayed payment such as Pix confirms, send the GA4 `purchase` into the
+original browser session with `buildGa4MeasurementProtocolEvent` from
+`@vizuh/clicktrail-server`. The rules, Stripe Checkout events, and a webhook
+recipe are in [GA4 Measurement Protocol](GA4-MEASUREMENT-PROTOCOL.md).
+
 ## Related package docs
 
 - [package README](../packages/clicktrail/README.md)

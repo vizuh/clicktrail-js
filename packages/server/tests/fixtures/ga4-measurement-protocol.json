@@ -1,0 +1,348 @@
+{
+  "description": "Synthetic GA4 Measurement Protocol builder cases (#49). Each case input is shallow-merged over base_input; a case snapshot replaces the base snapshot. No real IDs, visitors, or revenue.",
+  "semver": "Additive API in @vizuh/clicktrail-server. Changing an expected payload or skip reason is a breaking change to the builder contract.",
+  "base_input": {
+    "snapshot": {
+      "lt_source": "google",
+      "lt_medium": "organic",
+      "ga_client_id": "1111111111.1792580000",
+      "ga_session_id": "1792584000",
+      "ga_session_number": "3"
+    },
+    "event": "purchase",
+    "transactionId": "cs_test_synthetic_0001",
+    "value": 49.9,
+    "currency": "BRL",
+    "checkoutStartedAt": "2026-10-21T12:05:00.000Z",
+    "paidAt": "2026-10-21T12:10:00.000Z",
+    "now": "2026-10-21T12:10:05.000Z",
+    "consent": { "ad_user_data": "granted", "ad_personalization": "granted" }
+  },
+  "cases": [
+    {
+      "name": "purchase-paid-within-session",
+      "description": "Card paid 5 min after checkout start: payment time is inside the session, numeric session_id from the snapshot.",
+      "quirk_decision": "CONTRACT (rules 2, 3, 4, 5)",
+      "input": {},
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792584600000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-paid-at-timeout-boundary",
+      "description": "Paid exactly 30 min after checkout start: still inside the default session timeout, payment time is kept.",
+      "quirk_decision": "CONTRACT (rule 3, inclusive boundary)",
+      "input": { "paidAt": "2026-10-21T12:35:00.000Z", "now": "2026-10-21T12:35:05.000Z" },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792586100000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-delayed-pix-after-timeout",
+      "description": "Pix confirmed 1 h after checkout start: the session has ended, so the event is stamped at checkout start + 1 s.",
+      "quirk_decision": "CONTRACT (rule 3, late-confirmation fallback)",
+      "input": { "paidAt": "2026-10-21T13:05:00.000Z", "now": "2026-10-21T13:05:03.000Z" },
+      "expected": {
+        "timestampSource": "checkout_start_plus_1s",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792584301000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-custom-session-timeout",
+      "description": "Property session timeout set to 60 min: a payment 45 min after checkout start keeps the payment time.",
+      "quirk_decision": "CONTRACT (rule 3, configurable timeout)",
+      "input": {
+        "paidAt": "2026-10-21T12:50:00.000Z",
+        "now": "2026-10-21T12:50:02.000Z",
+        "sessionTimeoutMinutes": 60
+      },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792587000000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-late-fallback-beyond-72h",
+      "description": "Checkout start + 1 s is more than 72 h before send time: GA4 would reject the backdated event.",
+      "quirk_decision": "CONTRACT (rule 3, 72 h limit)",
+      "input": { "paidAt": "2026-10-23T09:00:00.000Z", "now": "2026-10-24T12:05:02.000Z" },
+      "expected": { "skip": "too_late" }
+    },
+    {
+      "name": "purchase-paid-in-time-sent-after-72h",
+      "description": "Payment inside the session but the host sends more than 72 h later.",
+      "quirk_decision": "CONTRACT (rule 3, 72 h limit)",
+      "input": { "now": "2026-10-24T12:10:01.000Z" },
+      "expected": { "skip": "too_late" }
+    },
+    {
+      "name": "purchase-missing-client-id",
+      "description": "No ga_client_id in the snapshot: never invent one.",
+      "quirk_decision": "CONTRACT (rule 1)",
+      "input": { "snapshot": { "lt_source": "google", "ga_session_id": "1792584000" } },
+      "expected": { "skip": "missing_client_id" }
+    },
+    {
+      "name": "purchase-invalid-client-id",
+      "description": "A ga_client_id that is not a GA client ID is rejected rather than forwarded.",
+      "quirk_decision": "CONTRACT (rule 1)",
+      "input": { "snapshot": { "ga_client_id": "visitor-abc", "ga_session_id": "1792584000" } },
+      "expected": { "skip": "invalid_client_id" }
+    },
+    {
+      "name": "purchase-raw-ga-cookie-client-id",
+      "description": "A raw _ga cookie value is reduced to <random>.<timestamp> like the browser adapter does.",
+      "quirk_decision": "CONTRACT (rule 1, same reduction as parseGaClientIdValue)",
+      "input": { "snapshot": { "ga_client_id": "GA1.1.1111111111.1792580000", "ga_session_id": "1792584000" } },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792584600000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-missing-session-id",
+      "description": "No ga_session_id: GA4 would open a new session with no source, so the default is to skip.",
+      "quirk_decision": "CONTRACT (rule 2, default)",
+      "input": { "snapshot": { "ga_client_id": "1111111111.1792580000" } },
+      "expected": { "skip": "missing_session_id" }
+    },
+    {
+      "name": "purchase-invalid-session-id",
+      "description": "A non-numeric ga_session_id is not sent: a wrong session ID splits the session.",
+      "quirk_decision": "CONTRACT (rule 2)",
+      "input": { "snapshot": { "ga_client_id": "1111111111.1792580000", "ga_session_id": "s1792584000" } },
+      "expected": { "skip": "invalid_session_id" }
+    },
+    {
+      "name": "purchase-missing-session-explicit-opt-in",
+      "description": "Host explicitly accepts an unjoined purchase: no session_id, payment time kept even when late.",
+      "quirk_decision": "CONTRACT (rule 2, explicit allowMissingSession choice)",
+      "input": {
+        "snapshot": { "ga_client_id": "1111111111.1792580000" },
+        "paidAt": "2026-10-21T13:05:00.000Z",
+        "now": "2026-10-21T13:05:03.000Z",
+        "allowMissingSession": true
+      },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792587900000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-paid-before-checkout",
+      "description": "Payment time earlier than checkout start is an inconsistent host record.",
+      "quirk_decision": "CONTRACT (rule 3)",
+      "input": { "paidAt": "2026-10-21T12:04:00.000Z" },
+      "expected": { "skip": "paid_before_checkout" }
+    },
+    {
+      "name": "purchase-consent-denied",
+      "description": "Stored choice denied both ads signals: the payload carries DENIED, it is not upgraded.",
+      "quirk_decision": "CONTRACT (rule 5)",
+      "input": { "consent": { "ad_user_data": "denied", "ad_personalization": "denied" } },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792584600000000,
+          "consent": { "ad_user_data": "DENIED", "ad_personalization": "DENIED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "purchase-consent-mixed-with-items",
+      "description": "Mixed stored choice is mirrored per signal; items keep only GA4 item keys.",
+      "quirk_decision": "CONTRACT (rule 5)",
+      "input": {
+        "consent": { "ad_user_data": "granted", "ad_personalization": "denied" },
+        "items": [
+          { "item_id": "course_synthetic", "item_name": "Synthetic course", "price": 49.9, "quantity": 1, "customer_email": "dropped@example.test" }
+        ]
+      },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792584600000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "DENIED" },
+          "events": [
+            {
+              "name": "purchase",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1,
+                "session_id": 1792584000,
+                "items": [
+                  { "item_id": "course_synthetic", "item_name": "Synthetic course", "price": 49.9, "quantity": 1 }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "refund-within-72h",
+      "description": "Refund keyed by the same transaction_id; no session_id because a refund is not session activity.",
+      "quirk_decision": "CONTRACT (rule 6)",
+      "input": {
+        "event": "refund",
+        "refundedAt": "2026-10-23T09:00:00.000Z",
+        "now": "2026-10-23T09:00:04.000Z"
+      },
+      "expected": {
+        "timestampSource": "event_time",
+        "payload": {
+          "client_id": "1111111111.1792580000",
+          "timestamp_micros": 1792746000000000,
+          "consent": { "ad_user_data": "GRANTED", "ad_personalization": "GRANTED" },
+          "events": [
+            {
+              "name": "refund",
+              "params": {
+                "transaction_id": "cs_test_synthetic_0001",
+                "value": 49.9,
+                "currency": "BRL",
+                "engagement_time_msec": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "refund-beyond-72h",
+      "description": "Refund sent more than 72 h after it happened.",
+      "quirk_decision": "CONTRACT (rule 3, 72 h limit)",
+      "input": {
+        "event": "refund",
+        "refundedAt": "2026-10-23T09:00:00.000Z",
+        "now": "2026-10-26T09:00:01.000Z"
+      },
+      "expected": { "skip": "too_late" }
+    },
+    {
+      "name": "refund-missing-client-id",
+      "description": "Refunds also require the browser client ID; none is invented.",
+      "quirk_decision": "CONTRACT (rule 1)",
+      "input": {
+        "event": "refund",
+        "refundedAt": "2026-10-23T09:00:00.000Z",
+        "now": "2026-10-23T09:00:04.000Z",
+        "snapshot": {}
+      },
+      "expected": { "skip": "missing_client_id" }
+    }
+  ]
+}
