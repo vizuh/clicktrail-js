@@ -54,6 +54,23 @@ Use [`@vizuh/clicktrail`](../clicktrail/) for the public umbrella package.
 It keeps the same stable core surface and adds browser and incubating
 entrypoints.
 
+## Stored touch fields
+
+By default the landing page is the full href and the referrer is the full
+URL, matching the WordPress plugin. A landing with no campaign parameters
+and no external referrer stores nothing. Each `parseAttributionUrl` option
+below is opt-in:
+
+| Option | Values | Effect |
+| --- | --- | --- |
+| `landingPageFormat` | `'url'` (default), `'path'`, `'path+allowlisted-query'` | `'path'` stores `/pricing`. `'path+allowlisted-query'` also keeps the query keys in `landingPageQueryAllowlist`, which defaults to `LANDING_PAGE_QUERY_ALLOWLIST` (UTMs and click IDs). |
+| `referrerFormat` | `'url'` (default), `'host'` | `'host'` stores `www.google.com`. Classification still reads the full referrer. |
+| `recordDirectTouch` | `false` (default), `true` | Turns a landing without signal into a placeholder touch: `Direct` (source `(direct)`, medium `(none)`) when there is no referrer, and `Unknown (before capture)` when the referrer is your own site, for example because consent came after the first page. |
+
+`mergeAttributionTouch` writes a placeholder only into an empty payload, and
+the first measured touch (UTMs, click ID or external referrer) replaces a
+stored placeholder as first touch.
+
 ## Contract
 
 - Same inputs produce the same outputs.

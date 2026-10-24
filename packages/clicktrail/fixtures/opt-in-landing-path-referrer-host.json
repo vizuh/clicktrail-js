@@ -1,0 +1,23 @@
+{
+  "name": "opt-in-landing-path-referrer-host",
+  "description": "landingPageFormat 'path' stores the pathname only and referrerFormat 'host' stores the referrer hostname; the channel is still classified from the raw referrer.",
+  "quirk_decision": "CONTRACT (opt-in, #56): default stays the full href / full URL (ruling #12, plugin contract). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/pricing?email=person%40example.org&ref=x#plans",
+    "referrer": "https://www.google.com/search?q=private+query",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "landingPageFormat": "path",
+    "referrerFormat": "host"
+  },
+  "expected": {
+    "_channel": "organic_search",
+    "ft_source": "google",
+    "ft_medium": "organic",
+    "ft_channel": "Google Organic",
+    "ft_landing_page": "/pricing",
+    "ft_referrer": "www.google.com",
+    "lt_landing_page": "/pricing",
+    "lt_referrer": "www.google.com"
+  }
+}

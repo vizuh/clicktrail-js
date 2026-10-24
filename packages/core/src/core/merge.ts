@@ -3,6 +3,7 @@ import {
   ATTRIBUTION_SELECTED_CLICK_ID_KEY,
   ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY,
   BROWSER_ID_KEYS,
+  CHANNEL_LABELS,
   CLICK_ID_HISTORY_KEY,
   CLICK_ID_HISTORY_LIMIT,
   CLICK_ID_KEYS,
@@ -70,6 +71,25 @@ function applyClickIdSelectionAudit(
   }
 }
 
+/** True when a stored ft_/lt_ touch has no evidence (ruling #17 guard). */
+function touchEmpty(payload: AttributionPayload, prefix: 'ft' | 'lt'): boolean {
+  const keys = prefix === 'ft' ? FT : LT;
+  return (
+    !payload[keys.source] && !payload[keys.medium] && !payload[keys.campaign] &&
+    !payload[keys.referrer] && !payload[keys.landingPage] &&
+    CLICK_ID_KEYS.every((key) => !payload[`${prefix}_${key}`])
+  );
+}
+
+/** True when the stored first touch is an opt-in `recordDirectTouch` placeholder. */
+function hasUnmeasuredFirstTouch(payload: AttributionPayload): boolean {
+  const label = payload[FT.channel];
+  return (
+    (label === CHANNEL_LABELS.DIRECT || label === CHANNEL_LABELS.BEFORE_CAPTURE) &&
+    CLICK_ID_KEYS.every((key) => !payload[`ft_${key}`])
+  );
+}
+
 /**
  * Merge a parsed touch into a stored canonical payload.
  *
@@ -85,6 +105,10 @@ function applyClickIdSelectionAudit(
  *   :1813-1837). Empty click IDs never overwrite existing mirrors.
  * - Browser IDs from the parsed touch are written top-level, newest
  *   non-empty wins (RULING A part a; plugin mergeTopLevelIdentifiers :1797).
+ * - Unmeasured placeholders (opt-in `recordDirectTouch`, #56) fill ft_ and
+ *   lt_ only when both are empty and never overwrite a stored touch. A
+ *   stored placeholder first touch is the one exception to write-once: the
+ *   first measured touch replaces it.
  * - The input is never mutated; a new object is returned.
  */
 export function mergeAttributionTouch(
@@ -93,12 +117,16 @@ export function mergeAttributionTouch(
 ): AttributionPayload {
   const next: AttributionPayload = { ...stored };
 
-  // First touch: write-once. A stored click ID alone blocks the overwrite.
-  const ftEmpty =
-    !next[FT.source] && !next[FT.medium] && !next[FT.campaign] &&
-    !next[FT.referrer] && !next[FT.landingPage] &&
-    CLICK_ID_KEYS.every((key) => !next[`ft_${key}`]);
-  if (ftEmpty) {
+  if (touch.unmeasured && !(touchEmpty(next, 'ft') && touchEmpty(next, 'lt'))) {
+    mergeBrowserIds(next, touch);
+    return next;
+  }
+
+  // First touch: write-once. A stored click ID alone blocks the overwrite;
+  // a stored placeholder yields to the first measured touch.
+  const ftWritable =
+    touchEmpty(next, 'ft') || (!touch.unmeasured && hasUnmeasuredFirstTouch(next));
+  if (ftWritable) {
     next[FT.source] = touch.source;
     next[FT.medium] = touch.medium;
     next[FT.campaign] = touch.campaign;
@@ -156,15 +184,20 @@ export function mergeAttributionTouch(
 
   applyClickIdSelectionAudit(next, capturedNow, touch.touchTimestamp);
 
-  // Browser IDs (RULING A part a): newest non-empty wins, same law as
-  // click IDs (plugin mergeTopLevelIdentifiers overwrites on any
-  // non-empty differing value, :1797-1811).
+  mergeBrowserIds(next, touch);
+  return next;
+}
+
+/**
+ * Browser IDs (RULING A part a): newest non-empty wins, same law as
+ * click IDs (plugin mergeTopLevelIdentifiers overwrites on any
+ * non-empty differing value, :1797-1811).
+ */
+function mergeBrowserIds(next: AttributionPayload, touch: ParsedTouch): void {
   for (const key of BROWSER_ID_KEYS) {
     const value = touch.browserIds?.[key];
     if (value) next[key] = value;
   }
-
-  return next;
 }
 
 /**

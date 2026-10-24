@@ -1,0 +1,35 @@
+{
+  "name": "opt-in-measured-touch-replaces-direct-placeholder",
+  "description": "A stored recordDirectTouch placeholder holds the first-touch slot only until the first measured touch, which replaces it as first touch.",
+  "quirk_decision": "CONTRACT (opt-in, #56): the only exception to first-touch write-once; it applies only to stored 'Direct' / 'Unknown (before capture)' placeholders without click IDs. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "stored": {
+    "ft_source": "(direct)",
+    "ft_medium": "(none)",
+    "ft_channel": "Direct",
+    "ft_landing_page": "/search",
+    "ft_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "lt_source": "(direct)",
+    "lt_medium": "(none)",
+    "lt_channel": "Direct",
+    "lt_landing_page": "/search",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z"
+  },
+  "input": {
+    "url": "https://example.com/lp?utm_source=google&utm_medium=cpc&utm_campaign=spring&gclid=EAIaTEST",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "landingPageFormat": "path"
+  },
+  "expected": {
+    "_channel": "paid_search",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_campaign": "spring",
+    "ft_channel": "Google Ads",
+    "ft_landing_page": "/lp",
+    "ft_gclid": "EAIaTEST",
+    "ft_touch_timestamp": "2026-10-23T10:00:00.000Z",
+    "lt_channel": "Google Ads"
+  }
+}

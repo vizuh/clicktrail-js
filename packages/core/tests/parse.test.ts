@@ -195,6 +195,97 @@ describe('parseAttributionUrl', () => {
   });
 });
 
+describe('touch field formats (#56, opt-in)', () => {
+  const url = 'https://example.com/pricing?email=a%40b.com&UTM_Source=google&utm_medium=cpc&gclid=G1&sc_click_id=S1#plans';
+  const referrer = 'https://www.google.com/search?q=private+query';
+
+  function landing(input: Parameters<typeof parseAttributionUrl>[0]): string {
+    const r = parseAttributionUrl(input);
+    if (r.kind !== 'touch') throw new Error('expected a touch');
+    return r.touch.landingPage;
+  }
+
+  it("defaults to the full href and full referrer URL (ruling #12)", () => {
+    const r = parseAttributionUrl({ url, referrer, currentHost: 'example.com' });
+    if (r.kind !== 'touch') throw new Error('expected a touch');
+    expect(r.touch.landingPage).toBe(url);
+    expect(r.touch.referrer).toBe(referrer);
+  });
+
+  it("'path' keeps the pathname only", () => {
+    expect(landing({ url, landingPageFormat: 'path' })).toBe('/pricing');
+  });
+
+  it("'path+allowlisted-query' keeps attribution keys case-insensitively, in URL order", () => {
+    expect(landing({ url, landingPageFormat: 'path+allowlisted-query' }))
+      .toBe('/pricing?UTM_Source=google&utm_medium=cpc&gclid=G1&sc_click_id=S1');
+  });
+
+  it("'path+allowlisted-query' honors a caller allowlist and drops an emptied query", () => {
+    expect(landing({ url, landingPageFormat: 'path+allowlisted-query', landingPageQueryAllowlist: ['GCLID'] }))
+      .toBe('/pricing?gclid=G1');
+    expect(landing({ url, landingPageFormat: 'path+allowlisted-query', landingPageQueryAllowlist: [] }))
+      .toBe('/pricing');
+  });
+
+  it("'host' stores the referrer hostname on both touch paths without changing classification", () => {
+    const inferred = parseAttributionUrl({ url: 'https://example.com/', referrer, currentHost: 'example.com', referrerFormat: 'host' });
+    const tagged = parseAttributionUrl({ url, referrer: 'https://news.example.org:8443/a?b=c', referrerFormat: 'host' });
+    if (inferred.kind !== 'touch' || tagged.kind !== 'touch') throw new Error('expected touches');
+    expect(inferred.touch.referrer).toBe('www.google.com');
+    expect(inferred.touch.channel).toBe('organic_search');
+    expect(inferred.touch.channelLabel).toBe('Google Organic');
+    expect(tagged.touch.referrer).toBe('news.example.org');
+    expect(tagged.touch.channel).toBe('paid_search');
+  });
+
+  it("'host' stores '' for a non-http(s) referrer on the campaign path", () => {
+    const r = parseAttributionUrl({ url, referrer: 'android-app://com.some.app/page', referrerFormat: 'host' });
+    if (r.kind !== 'touch') throw new Error('expected a touch');
+    expect(r.touch.referrer).toBe('');
+  });
+});
+
+describe('recordDirectTouch (#56, opt-in)', () => {
+  const now = '2026-10-23T10:00:00.000Z';
+
+  it('is off by default: no signal and internal referrers still return none', () => {
+    expect(parseAttributionUrl({ url: 'https://example.com/a', currentHost: 'example.com' }))
+      .toEqual({ kind: 'none', reason: 'no_signal' });
+    expect(parseAttributionUrl({ url: 'https://example.com/a', referrer: 'https://example.com/b', currentHost: 'example.com' }))
+      .toEqual({ kind: 'none', reason: 'internal_referrer' });
+  });
+
+  it('no signal yields an unmeasured direct touch', () => {
+    const r = parseAttributionUrl({
+      url: 'https://example.com/a?x=1', currentHost: 'example.com', now, recordDirectTouch: true, landingPageFormat: 'path',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch).toMatchObject({
+      source: '(direct)', medium: '(none)', referrer: '', landingPage: '/a', touchTimestamp: now,
+      channel: 'direct', channelLabel: 'Direct', clickIds: {}, unmeasured: true,
+    });
+  });
+
+  it('a same-site referrer yields an unmeasured before-capture touch', () => {
+    const r = parseAttributionUrl({
+      url: 'https://example.com/a', referrer: 'https://www.example.com/b', currentHost: 'example.com', now, recordDirectTouch: true,
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch).toMatchObject({
+      source: '', medium: '', referrer: '', landingPage: 'https://example.com/a',
+      channel: 'unknown', channelLabel: 'Unknown (before capture)', unmeasured: true,
+    });
+  });
+
+  it('measured landings are unchanged by the option', () => {
+    const input = { url: 'https://example.com/?utm_source=nl&utm_medium=email', currentHost: 'example.com', now };
+    expect(parseAttributionUrl({ ...input, recordDirectTouch: true })).toEqual(parseAttributionUrl(input));
+  });
+});
+
 describe('areRelatedHosts (ruling #8)', () => {
   it('is symmetric for sibling subdomains', () => {
     expect(areRelatedHosts('shop.example.com', 'example.com')).toBe(true);
@@ -273,6 +364,19 @@ describe('ignoredReferrerHosts (payment returns, WP plugin 1.11.0 parity)', () =
     expect(r.touch.source).toBe('newsletter');
     expect(r.touch.referrer).toBe('');
     expect(r.touch.channel).toBe('email');
+  });
+
+  it('keeps the ignored referrer blank in referrerFormat host', () => {
+    const r = parseAttributionUrl({
+      url: 'https://shop.example.com/thanks/?utm_source=newsletter',
+      referrer: 'https://checkout.stripe.com/c/pay/cs_test_synthetic',
+      currentHost: 'shop.example.com',
+      ignoredReferrerHosts: ['checkout.stripe.com'],
+      referrerFormat: 'host',
+    });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch.referrer).toBe('');
   });
 
   it('matches host or subdomain only, never look-alike hosts', () => {

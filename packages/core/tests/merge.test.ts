@@ -80,6 +80,57 @@ describe('first-touch guard counts click IDs (ruling #17)', () => {
   });
 });
 
+describe('unmeasured placeholders (#56, opt-in recordDirectTouch)', () => {
+  const direct = makeTouch({
+    source: '(direct)', medium: '(none)', landingPage: '/a', channel: 'direct',
+    channelLabel: 'Direct', unmeasured: true, touchTimestamp: '2026-10-23T10:00:00.000Z',
+  });
+  const beforeCapture = makeTouch({
+    landingPage: '/b', channel: 'unknown', channelLabel: 'Unknown (before capture)', unmeasured: true,
+  });
+  const measured = makeTouch({
+    source: 'google', medium: 'cpc', landingPage: '/c', channel: 'paid_search',
+    channelLabel: 'Google Ads', clickIds: { gclid: 'G1' }, touchTimestamp: '2026-10-24T10:00:00.000Z',
+  });
+
+  it('fills ft_ and lt_ of an empty payload', () => {
+    const out = mergeAttributionTouch(emptyAttribution(), direct);
+    expect(out).toMatchObject({
+      ft_source: '(direct)', ft_medium: '(none)', ft_channel: 'Direct', ft_landing_page: '/a',
+      lt_source: '(direct)', lt_channel: 'Direct', lt_landing_page: '/a',
+      click_id_history: '[]', attribution_selected_click_id: '',
+    });
+  });
+
+  it('never overwrites a stored touch, measured or placeholder', () => {
+    const withMeasured = mergeAttributionTouch(emptyAttribution(), measured);
+    expect(mergeAttributionTouch(withMeasured, direct)).toEqual(withMeasured);
+    const withPlaceholder = mergeAttributionTouch(emptyAttribution(), direct);
+    expect(mergeAttributionTouch(withPlaceholder, beforeCapture)).toEqual(withPlaceholder);
+  });
+
+  it('still writes top-level browser IDs when the touch is skipped', () => {
+    const stored = mergeAttributionTouch(emptyAttribution(), measured);
+    const out = mergeAttributionTouch(stored, { ...direct, browserIds: { fbp: 'fb.1.1.2' } });
+    expect(out.fbp).toBe('fb.1.1.2');
+    expect(out.lt_channel).toBe('Google Ads');
+  });
+
+  it.each([['Direct', direct], ['Unknown (before capture)', beforeCapture]])(
+    'the first measured touch replaces a %s first touch',
+    (_label, placeholder) => {
+      const stored = mergeAttributionTouch(emptyAttribution(), placeholder);
+      const out = mergeAttributionTouch(stored, measured);
+      expect(out).toMatchObject({
+        ft_source: 'google', ft_medium: 'cpc', ft_channel: 'Google Ads', ft_landing_page: '/c',
+        ft_gclid: 'G1', ft_touch_timestamp: '2026-10-24T10:00:00.000Z', lt_channel: 'Google Ads',
+      });
+      const later = mergeAttributionTouch(out, makeTouch({ source: 'nl', medium: 'email', channelLabel: 'Unknown' }));
+      expect(later.ft_source).toBe('google');
+    },
+  );
+});
+
 describe('click-ID ft_/lt_ mirror (ruling B, runtime findings 2026-08-23)', () => {
   it('mirrors captured click IDs into ft_ and lt_ at write time', () => {
     const stored = mergeAttributionTouch(
