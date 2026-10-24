@@ -79,6 +79,58 @@ These semantics match the ClickTrail WordPress plugin's consent bridge. The
 adapters are browser-only; without a `window` (SSR) they return a no-op
 disposer. Pass `{ target }` to supply a window-like object in tests.
 
+## Google Consent Mode v2
+
+`@vizuh/clicktrail-consent/google-consent-mode` passes the same decision to
+Google tags. Nothing runs until you call it.
+
+```ts
+import { createConsentGate, createConsentHub } from '@vizuh/clicktrail-consent';
+import {
+  applyConsentModeUpdate,
+  consentModeDefaultScript,
+  loadConsentRecord,
+  saveConsentRecord,
+} from '@vizuh/clicktrail-consent/google-consent-mode';
+
+const KEY = 'site:consent';
+
+// Server/head: render this inline script BEFORE the GTM snippet
+// (add your CSP nonce to the <script> element that wraps it).
+const head = consentModeDefaultScript({ storageKey: KEY });
+
+// Browser: store each decision and tell Google tags.
+const hub = createConsentHub();
+hub.subscribe((record) => {
+  saveConsentRecord(KEY, record);
+  applyConsentModeUpdate(record);
+});
+
+// Gate the SDK on the stored record. loadConsentRecord returns null while
+// pending (no answer yet) and the stored record once denied, so the host can
+// report pending vs denied (e.g. to its server). The gate blocks both.
+const consentGate = createConsentGate(() => loadConsentRecord(KEY));
+```
+
+| `ConsentRecord` | `analytics_storage` | `ad_storage`, `ad_user_data`, `ad_personalization` |
+| --- | --- | --- |
+| none stored (pending) | denied (default only, no `update`) | denied |
+| `analytics: true` | granted | denied |
+| `analytics: true, advertising: true` | granted | granted |
+| `state: 'denied'`, no flags | denied | denied |
+
+- Purpose flags decide the signals, not `state`: CMP adapters set `state` from
+  marketing, so analytics-only consent still grants `analytics_storage`.
+  Advertising uses `advertising`, falling back to `marketing` when unset.
+- The default script reads the JSON record written by `saveConsentRecord`,
+  defines `dataLayer`/`gtag` if missing, and sets `wait_for_update: 500`
+  (the WordPress plugin's value; `waitForUpdate: 0` omits it).
+- `applyConsentModeUpdate` uses the page's `gtag` when present, otherwise
+  pushes gtag's `arguments` object to `dataLayer`. It returns the signals it
+  sent, or `null` for pending or without a `window` (SSR).
+- Regional defaults and the non-ad storage types
+  (`functionality_storage`, …) are left to the host.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
