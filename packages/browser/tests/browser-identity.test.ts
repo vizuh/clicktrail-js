@@ -189,3 +189,229 @@ describe('createIdentityStore', () => {
     expect(fresh.sessionId).toBe(uuidV4FromBytes(new Uint8Array(16).fill(4)));
   });
 });
+
+describe('rollSession max length (pure, table-driven)', () => {
+  const IDLE = 2 * 60 * 60 * 1000;
+  const MAX = 24 * 60 * 60 * 1000;
+  const table: {
+    name: string;
+    lastEventTs: number;
+    sessionStartedAt: number | null;
+    now: number;
+    maxMs: number | undefined;
+    rolls: boolean;
+  }[] = [
+    { name: 'active, inside max -> keep', lastEventTs: MAX - 10, sessionStartedAt: 0, now: MAX - 1, maxMs: MAX, rolls: false },
+    { name: 'active, exactly at max -> roll', lastEventTs: MAX - 10, sessionStartedAt: 0, now: MAX, maxMs: MAX, rolls: true },
+    { name: 'active, past max -> roll', lastEventTs: MAX, sessionStartedAt: 0, now: MAX + 1, maxMs: MAX, rolls: true },
+    { name: 'no max configured -> idle rule only', lastEventTs: 5 * MAX, sessionStartedAt: 0, now: 5 * MAX + 1, maxMs: undefined, rolls: false },
+    { name: 'unknown start -> idle rule only', lastEventTs: 5 * MAX, sessionStartedAt: null, now: 5 * MAX + 1, maxMs: MAX, rolls: false },
+    { name: 'start in the future (skew) -> no max roll', lastEventTs: 0, sessionStartedAt: 10, now: 5, maxMs: 1, rolls: false },
+    { name: 'idle still rolls inside max', lastEventTs: 0, sessionStartedAt: 0, now: IDLE, maxMs: MAX, rolls: true },
+  ];
+  for (const c of table) {
+    it(c.name, () => {
+      expect(
+        rollSession({
+          lastEventTs: c.lastEventTs,
+          now: c.now,
+          timeoutMs: IDLE,
+          sessionStartedAt: c.sessionStartedAt,
+          ...(c.maxMs !== undefined ? { maxMs: c.maxMs } : {}),
+        }),
+      ).toBe(c.rolls);
+    });
+  }
+});
+
+describe('createIdentityStore session timing', () => {
+  const MIN = 60 * 1000;
+
+  it('uses a custom idle timeout', () => {
+    let now = 0;
+    let n = 0;
+    const store = createIdentityStore({
+      adapter: fakeAdapter(),
+      randomBytes: () => new Uint8Array(16).fill(n++),
+      nowMs: () => now,
+      timeoutMs: 120 * MIN,
+    });
+    const first = store.current();
+    now += 119 * MIN;
+    expect(store.current().sessionId).toBe(first.sessionId);
+    now += 2 * MIN; // 121 min since the last recorded activity (#46 adds per-event refresh)
+    const rolled = store.current();
+    expect(rolled.sessionNumber).toBe(2);
+    expect(rolled.visitorId).toBe(first.visitorId);
+  });
+
+  it('rolls at the maximum session length even while active', () => {
+    let now = 0;
+    let n = 0;
+    const store = createIdentityStore({
+      adapter: fakeAdapter(),
+      randomBytes: () => new Uint8Array(16).fill(n++),
+      nowMs: () => now,
+      timeoutMs: 120 * MIN,
+      maxMs: 24 * 60 * MIN,
+    });
+    const first = store.current();
+    for (let i = 0; i < 23; i++) {
+      now += 60 * MIN;
+      store.touch();
+    }
+    now += 59 * MIN;
+    expect(store.current().sessionId).toBe(first.sessionId);
+    now += MIN; // exactly 24 h after session start
+    const rolled = store.current();
+    expect(rolled.sessionId).not.toBe(first.sessionId);
+    expect(rolled.sessionNumber).toBe(2);
+    expect(rolled.visitorId).toBe(first.visitorId);
+  });
+
+  it('persists session_started_at and backfills it from last_event_ts for older states', () => {
+    let now = 1_000;
+    const adapter = fakeAdapter();
+    adapter.set(SESSION_STATE_KEY, JSON.stringify({ session_id: 'legacy-session', session_number: 3, last_event_ts: 1_000 }));
+    adapter.set(VISITOR_ID_FALLBACK_KEY, 'legacy-visitor');
+    const store = createIdentityStore({
+      adapter,
+      randomBytes: () => new Uint8Array(16).fill(9),
+      nowMs: () => now,
+      maxMs: 10_000,
+    });
+    now = 5_000;
+    store.touch();
+    expect(JSON.parse(adapter.map.get(SESSION_STATE_KEY)!)).toEqual({
+      session_id: 'legacy-session',
+      session_number: 3,
+      session_started_at: 1_000,
+      last_event_ts: 5_000,
+    });
+    now = 11_000; // 10 s after the backfilled start
+    const rolled = store.current();
+    expect(rolled.sessionNumber).toBe(4);
+    expect(rolled.visitorId).toBe('legacy-visitor');
+    expect(JSON.parse(adapter.map.get(SESSION_STATE_KEY)!).session_started_at).toBe(11_000);
+  });
+});
+
+describe('createIdentityStore seed', () => {
+  const VISITOR = '3f0b2c9e-6a1d-4b7e-9c2a-8d5e4f1a2b3c';
+  const SESSION = '7c1d4e2f-0a9b-4c8d-8e7f-6a5b4c3d2e1f';
+
+  function seededStore(seed: () => unknown, opts: { now?: () => number; maxMs?: number } = {}) {
+    const adapter = fakeAdapter();
+    const rejected: string[] = [];
+    let calls = 0;
+    const store = createIdentityStore({
+      adapter,
+      randomBytes: () => new Uint8Array(16).fill(0x5a),
+      nowMs: opts.now ?? (() => 10_000),
+      ...(opts.maxMs !== undefined ? { maxMs: opts.maxMs } : {}),
+      seed: () => {
+        calls++;
+        return seed() as never;
+      },
+      onSeedRejected: (reason) => rejected.push(reason),
+    });
+    return { adapter, store, rejected, calls: () => calls };
+  }
+
+  it('adopts a valid seed once and persists it like a minted identity', () => {
+    const { adapter, store, calls } = seededStore(() => ({ visitorId: VISITOR, sessionId: SESSION, sessionStartedAt: 4_000 }));
+    expect(store.current()).toEqual({ visitorId: VISITOR, sessionId: SESSION, sessionNumber: 1 });
+    expect(store.current()).toEqual({ visitorId: VISITOR, sessionId: SESSION, sessionNumber: 1 });
+    expect(calls()).toBe(1);
+    expect(adapter.map.get(VISITOR_ID_FALLBACK_KEY)).toBe(VISITOR);
+    expect(adapter.map.get(SESSION_ID_FALLBACK_KEY)).toBe(SESSION);
+    expect(JSON.parse(adapter.map.get(SESSION_STATE_KEY)!)).toEqual({
+      session_id: SESSION,
+      session_number: 1,
+      session_started_at: 4_000,
+      last_event_ts: 10_000,
+    });
+  });
+
+  it('accepts plugin-style fallback IDs', () => {
+    const { store } = seededStore(() => ({ visitorId: 'vis_0123456789abcdef', sessionId: 'sess_0123456789abcdef' }));
+    expect(store.current()).toMatchObject({ visitorId: 'vis_0123456789abcdef', sessionId: 'sess_0123456789abcdef' });
+  });
+
+  it('visitor-only seed keeps the visitor and mints a session', () => {
+    const { store } = seededStore(() => ({ visitorId: VISITOR }));
+    const snap = store.current();
+    expect(snap.visitorId).toBe(VISITOR);
+    expect(snap.sessionId).toBe(uuidV4FromBytes(new Uint8Array(16).fill(0x5a)));
+    expect(snap.sessionNumber).toBe(1);
+  });
+
+  it('never calls the seed when a ClickTrail identity already exists', () => {
+    const { adapter, store, calls } = seededStore(() => ({ visitorId: VISITOR, sessionId: SESSION }));
+    adapter.set(SESSION_STATE_KEY, JSON.stringify({ session_id: 'existing-session', session_number: 2, last_event_ts: 9_000 }));
+    adapter.set(VISITOR_ID_FALLBACK_KEY, 'existing-visitor');
+    expect(store.current()).toEqual({ visitorId: 'existing-visitor', sessionId: 'existing-session', sessionNumber: 2 });
+    expect(calls()).toBe(0);
+  });
+
+  it('never calls the seed when only the visitor fallback key exists', () => {
+    const { adapter, store, calls } = seededStore(() => ({ visitorId: VISITOR }));
+    adapter.set(VISITOR_ID_FALLBACK_KEY, 'existing-visitor');
+    store.current();
+    expect(calls()).toBe(0);
+  });
+
+  it('a seeded session already past the max length rolls to session #2 for the seeded visitor', () => {
+    const { store } = seededStore(() => ({ visitorId: VISITOR, sessionId: SESSION, sessionStartedAt: 0 }), { maxMs: 10_000 });
+    const snap = store.current();
+    expect(snap.visitorId).toBe(VISITOR);
+    expect(snap.sessionId).not.toBe(SESSION);
+    expect(snap.sessionNumber).toBe(2);
+  });
+
+  const invalid: { name: string; seed: unknown }[] = [
+    { name: 'too short', seed: { visitorId: 'abc' } },
+    { name: 'illegal characters', seed: { visitorId: 'visitor id with spaces' } },
+    { name: 'non-string id', seed: { sessionId: 12345678 } },
+    { name: 'leading separator', seed: { visitorId: '_abcdefghij' } },
+    { name: 'too long', seed: { visitorId: 'a'.repeat(129) } },
+    { name: 'future start', seed: { sessionId: SESSION, sessionStartedAt: 10_001 } },
+    { name: 'non-finite start', seed: { sessionId: SESSION, sessionStartedAt: Number.NaN } },
+    { name: 'start without session', seed: { visitorId: VISITOR, sessionStartedAt: 1 } },
+    { name: 'non-object', seed: 'visitor' },
+  ];
+  for (const c of invalid) {
+    it(`rejects the whole seed (${c.name}) and mints fresh IDs`, () => {
+      const { store, rejected } = seededStore(() => c.seed);
+      const snap = store.current();
+      expect(snap.visitorId).toBe(uuidV4FromBytes(new Uint8Array(16).fill(0x5a)));
+      expect(snap.visitorId).not.toBe(VISITOR);
+      expect(rejected).toHaveLength(1);
+    });
+  }
+
+  it('a throwing seed is rejected without breaking identity', () => {
+    const { store, rejected } = seededStore(() => {
+      throw new Error('host cookie unreadable');
+    });
+    expect(store.current().sessionNumber).toBe(1);
+    expect(rejected).toEqual(['identity seed threw; minting fresh identity.']);
+  });
+
+  it('null / empty seeds mint fresh IDs without a rejection', () => {
+    for (const value of [null, undefined, {}]) {
+      const { store, rejected, calls } = seededStore(() => value);
+      expect(store.current().visitorId).toBe(uuidV4FromBytes(new Uint8Array(16).fill(0x5a)));
+      expect(rejected).toHaveLength(0);
+      expect(calls()).toBe(1);
+    }
+  });
+
+  it('is not consulted again after clear() (withdrawal cannot resurrect host IDs)', () => {
+    const { store, calls } = seededStore(() => ({ visitorId: VISITOR, sessionId: SESSION }));
+    expect(store.current().visitorId).toBe(VISITOR);
+    store.clear();
+    expect(store.current().visitorId).not.toBe(VISITOR);
+    expect(calls()).toBe(1);
+  });
+});
