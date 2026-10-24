@@ -146,6 +146,20 @@ is unaffected. The fix should be ported to the plugin.
 | `browser/payload-store.ts` | legacy key aliases table (see 2.2) | ATTRIBUTION_KEY_ALIASES `:48-59` |
 | `tools/wp-runtime/run-parity.mjs` | executes the REAL plugin JS (GPL) loaded as text into a Node `vm` sandbox — development-time harness ONLY | loads `../click-trail-handler/assets/js/clicutcl-attribution.js` |
 
+Session activity (`browser/identity.ts`, issue #63) is authored here, not
+ported. It deviates from the plugin's session refresh (plugin 1.11.0
+`clicutcl-attribution.js:1650-1797`: `touch()` once per script run, fixed
+30-minute idle, no maximum):
+
+| Engine (#63) | Plugin | Why |
+|---|---|---|
+| `track()` records activity by default (`identity.activityOnTrack`, opt-out); hosts may call `touchSession()` on their own activity signals | activity = one page run | Hosts migrating a tracker that counts only visible activity (pointer/key/route) need the same signal to keep `session_id` byte-identical. |
+| `getSession({ passive: true })` reads without creating, rolling or writing | every read is load-or-roll | Hosts that open a session only after activity need a read that does not create one. |
+| A seed may carry `lastActivityAt` | no host seed | The seeded session keeps its real idle clock. |
+
+The parity harness does not exercise identity, so `PARITY-RUN.md` is
+unaffected. Cookie-backed identity stays with #46.
+
 ### 2.5 Explicitly NOT derived (checked, cleared)
 
 - **`conversation/chatwoot.ts` attribute naming**: there is NO Chatwoot

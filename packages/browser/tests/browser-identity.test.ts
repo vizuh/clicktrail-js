@@ -239,7 +239,7 @@ describe('createIdentityStore session timing', () => {
     const first = store.current();
     now += 119 * MIN;
     expect(store.current().sessionId).toBe(first.sessionId);
-    now += 2 * MIN; // 121 min since the last recorded activity (#46 adds per-event refresh)
+    now += 2 * MIN; // 121 min since the last recorded activity (current() is not activity)
     const rolled = store.current();
     expect(rolled.sessionNumber).toBe(2);
     expect(rolled.visitorId).toBe(first.visitorId);
@@ -375,6 +375,10 @@ describe('createIdentityStore seed', () => {
     { name: 'non-string id', seed: { sessionId: 12345678 } },
     { name: 'leading separator', seed: { visitorId: '_abcdefghij' } },
     { name: 'too long', seed: { visitorId: 'a'.repeat(129) } },
+    { name: 'future last activity', seed: { sessionId: SESSION, lastActivityAt: 10_001 } },
+    { name: 'negative last activity', seed: { sessionId: SESSION, lastActivityAt: -1 } },
+    { name: 'last activity without session', seed: { visitorId: VISITOR, lastActivityAt: 1 } },
+    { name: 'last activity before start', seed: { sessionId: SESSION, sessionStartedAt: 5_000, lastActivityAt: 4_999 } },
     { name: 'future start', seed: { sessionId: SESSION, sessionStartedAt: 10_001 } },
     { name: 'non-finite start', seed: { sessionId: SESSION, sessionStartedAt: Number.NaN } },
     { name: 'start without session', seed: { visitorId: VISITOR, sessionStartedAt: 1 } },
@@ -413,5 +417,98 @@ describe('createIdentityStore seed', () => {
     store.clear();
     expect(store.current().visitorId).not.toBe(VISITOR);
     expect(calls()).toBe(1);
+  });
+});
+
+describe('createIdentityStore activity and passive reads', () => {
+  const MIN = 60 * 1000;
+  const HOUR = 60 * MIN;
+
+  function store(opts: { timeoutMs?: number; maxMs?: number; seed?: () => unknown } = {}) {
+    let now = 1_700_000_000_000;
+    let n = 0;
+    const adapter = fakeAdapter();
+    const s = createIdentityStore({
+      adapter,
+      randomBytes: () => new Uint8Array(16).fill(++n),
+      nowMs: () => now,
+      ...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
+      ...(opts.maxMs !== undefined ? { maxMs: opts.maxMs } : {}),
+      ...(opts.seed !== undefined ? { seed: opts.seed as never } : {}),
+    });
+    return {
+      adapter,
+      store: s,
+      advance: (ms: number) => { now += ms; },
+      now: () => now,
+      randomCalls: () => n,
+    };
+  }
+
+  it('touch() on an empty store creates the session and returns it', () => {
+    const { adapter, store: s } = store();
+    const snap = s.touch();
+    expect(snap.sessionNumber).toBe(1);
+    expect(JSON.parse(adapter.map.get(SESSION_STATE_KEY)!).session_id).toBe(snap.sessionId);
+  });
+
+  it('touch() rolls an expired session instead of reviving it', () => {
+    const { store: s, advance } = store();
+    const first = s.current();
+    advance(31 * MIN);
+    const touched = s.touch();
+    expect(touched.sessionId).not.toBe(first.sessionId);
+    expect(touched.sessionNumber).toBe(2);
+    expect(touched.visitorId).toBe(first.visitorId);
+  });
+
+  it('touch() never moves last_event_ts backwards on clock skew', () => {
+    const { adapter, store: s, advance, now } = store();
+    s.current();
+    const createdAt = now();
+    advance(-5 * MIN);
+    s.touch();
+    expect(JSON.parse(adapter.map.get(SESSION_STATE_KEY)!).last_event_ts).toBe(createdAt);
+  });
+
+  it('peek() never writes, never mints, and empties an expired session', () => {
+    const { adapter, store: s, advance, randomCalls } = store({ timeoutMs: 2 * HOUR });
+    expect(s.peek()).toEqual({ visitorId: '', sessionId: '', sessionNumber: null });
+    expect(adapter.map.size).toBe(0);
+    expect(randomCalls()).toBe(0);
+
+    const live = s.current();
+    const before = new Map(adapter.map);
+    advance(2 * HOUR - 1);
+    expect(s.peek()).toEqual({ visitorId: live.visitorId, sessionId: live.sessionId, sessionNumber: 1 });
+    advance(1);
+    expect(s.peek()).toEqual({ visitorId: live.visitorId, sessionId: '', sessionNumber: null });
+    expect(adapter.map).toEqual(before);
+    expect(randomCalls()).toBe(2);
+  });
+
+  it('peek() does not consult the seed', () => {
+    let calls = 0;
+    const { store: s } = store({ seed: () => { calls++; return { visitorId: 'host-visitor-0001' }; } });
+    expect(s.peek().visitorId).toBe('');
+    expect(calls).toBe(0);
+    expect(s.current().visitorId).toBe('host-visitor-0001');
+    expect(calls).toBe(1);
+  });
+
+  it('a seed with lastActivityAt keeps its own idle clock (start defaults to it)', () => {
+    const SESSION = '7c1d4e2f-0a9b-4c8d-8e7f-6a5b4c3d2e1f';
+    let seedAt = 0;
+    const ctx = store({
+      timeoutMs: 2 * HOUR,
+      seed: () => ({ sessionId: SESSION, lastActivityAt: seedAt }),
+    });
+    seedAt = ctx.now() - HOUR;
+    expect(ctx.store.current().sessionId).toBe(SESSION);
+    expect(JSON.parse(ctx.adapter.map.get(SESSION_STATE_KEY)!)).toMatchObject({
+      session_id: SESSION,
+      session_started_at: seedAt,
+      last_event_ts: seedAt,
+    });
   });
 });

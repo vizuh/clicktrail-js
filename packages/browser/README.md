@@ -63,7 +63,7 @@ const clickTrail = createClickTrail({
   consentGate: () => hasMarketingConsent(),
   storage: {},
   identity: {
-    seed: () => readLegacyIds(), // { visitorId?, sessionId?, sessionStartedAt? } | null
+    seed: () => readLegacyIds(), // { visitorId?, sessionId?, sessionStartedAt?, lastActivityAt? } | null
     sessionIdleMs: 2 * 60 * 60 * 1000, // default: 30 minutes
     sessionMaxMs: 24 * 60 * 60 * 1000, // default: no maximum
   },
@@ -74,15 +74,54 @@ const clickTrail = createClickTrail({
   only calls it while consent allows and when ClickTrail storage has no
   identity yet. It never replaces an existing ClickTrail identity.
 - IDs must be 8-128 characters of `A-Z a-z 0-9 _ . : -`, starting with a letter
-  or digit (UUIDs pass). `sessionStartedAt` is epoch milliseconds, not in the
-  future, and needs `sessionId`. If any field is invalid, ClickTrail rejects
-  the whole seed, reports `identity_seed_rejected`, and creates fresh IDs.
-- Only seed a session that your site still treats as active. A seeded session
-  that is already older than `sessionMaxMs` becomes session 2 for the same
-  visitor.
+  or digit (UUIDs pass). `sessionStartedAt` and `lastActivityAt` are epoch
+  milliseconds, not in the future, and need `sessionId`; `lastActivityAt`
+  may not be before `sessionStartedAt`. If any field is invalid, ClickTrail
+  rejects the whole seed, reports `identity_seed_rejected`, and creates fresh
+  IDs.
+- Pass `lastActivityAt` to keep the seeded session's idle clock: with
+  `sessionIdleMs` of 2 hours, a session last active 1 hour ago survives one
+  more hour without activity. Without `sessionStartedAt`, the session is
+  taken to start at `lastActivityAt`. Without `lastActivityAt`, the seeded
+  session counts as active when ClickTrail adopts it, so only seed a session
+  that your site still treats as active.
+- A seeded session that is already past `sessionIdleMs` (from
+  `lastActivityAt`) or `sessionMaxMs` becomes session 2 for the same visitor.
 - After consent is withdrawn, the seed is not used again for that instance.
   Delete your legacy IDs when consent is withdrawn, or the next page load
   will seed them again.
+
+## Session activity
+
+`sessionIdleMs` counts from the last recorded activity. By default every
+delivered `track()` records activity. To decide what counts as activity
+yourself, turn that off and call `touchSession()`:
+
+```ts
+const clickTrail = createClickTrail({
+  // ...
+  storage: {},
+  identity: { sessionIdleMs: 2 * 60 * 60 * 1000, activityOnTrack: false },
+});
+
+for (const type of ['pointerdown', 'keydown']) {
+  addEventListener(type, () => {
+    if (document.visibilityState === 'visible') clickTrail.touchSession();
+  }, { passive: true });
+}
+
+// Read without creating, rolling or writing a session:
+const { sessionId } = clickTrail.getSession({ passive: true }); // '' once expired
+```
+
+- `touchSession()` is consent-gated. It starts a new session when none is
+  stored or the stored one expired, then restarts the idle window. It returns
+  the session snapshot.
+- `getSession()` without options still creates the session when needed but
+  does not count as activity.
+- `getSession({ passive: true })` never writes storage and never calls
+  `seed`. It returns an empty `sessionId`/`sessionNumber` when no session is
+  stored or the stored one expired.
 
 ## Boundaries
 

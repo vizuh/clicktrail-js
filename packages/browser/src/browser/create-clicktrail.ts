@@ -233,6 +233,23 @@ export interface ClickTrailIdentityConfig {
   sessionIdleMs?: number;
   /** Maximum session length in ms from session start (positive integer). Default: none. */
   sessionMaxMs?: number;
+  /**
+   * Count every delivered `track()` as session activity (same as calling
+   * `touchSession()` first), so `sessionIdleMs` measures inactivity.
+   * Set false when the host decides what counts as activity and calls
+   * `touchSession()` itself. Default: true.
+   */
+  activityOnTrack?: boolean;
+}
+
+export interface GetSessionOptions {
+  /**
+   * Read the stored identity without creating, rolling or touching it and
+   * without writing storage (or consulting `identity.seed`). The session
+   * fields are empty when no session is stored or it has expired.
+   * Default: false.
+   */
+  passive?: boolean;
 }
 
 export interface ClickTrailInstance {
@@ -263,7 +280,19 @@ export interface ClickTrailInstance {
   getField(key: string): string;
   /** Reset all stored attribution state. */
   clearData(): void;
-  getSession(): SessionSnapshot;
+  /**
+   * Current visitor/session identity. By default creates the session when
+   * none is stored or the stored one expired; `{ passive: true }` only reads.
+   * Empty while consent is denied.
+   */
+  getSession(options?: GetSessionOptions): SessionSnapshot;
+  /**
+   * Record session activity now (e.g. a visible pointerdown/keydown or a
+   * route change): load-or-roll the session, then restart its inactivity
+   * window. Consent-gated; no-op returning the pre-start snapshot before
+   * start(). Returns the resulting snapshot.
+   */
+  touchSession(): SessionSnapshot;
 }
 
 const warnConsoleSink: DiagnosticSink = {
@@ -333,7 +362,11 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     }
     assertPositiveMs('sessionIdleMs', identityCfg.sessionIdleMs);
     assertPositiveMs('sessionMaxMs', identityCfg.sessionMaxMs);
+    if (identityCfg.activityOnTrack !== undefined && typeof identityCfg.activityOnTrack !== 'boolean') {
+      throw new TypeError('clicktrail: identity.activityOnTrack must be a boolean.');
+    }
   }
+  const activityOnTrack = identityCfg?.activityOnTrack ?? true;
   let eventSequence = 0;
 
   let destinationCleanupFailed = false;
@@ -453,6 +486,13 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     visitorId: snap.visitorId,
     sessionId: snap.sessionId,
     sessionNumber: String(snap.sessionNumber),
+  });
+
+  /** Pre-start / storage-less view: identity carried in the payload. */
+  const payloadSessionSnapshot = (): SessionSnapshot => ({
+    visitorId: payload['visitor_id'] ?? '',
+    sessionId: payload['session_id'] ?? '',
+    sessionNumber: payload['session_number'] ?? '',
   });
 
   const consentAllows = (): boolean => {
@@ -712,7 +752,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       if (isLeadEvent(eventName) && !eventData.lead_id) {
         eventData.lead_id = `lead_${String(eventData.event_id).replace(/^evt_/, '')}`;
       }
-      const envelopeContext: MarketingTrailContext = { identity: instance.getSession() };
+      const envelopeContext: MarketingTrailContext = {
+        identity: activityOnTrack ? instance.touchSession() : instance.getSession(),
+      };
       if (config.workspaceId !== undefined) envelopeContext.workspaceId = config.workspaceId;
       if (config.siteId !== undefined) envelopeContext.siteId = config.siteId;
       const consentState = config.consentState?.();
@@ -794,20 +836,34 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       }
     },
 
-    getSession(): SessionSnapshot {
+    getSession(options): SessionSnapshot {
       // Identifiers are created only while consent allows (DATA-MODEL.md:246);
       // a denied gate yields an empty snapshot instead of regenerating.
       if (!consentAllows()) {
         return { visitorId: '', sessionId: '', sessionNumber: '' };
       }
       if (started && identity) {
+        if (options?.passive === true) {
+          const peeked = identity.peek();
+          return {
+            visitorId: peeked.visitorId,
+            sessionId: peeked.sessionId,
+            sessionNumber: peeked.sessionNumber === null ? '' : String(peeked.sessionNumber),
+          };
+        }
         return snapshotFromIdentity(identity.current());
       }
-      return {
-        visitorId: payload['visitor_id'] ?? '',
-        sessionId: payload['session_id'] ?? '',
-        sessionNumber: payload['session_number'] ?? '',
-      };
+      return payloadSessionSnapshot();
+    },
+
+    touchSession(): SessionSnapshot {
+      if (!consentAllows()) {
+        return { visitorId: '', sessionId: '', sessionNumber: '' };
+      }
+      if (started && identity) {
+        return snapshotFromIdentity(identity.touch());
+      }
+      return payloadSessionSnapshot();
     },
   };
   return instance;
