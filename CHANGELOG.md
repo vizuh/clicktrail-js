@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consent is pending, deduplicate repeated events, and observe in-page
   withdrawals (#39).
 
+### Security
+
+- Workspace dependency overrides lift the dev/peer graph past the current
+  high/critical advisories (Astro 7.4.2, Nuxt 4.6.2, sharp 0.35.5, undici,
+  brace-expansion, source-map-js, shell-quote, launch-editor, vite 6.4.5) so
+  `pnpm audit --prod --audit-level high` passes again. Two advisories with no
+  patched release are ignored in `pnpm.auditConfig` until upstream ships a
+  fix: GHSA-86w9-cpqp-85rv (`node-forge`, reached only through Nuxt's
+  nitropack/listhen dev server) and GHSA-mrhx-c7xc-m3w5 (`zod@3`, reached only
+  through the `@builder.io/qwik-city` peer, which ClickTrail never imports).
+
 ## [0.2.0-rc.2] - pending publication
 
 Candidate prepared 2026-09-13 from merged PR #28 for matching GitHub/npm
