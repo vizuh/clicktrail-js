@@ -43,7 +43,11 @@ export {
   parseCookieMap,
   parseGaSessionDataValue,
 } from './browser-ids.js';
-export type { CollectBrowserIdsOptions } from './browser-ids.js';
+export type {
+  CollectBrowserIdsOptions,
+  CookieDuplicatePolicy,
+  ParseCookieMapOptions,
+} from './browser-ids.js';
 export { createClickTrail } from './create-clicktrail.js';
 export type {
   ClickTrailConfig,

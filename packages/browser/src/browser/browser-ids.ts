@@ -22,14 +22,46 @@
  * GS2 tokens read after the `GS2.<n>.` prefix, and no numeric-token fallback
  * for non-GS1/GS2 values. A wrong session ID splits the GA4 session; a
  * missing one does not.
+ *
+ * Duplicate cookie names (issue #66): parseCookieMap keeps the last
+ * occurrence by default (plugin getCookieMap parity) or the first with
+ * `duplicates: 'first'`, which createClickTrail uses for browser IDs.
  */
 import { BROWSER_ID_KEYS, DIAGNOSTIC_CODES, parseGaClientIdValue } from '@vizuh/clicktrail-core';
 import type { AttributionPayload, DiagnosticSink } from '@vizuh/clicktrail-core';
 
+/** Which occurrence {@link parseCookieMap} keeps when a cookie name repeats. */
+export type CookieDuplicatePolicy = 'first' | 'last';
+
+export interface ParseCookieMapOptions {
+  /**
+   * Which value to keep when a name appears more than once (one cookie per
+   * domain or path). Browsers list longer paths first and, for equal paths,
+   * older cookies first (RFC 6265 §5.4).
+   * - `'last'` (default): plugin getCookieMap parity; matches the cookie
+   *   storage adapter, so server reads of ClickTrail's own cookies agree with
+   *   the browser.
+   * - `'first'`: what `document.cookie.match(...)` readers and gtag's `_ga`
+   *   read take. createClickTrail reads browser-ID cookies this way.
+   */
+  duplicates?: CookieDuplicatePolicy;
+  /**
+   * Receives `browser_id_cookie_duplicate` (at most once per call) when
+   * `_ga`, `_ga_<property>`, `_fbp` or `_fbc` appears more than once with
+   * different values. Context carries cookie names, never values.
+   */
+  sink?: DiagnosticSink;
+}
+
 /** Parse a raw document.cookie header into a name->value map (lowercased names). */
-export function parseCookieMap(raw: string): Record<string, string> {
+export function parseCookieMap(raw: string, options: ParseCookieMapOptions = {}): Record<string, string> {
+  const duplicates = options.duplicates ?? 'last';
+  if (duplicates !== 'first' && duplicates !== 'last') {
+    throw new TypeError(`clicktrail: invalid cookie duplicates policy '${String(duplicates)}'; expected 'first' or 'last'.`);
+  }
   const out: Record<string, string> = {};
   if (!raw) return out;
+  const conflicting = new Set<string>();
   for (const pair of raw.split(';')) {
     const trimmed = pair.trim();
     if (!trimmed) continue;
@@ -43,7 +75,20 @@ export function parseCookieMap(raw: string): Record<string, string> {
     } catch {
       // Malformed escape: keep the raw value rather than dropping the entry.
     }
+    if (Object.prototype.hasOwnProperty.call(out, name)) {
+      const tracked = name === '_ga' || name === '_fbp' || name === '_fbc' || name.startsWith('_ga_');
+      if (tracked && out[name] !== value) conflicting.add(name);
+      if (duplicates === 'first') continue;
+    }
     out[name] = value;
+  }
+  if (conflicting.size > 0) {
+    options.sink?.report({
+      code: DIAGNOSTIC_CODES.BROWSER_ID_COOKIE_DUPLICATE,
+      level: 'warn',
+      message: `Browser-ID cookies are set more than once with different values (one per domain or path); the ${duplicates} occurrence is used.`,
+      context: { cookie_names: [...conflicting].join(','), duplicates },
+    });
   }
   return out;
 }

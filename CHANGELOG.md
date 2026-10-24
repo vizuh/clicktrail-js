@@ -67,6 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   while pending; `consentModeSignals` maps analytics and advertising
   separately; `loadConsentRecord` / `saveConsentRecord` keep pending (`null`)
   apart from denied (#54).
+- `parseCookieMap(raw, { duplicates: 'first' | 'last', sink })` chooses which
+  occurrence of a repeated cookie name is kept (default `'last'`, unchanged)
+  and reports `browser_id_cookie_duplicate` when `_ga`, `_ga_<property>`,
+  `_fbp` or `_fbc` repeats with different values.
+  `createClickTrail({ browserIdCookieDuplicates })` passes the policy to its
+  browser-ID read and reports the diagnostic once per instance (#66).
 
 ### Fixed
 
@@ -75,6 +81,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Values that are neither GS1 nor GS2 no longer produce a `ga_session_id`
   from the first digits found. A cookie without a session ID is skipped when
   choosing the unpinned session cookie (#47).
+- With a duplicated `_ga`, `_fbp` or other browser-ID cookie,
+  `createClickTrail` now uses the first occurrence in `document.cookie`, as
+  gtag does for `_ga`, instead of the last. Set
+  `browserIdCookieDuplicates: 'last'` to keep the previous result (#66).
 
 ### Security
 

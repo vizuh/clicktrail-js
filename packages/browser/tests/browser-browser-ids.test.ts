@@ -19,6 +19,44 @@ describe('parseCookieMap', () => {
       x: 'a b',
     });
   });
+
+  // Order as Chrome lists it: longer path first, then older first (RFC 6265 §5.4).
+  const TWO_GA = '_ga=GA1.1.1.100; _ga=GA1.1.2.200';
+
+  it('keeps the last duplicate by default and the first with duplicates: first', () => {
+    expect(parseCookieMap(TWO_GA)).toEqual({ _ga: 'GA1.1.2.200' });
+    expect(parseCookieMap(TWO_GA, { duplicates: 'last' })).toEqual({ _ga: 'GA1.1.2.200' });
+    expect(parseCookieMap(TWO_GA, { duplicates: 'first' })).toEqual({ _ga: 'GA1.1.1.100' });
+    expect(collectBrowserIdsFromCookies(parseCookieMap(TWO_GA, { duplicates: 'first' }))).toEqual({
+      ga_client_id: '1.100',
+    });
+    expect(collectBrowserIdsFromCookies(parseCookieMap(TWO_GA))).toEqual({ ga_client_id: '2.200' });
+  });
+
+  it('rejects an unknown duplicates policy', () => {
+    expect(() => parseCookieMap('', { duplicates: 'newest' as never })).toThrow(TypeError);
+  });
+
+  it('reports differing duplicates of tracked browser-ID cookies once per call, names only', () => {
+    const reported: Array<{ code: string; context?: Record<string, unknown> }> = [];
+    const sink = { report: (d: { code: string; context?: Record<string, unknown> }) => reported.push(d) };
+    parseCookieMap(
+      `${TWO_GA}; _ga_ABC123=GS2.1.s1111111111; _ga_ABC123=GS2.1.s2222222222; ` +
+        '_fbp=fb.1.1.1; _fbp=fb.1.1.1; _fbc=fb.1.1.a; _fbc=fb.1.1.b; x=1; x=2',
+      { duplicates: 'first', sink },
+    );
+    expect(reported).toEqual([
+      expect.objectContaining({
+        code: 'browser_id_cookie_duplicate',
+        level: 'warn',
+        context: { cookie_names: '_ga,_ga_abc123,_fbc', duplicates: 'first' },
+      }),
+    ]);
+
+    // Identical values, untracked names, or a single occurrence stay silent.
+    parseCookieMap('_fbp=fb.1.1.1; _fbp=fb.1.1.1; x=1; x=2; _ga=GA1.1.1.100', { sink });
+    expect(reported).toHaveLength(1);
+  });
 });
 
 // Synthetic GA4 cookie values in the shapes gtag writes (no real property IDs).
@@ -239,5 +277,41 @@ describe('createClickTrail cookie browser-ID gating', () => {
   it('throws at construction for an invalid ga4MeasurementId', () => {
     expect(() => createClickTrail({ destinations: NO_DEST, ga4MeasurementId: 'UA-1234-1' })).toThrow(TypeError);
     expect(() => createClickTrail({ destinations: NO_DEST, ga4MeasurementId: [] })).toThrow(TypeError);
+  });
+
+  it('reads the first duplicate browser-ID cookie by default; last on request', () => {
+    const jar = fakeJar('_ga=GA1.1.1.100; _ga=GA1.1.2.200');
+    const first = createClickTrail({ destinations: NO_DEST, storage: { browserIdCookieJar: jar } });
+    first.start();
+    expect(first.getField('ga_client_id')).toBe('1.100');
+
+    const last = createClickTrail({
+      destinations: NO_DEST,
+      browserIdCookieDuplicates: 'last',
+      storage: { browserIdCookieJar: jar },
+    });
+    last.start();
+    expect(last.getField('ga_client_id')).toBe('2.200');
+  });
+
+  it('reports browser_id_cookie_duplicate once per instance, independent of other codes', () => {
+    const reported: string[] = [];
+    const ct = createClickTrail({
+      destinations: NO_DEST,
+      diagnosticSink: { report: (d) => reported.push(d.code) },
+      storage: {
+        browserIdCookieJar: fakeJar(`_fbp=fb.1.1.100; _fbp=fb.1.1.200; ${TWO_PROPERTIES}`),
+      },
+    });
+    ct.start();
+    ct.mergeParsedTouch(touch);
+    expect(ct.getField('fbp')).toBe('fb.1.1.100');
+    expect(reported).toEqual(['browser_id_cookie_duplicate', 'ga_session_property_unpinned']);
+  });
+
+  it('throws at construction for an invalid browserIdCookieDuplicates', () => {
+    expect(() =>
+      createClickTrail({ destinations: NO_DEST, browserIdCookieDuplicates: 'newest' as never }),
+    ).toThrow(TypeError);
   });
 });

@@ -36,6 +36,8 @@ export const DIAGNOSTIC_CODES = {
   FIELD_TRUNCATED: 'field_truncated',
   /** Unpinned GA session read while several `_ga_<property>` cookies exist. */
   GA_SESSION_PROPERTY_UNPINNED: 'ga_session_property_unpinned',
+  /** `_ga`, `_ga_<property>`, `_fbp` or `_fbc` set more than once with different values. */
+  BROWSER_ID_COOKIE_DUPLICATE: 'browser_id_cookie_duplicate',
 } as const;
 
 /** A sink that discards everything — the default. Deterministic and silent. */
