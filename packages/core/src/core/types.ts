@@ -158,6 +158,67 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
    * `channelLabel`, so stored channels and channel codes are unchanged.
    */
   inferSourceMedium?: boolean;
+  /**
+   * Length limit for click-ID values, in UTF-16 code units after trimming.
+   * Default: `maxFieldLength`. Lets a host keep a shorter limit for click IDs
+   * than for UTM values (e.g. 64 / 120). `overLengthPolicy` applies.
+   */
+  maxClickIdLength?: number;
+  /**
+   * Default `false`: a UTM or click-ID parameter counts as a signal when it
+   * is present and non-empty, even if a value policy then drops it.
+   * `true`: only values that survive sanitizing count, so a landing whose
+   * only signals were dropped follows the no-signal path (referrer
+   * inference, `recordDirectTouch` placeholder, or no touch).
+   */
+  signalAfterSanitize?: boolean;
+  /**
+   * Default: every key in {@link UTM_PARAM_TO_FIELD} and
+   * {@link CLICK_ID_KEYS} forms a touch. When set, only the listed keys are
+   * read: an unlisted UTM key or click ID is neither a signal nor stored.
+   * Entries are canonical lowercase names (`utm_source`, `gclid`); an alias
+   * (`sc_click_id`) counts as its canonical key. An omitted list keeps the
+   * full default set for that kind; an empty list disables that kind.
+   */
+  signalKeys?: SignalKeys;
+  /**
+   * Which referrer hosts count as internal. Default `'related'` (ruling #8):
+   * the current host and any host that contains it or that it contains, so
+   * `blog.example.com` -> `www.example.com` creates no touch.
+   * `'same-host'`: only the current host (ignoring `www.` and port); a
+   * sibling or parent subdomain classifies like any external referrer.
+   */
+  internalReferrer?: InternalReferrerPolicy;
+  /**
+   * Default `false` (ruling #9): UTM and click-ID keys match
+   * case-insensitively, so `UTM_SOURCE` reads as `utm_source`. `true`: they
+   * match exactly, like `URLSearchParams.get`. Browser-ID parameters and the
+   * landing-page allowlist keep case-insensitive matching.
+   */
+  caseSensitiveParams?: boolean;
+}
+
+/** Keys allowed to form a touch. See {@link ParseAttributionInput.signalKeys}. */
+export interface SignalKeys {
+  /** UTM parameter names, e.g. `['utm_source', 'utm_medium']`. */
+  utm?: readonly string[];
+  /** Canonical click-ID keys, e.g. `['gclid', 'fbclid']`. */
+  clickIds?: readonly string[];
+}
+
+/** See {@link ParseAttributionInput.internalReferrer}. */
+export type InternalReferrerPolicy = 'related' | 'same-host';
+
+/** Options for {@link mergeAttributionTouch}. Every default is the plugin contract. */
+export interface MergeAttributionOptions {
+  /**
+   * Default `false` (ruling B): a last-touch write sets `lt_<clickid>` only
+   * for click IDs on the new touch, so an older click ID survives under a
+   * newer last touch. `true`: the write also clears `lt_<clickid>` for
+   * click IDs absent from the new touch. `ft_<clickid>`, top-level click IDs
+   * and `click_id_history` are unchanged.
+   */
+  clearLastTouchClickIds?: boolean;
 }
 
 /** Options for {@link mergeAttributionTouch}. */

@@ -1,0 +1,42 @@
+{
+  "name": "opt-in-clear-last-touch-click-ids",
+  "description": "clearLastTouchClickIds: an organic Google last touch after a paid gclid touch clears lt_gclid; ft_gclid and the top-level gclid are kept.",
+  "quirk_decision": "CONTRACT (opt-in merge option, #71): default keeps lt_<clickid> until a newer value arrives (ruling B, plugin applyTouch). Semver: additive opt-in merge option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "stored": {
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "ft_landing_page": "https://example.com/lp",
+    "ft_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "ft_gclid": "A1",
+    "lt_source": "google",
+    "lt_medium": "cpc",
+    "lt_channel": "Google Ads",
+    "lt_landing_page": "https://example.com/lp",
+    "lt_touch_timestamp": "2026-10-20T09:00:00.000Z",
+    "lt_gclid": "A1",
+    "gclid": "A1"
+  },
+  "mergeOptions": {
+    "clearLastTouchClickIds": true
+  },
+  "input": {
+    "url": "https://example.com/",
+    "referrer": "https://www.google.com/",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "referrerFormat": "host"
+  },
+  "expected": {
+    "_channel": "organic_search",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_gclid": "A1",
+    "lt_source": "google",
+    "lt_medium": "organic",
+    "lt_channel": "Google Organic",
+    "lt_referrer": "www.google.com",
+    "lt_gclid": "",
+    "gclid": "A1"
+  }
+}

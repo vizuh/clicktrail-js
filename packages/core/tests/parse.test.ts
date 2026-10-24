@@ -439,6 +439,152 @@ describe('ignored referrers with recordDirectTouch (#65)', () => {
   });
 });
 
+describe('signal rules (#71, opt-in)', () => {
+  const now = '2026-10-23T10:00:00.000Z';
+  const gclid70 = 'G'.repeat(70);
+  const limits = { maxFieldLength: 120, maxClickIdLength: 64, overLengthPolicy: 'drop' } as const;
+
+  function touchOf(input: Parameters<typeof parseAttributionUrl>[0]) {
+    const r = parseAttributionUrl(input);
+    if (r.kind !== 'touch') throw new Error(`expected a touch, got ${r.reason}`);
+    return r.touch;
+  }
+
+  describe('signalAfterSanitize', () => {
+    it('a click ID dropped by its length limit is no signal', () => {
+      const url = `https://example.com/?gclid=${gclid70}`;
+      expect(touchOf({ url, now, ...limits }).clickIds).toEqual({ gclid: '' });
+      expect(parseAttributionUrl({ url, now, ...limits, signalAfterSanitize: true }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+      expect(touchOf({ url, now, ...limits, signalAfterSanitize: true, recordDirectTouch: true }))
+        .toMatchObject({ source: '(direct)', medium: '(none)', clickIds: {}, channel: 'direct', unmeasured: true });
+    });
+
+    it('a dropped bare fbclid derives no fbc', () => {
+      const t = touchOf({ url: `https://example.com/?fbclid=${gclid70}`, now, ...limits, signalAfterSanitize: true, recordDirectTouch: true });
+      expect(t.browserIds).toEqual({});
+    });
+
+    it('a UTM value dropped by a policy is no signal; the referrer path still runs', () => {
+      const url = `https://example.com/?utm_source=${'a'.repeat(130)}`;
+      expect(touchOf({ url, ...limits }).source).toBe('');
+      expect(parseAttributionUrl({ url, ...limits, signalAfterSanitize: true }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+      expect(touchOf({ url, ...limits, signalAfterSanitize: true, referrer: 'https://www.google.com/', currentHost: 'example.com' }))
+        .toMatchObject({ source: 'google', medium: 'organic', channel: 'organic_search' });
+      const macro = 'https://example.com/?utm_campaign=%7B%7Bad.name%7D%7D';
+      expect(parseAttributionUrl({ url: macro }).kind).toBe('touch');
+      expect(parseAttributionUrl({ url: macro, signalAfterSanitize: true })).toEqual({ kind: 'none', reason: 'no_signal' });
+    });
+
+    it('one surviving value still forms a touch', () => {
+      expect(touchOf({ url: `https://example.com/?utm_source=${'a'.repeat(130)}&utm_medium=email`, ...limits, signalAfterSanitize: true }))
+        .toMatchObject({ source: '', medium: 'email', channel: 'email' });
+      expect(touchOf({ url: `https://example.com/?gclid=${gclid70}&fbclid=F1`, ...limits, signalAfterSanitize: true }).clickIds)
+        .toEqual({ fbclid: 'F1' });
+    });
+
+    it('a placeholder from a dropped signal follows inferSourceMedium', () => {
+      expect(touchOf({
+        url: `https://example.com/?gclid=${gclid70}`, ...limits, signalAfterSanitize: true, recordDirectTouch: true, inferSourceMedium: false,
+      })).toMatchObject({ source: '', medium: '', channel: 'direct', channelLabel: 'Direct' });
+    });
+  });
+
+  describe('maxClickIdLength', () => {
+    it('limits click IDs separately from UTM values', () => {
+      const t = touchOf({ url: `https://example.com/?utm_source=${'s'.repeat(100)}&gclid=${'g'.repeat(100)}`, maxFieldLength: 120, maxClickIdLength: 64 });
+      expect(t.source).toBe('s'.repeat(100));
+      expect(t.clickIds.gclid).toBe('g'.repeat(64));
+    });
+
+    it('falls back to maxFieldLength when unusable', () => {
+      for (const maxClickIdLength of [0, -1, 1.5, Number.NaN]) {
+        expect(touchOf({ url: `https://example.com/?gclid=${'g'.repeat(100)}`, maxFieldLength: 80, maxClickIdLength }).clickIds.gclid)
+          .toBe('g'.repeat(80));
+      }
+    });
+  });
+
+  describe('signalKeys', () => {
+    const utm = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    const clickIds = ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid'];
+
+    it('an unlisted click ID or UTM key is no signal', () => {
+      expect(parseAttributionUrl({ url: 'https://example.com/?twclid=T1', signalKeys: { clickIds } }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+      expect(parseAttributionUrl({ url: 'https://example.com/?utm_id=123', signalKeys: { utm } }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+    });
+
+    it('an unlisted key is not stored next to listed ones', () => {
+      const t = touchOf({ url: 'https://example.com/?utm_source=a&utm_id=123&gclid=G&twclid=T', signalKeys: { utm, clickIds } });
+      expect(t).toMatchObject({ source: 'a', utmId: '' });
+      expect(t.clickIds).toEqual({ gclid: 'G' });
+    });
+
+    it('an omitted kind keeps every key; an empty list disables the kind; aliases fold', () => {
+      expect(touchOf({ url: 'https://example.com/?utm_id=1', signalKeys: { clickIds } }).utmId).toBe('1');
+      expect(parseAttributionUrl({ url: 'https://example.com/?gclid=G', signalKeys: { clickIds: [] } }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+      expect(touchOf({ url: 'https://example.com/?sc_click_id=S', signalKeys: { clickIds: ['SC_CLICK_ID'] } }).clickIds)
+        .toEqual({ sccid: 'S' });
+    });
+
+    it('an unlisted fbclid derives no fbc', () => {
+      expect(touchOf({ url: 'https://example.com/?fbclid=F&gclid=G', now, signalKeys: { clickIds: ['gclid'] } }).browserIds)
+        .toEqual({});
+    });
+  });
+
+  describe("internalReferrer 'same-host'", () => {
+    const base = { url: 'https://www.example.com/', currentHost: 'www.example.com', internalReferrer: 'same-host' } as const;
+
+    it('classifies a sibling or parent subdomain as a referral', () => {
+      expect(parseAttributionUrl({ url: base.url, currentHost: base.currentHost, referrer: 'https://blog.example.com/post' }))
+        .toEqual({ kind: 'none', reason: 'internal_referrer' });
+      expect(touchOf({ ...base, referrer: 'https://blog.example.com/post', referrerFormat: 'host' }))
+        .toMatchObject({ source: 'blog.example.com', medium: 'referral', referrer: 'blog.example.com', channel: 'referral' });
+      expect(touchOf({ ...base, url: 'https://shop.example.com/', currentHost: 'shop.example.com', referrer: 'https://example.com/' }))
+        .toMatchObject({ source: 'example.com', channel: 'referral' });
+    });
+
+    it('the current host stays internal, ignoring www. and port', () => {
+      for (const referrer of ['https://www.example.com/a', 'https://example.com/a', 'https://example.com:8443/a']) {
+        expect(parseAttributionUrl({ ...base, referrer })).toEqual({ kind: 'none', reason: 'internal_referrer' });
+      }
+    });
+  });
+
+  describe('caseSensitiveParams', () => {
+    it('ignores UTM and click-ID keys that differ in case', () => {
+      const url = 'https://example.com/?UTM_SOURCE=x&utm_medium=email';
+      expect(touchOf({ url })).toMatchObject({ source: 'x', medium: 'email' });
+      expect(touchOf({ url, caseSensitiveParams: true })).toMatchObject({ source: '', medium: 'email' });
+      expect(parseAttributionUrl({ url: 'https://example.com/?GCLID=X', caseSensitiveParams: true }))
+        .toEqual({ kind: 'none', reason: 'no_signal' });
+      expect(touchOf({ url: 'https://example.com/?gclid=X&GCLID=Y', caseSensitiveParams: true }).clickIds).toEqual({ gclid: 'X' });
+    });
+
+    it('browser-ID parameters keep case-insensitive matching', () => {
+      expect(touchOf({ url: 'https://example.com/?utm_source=a&FBP=fb.1.1.1', caseSensitiveParams: true }).browserIds)
+        .toEqual({ fbp: 'fb.1.1.1' });
+    });
+  });
+
+  it('defaults change nothing', () => {
+    const inputs = [
+      { url: `https://example.com/?gclid=${gclid70}&UTM_SOURCE=x&twclid=T`, referrer: 'https://blog.example.com/', currentHost: 'www.example.com', now, ...limits },
+      { url: 'https://www.example.com/', referrer: 'https://blog.example.com/', currentHost: 'www.example.com', now },
+    ];
+    for (const input of inputs) {
+      expect(parseAttributionUrl({
+        ...input, signalAfterSanitize: false, caseSensitiveParams: false, internalReferrer: 'related',
+      })).toEqual(parseAttributionUrl(input));
+    }
+  });
+});
+
 describe('areRelatedHosts (ruling #8)', () => {
   it('is symmetric for sibling subdomains', () => {
     expect(areRelatedHosts('shop.example.com', 'example.com')).toBe(true);

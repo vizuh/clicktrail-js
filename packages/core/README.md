@@ -71,14 +71,56 @@ below is opt-in:
 | `overLengthPolicy` | `'truncate'` (default), `'drop'` | `'drop'` stores `''` for a value over `maxFieldLength` instead of cutting it. |
 | `macroPolicy` | `'drop'` (default), `'keep'` | `'keep'` stores an unexpanded `{{macro}}` value as received. |
 | `controlCharPolicy` | `'strip'` (default), `'drop'` | `'drop'` trims the value, then stores `''` if it still contains a control character. |
+| `maxClickIdLength` | positive integer, default `maxFieldLength` | Separate length limit for click IDs, e.g. `64` with `maxFieldLength: 120`. |
 
 `mergeAttributionTouch` writes a placeholder only into an empty payload, and
 the first measured touch (UTMs, click ID or external referrer) replaces a
 stored placeholder as first touch.
 
-The value policies leave the landing page and referrer alone. A query
-parameter whose value a policy drops still counts as received, as a
-rejected macro does by default, so the landing still creates a touch.
+The value policies leave the landing page and referrer alone. By default a
+query parameter whose value a policy drops still counts as received, as a
+rejected macro does, so the landing still creates a touch.
+
+## Signal rules
+
+Hosts moving an existing first/last-touch contract onto the engine can narrow
+what counts as a signal. Each option is opt-in; the defaults match the
+WordPress plugin:
+
+| Option | Values | Effect |
+| --- | --- | --- |
+| `signalAfterSanitize` | `false` (default), `true` | Only UTM and click-ID values that survive the value policies count. A landing whose only signals were dropped follows the no-signal path: referrer inference, the `recordDirectTouch` placeholder, or no touch. |
+| `signalKeys` | `{ utm?: string[]; clickIds?: string[] }` | Only the listed UTM keys and click IDs are read; others are neither a signal nor stored. An omitted list keeps every known key; aliases such as `sc_click_id` count as their canonical key. |
+| `internalReferrer` | `'related'` (default), `'same-host'` | `'same-host'` treats only the current host (ignoring `www.`) as internal, so `blog.example.com` -> `www.example.com` is a referral. |
+| `caseSensitiveParams` | `false` (default), `true` | UTM and click-ID keys match exactly, so `UTM_SOURCE` is ignored. Duplicate keys still resolve to the last value. |
+
+`mergeAttributionTouch(stored, touch, { clearLastTouchClickIds: true })`
+clears `lt_<clickid>` for click IDs the new last touch lacks, so a paid
+`gclid` does not stay attached to a later organic last touch. `ft_<clickid>`,
+top-level click IDs and `click_id_history` are unchanged. The browser SDK
+takes the same options as `createClickTrail({ mergeOptions })`.
+
+```ts
+const result = parseAttributionUrl({
+  url: location.href,
+  referrer: document.referrer,
+  currentHost: location.host,
+  now: new Date().toISOString(),
+  maxFieldLength: 120,
+  maxClickIdLength: 64,
+  overLengthPolicy: 'drop',
+  signalAfterSanitize: true,
+  signalKeys: {
+    utm: ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'],
+    clickIds: ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid'],
+  },
+  internalReferrer: 'same-host',
+  caseSensitiveParams: true,
+});
+if (result.kind === 'touch') {
+  payload = mergeAttributionTouch(payload, result.touch, { clearLastTouchClickIds: true });
+}
+```
 
 ## Contract
 

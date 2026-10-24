@@ -1,0 +1,17 @@
+{
+  "name": "opt-in-signal-keys-click-ids",
+  "description": "signalKeys.clickIds limited to six click IDs: ?twclid=T1 is neither a signal nor stored, so the landing has no signal.",
+  "quirk_decision": "CONTRACT (opt-in, #71): default reads every key in CLICK_ID_KEYS and UTM_PARAM_TO_FIELD. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/?twclid=T1",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "signalKeys": {
+      "clickIds": ["gclid", "gbraid", "wbraid", "fbclid", "msclkid", "ttclid"]
+    }
+  },
+  "expected": {
+    "_no_touch_reason": "no_signal"
+  }
+}

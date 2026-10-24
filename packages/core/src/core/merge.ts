@@ -103,7 +103,9 @@ function hasUnmeasuredFirstTouch(payload: AttributionPayload): boolean {
  *   ID is ALSO mirrored into its `ft_<cid>` / `lt_<cid>` touch fields at
  *   write time (RULING B, runtime findings 2026-08-23 — plugin contract,
  *   applyTouch(mapQueryFields), clicutcl-attribution.js:1788-1799 +
- *   :1813-1837). Empty click IDs never overwrite existing mirrors.
+ *   :1813-1837). Empty click IDs never overwrite existing mirrors, unless
+ *   opt-in `clearLastTouchClickIds` (#71) clears `lt_<cid>` for click IDs
+ *   absent from a new last touch.
  * - Browser IDs from the parsed touch are written top-level, newest
  *   non-empty wins (RULING A part a; plugin mergeTopLevelIdentifiers :1797).
  * - Unmeasured placeholders (opt-in `recordDirectTouch`, #56) fill ft_ and
@@ -175,9 +177,11 @@ export function mergeAttributionTouch(
 
   // Last-touch write-time click-ID mirror (RULING B): applyTouch('lt')
   // always runs on a valid signal, so lt_<cid> follows every capture.
+  // Opt-in `clearLastTouchClickIds` also blanks the IDs this touch lacks.
   for (const key of CLICK_ID_KEYS) {
     const value = touch.clickIds?.[key];
     if (value) next[`lt_${key}`] = value;
+    else if (options.clearLastTouchClickIds) next[`lt_${key}`] = '';
   }
 
   // Click IDs: newest-valid-wins (from the touch itself; deterministic order).

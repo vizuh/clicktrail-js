@@ -254,6 +254,22 @@ describe('createClickTrail', () => {
     expect(event['marketing_trail']).not.toHaveProperty('channel_code');
   });
 
+  it('mergeOptions apply to every mergeParsedTouch', () => {
+    const touch = {
+      source: 'google', medium: 'cpc', campaign: '', term: '', content: '',
+      utmId: '', utmSourcePlatform: '', utmCreativeFormat: '', utmMarketingTactic: '',
+      referrer: '', landingPage: '/', touchTimestamp: '2026-10-23T10:00:00.000Z',
+      channel: 'paid_search', channelLabel: 'Google Ads', clickIds: { gclid: 'A1' },
+    } as const;
+    const organic = { ...touch, medium: 'organic', referrer: 'www.google.com', channel: 'organic_search', channelLabel: 'Google Organic', clickIds: {} } as const;
+    const ct = createClickTrail({ destinations: [], mergeOptions: { clearLastTouchClickIds: true } });
+    ct.mergeParsedTouch({ ...touch, clickIds: { ...touch.clickIds } });
+    ct.mergeParsedTouch({ ...organic, clickIds: {} });
+    expect(ct.getField('lt_gclid')).toBe('');
+    expect(ct.getField('ft_gclid')).toBe('A1');
+    expect(ct.getField('gclid')).toBe('A1');
+  });
+
   it('stop() flushes buffered http events and halts delivery', () => {
     const calls: string[] = [];
     const http = httpDestination({

@@ -1,0 +1,19 @@
+{
+  "name": "opt-in-case-sensitive-params",
+  "description": "caseSensitiveParams: UTM_SOURCE is ignored and utm_medium is read, like URLSearchParams.get('utm_source').",
+  "quirk_decision": "CONTRACT (opt-in, #71): default matches UTM and click-ID keys case-insensitively (ruling #9). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/?UTM_SOURCE=x&utm_medium=email",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "caseSensitiveParams": true
+  },
+  "expected": {
+    "_channel": "email",
+    "ft_source": "",
+    "ft_medium": "email",
+    "lt_source": "",
+    "lt_medium": "email"
+  }
+}

@@ -8,6 +8,7 @@
  * - optional `stored`: pre-existing canonical payload. It is merged with
  *   emptyAttribution() and fed to mergeAttributionTouch BEFORE the parsed
  *   touch, so merge-level scenarios (first-touch guard) are deterministic.
+ * - optional `mergeOptions`: MergeAttributionOptions for that merge.
  * - `expected`: subset of payload keys asserted after replay; `_channel`
  *   asserts the machine enum on the parsed touch; `_no_touch_reason` asserts
  *   a non-touch result instead, and its other keys assert the untouched
@@ -19,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parseAttributionUrl } from '@vizuh/clicktrail-core';
 import { emptyAttribution, mergeAttributionTouch } from '@vizuh/clicktrail-core';
+import type { MergeAttributionOptions } from '@vizuh/clicktrail-core';
 
 const fxDir = join(dirname(fileURLToPath(import.meta.url)), '../fixtures');
 
@@ -26,6 +28,7 @@ interface FixtureCase {
   name: string;
   input: Record<string, unknown>;
   stored?: Record<string, string>;
+  mergeOptions?: MergeAttributionOptions;
   expected: Record<string, string>;
 }
 
@@ -45,7 +48,7 @@ function loadFixtures(dir: string): FixtureCase[] {
 
 const cases = loadFixtures(fxDir);
 
-describe.each(cases)('fixture: $name', ({ input, stored, expected }) => {
+describe.each(cases)('fixture: $name', ({ input, stored, mergeOptions, expected }) => {
   it('replays field-for-field', () => {
     const parsed = parseAttributionUrl(input as never);
 
@@ -67,8 +70,8 @@ describe.each(cases)('fixture: $name', ({ input, stored, expected }) => {
     }
 
     let payload = emptyAttribution();
-    if (stored) payload = mergeAttributionTouch({ ...payload, ...stored }, parsed.touch);
-    else payload = mergeAttributionTouch(payload, parsed.touch);
+    if (stored) payload = mergeAttributionTouch({ ...payload, ...stored }, parsed.touch, mergeOptions);
+    else payload = mergeAttributionTouch(payload, parsed.touch, mergeOptions);
     for (const [key, value] of Object.entries(expected)) {
       if (key.startsWith('_')) continue;
       expect(payload[key], `${key}`).toBe(value);
