@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseAttributionUrl } from '../src/core/parse.js';
-import { areRelatedHosts, isIgnoredReferrerHost, normalizeReferrerHosts } from '../src/core/sanitize.js';
+import { areRelatedHosts, isIgnoredReferrerHost, normalizeReferrerHosts, sanitizeField } from '../src/core/sanitize.js';
 import { PAYMENT_REFERRER_HOSTS, resolveChannelLabel } from '../src/core/knowledge.js';
 
 describe('parseAttributionUrl', () => {
@@ -283,6 +283,116 @@ describe('recordDirectTouch (#56, opt-in)', () => {
   it('measured landings are unchanged by the option', () => {
     const input = { url: 'https://example.com/?utm_source=nl&utm_medium=email', currentHost: 'example.com', now };
     expect(parseAttributionUrl({ ...input, recordDirectTouch: true })).toEqual(parseAttributionUrl(input));
+  });
+});
+
+describe('inferSourceMedium: false (#64, opt-in)', () => {
+  const now = '2026-10-23T10:00:00.000Z';
+
+  function touchOf(input: Parameters<typeof parseAttributionUrl>[0]) {
+    const r = parseAttributionUrl(input);
+    if (r.kind !== 'touch') throw new Error('expected a touch');
+    return r.touch;
+  }
+
+  it('a bare gclid stores empty source/medium; channel and label still come from the click ID', () => {
+    expect(touchOf({ url: 'https://example.com/?gclid=X', now, inferSourceMedium: false })).toMatchObject({
+      source: '', medium: '', clickIds: { gclid: 'X' }, channel: 'paid_search', channelLabel: 'Google Ads',
+    });
+  });
+
+  it('keeps received UTMs, so tagged and untagged click-ID landings differ', () => {
+    const tagged = touchOf({ url: 'https://example.com/?utm_source=google&utm_medium=cpc&gclid=X', inferSourceMedium: false });
+    const partial = touchOf({ url: 'https://example.com/?utm_medium=banner&gclid=X', inferSourceMedium: false });
+    expect(tagged).toMatchObject({ source: 'google', medium: 'cpc', channel: 'paid_search' });
+    expect(partial).toMatchObject({ source: '', medium: 'banner', channel: 'paid_search', channelLabel: 'Google Ads' });
+  });
+
+  it('an uncertain click ID stores no inferred source', () => {
+    expect(touchOf({ url: 'https://example.com/?fbclid=F', inferSourceMedium: false })).toMatchObject({
+      source: '', medium: '', clickIds: { fbclid: 'F' }, channel: 'unknown', channelLabel: 'Facebook',
+    });
+  });
+
+  it('a bare Google referrer stores empty source/medium and the referrer per referrerFormat', () => {
+    const base = { url: 'https://example.com/', referrer: 'https://www.google.com/', currentHost: 'example.com', inferSourceMedium: false };
+    expect(touchOf(base)).toMatchObject({
+      source: '', medium: '', referrer: 'https://www.google.com/', channel: 'organic_search', channelLabel: 'Google Organic',
+    });
+    expect(touchOf({ ...base, referrerFormat: 'host' })).toMatchObject({
+      source: '', medium: '', referrer: 'www.google.com', channel: 'organic_search',
+    });
+  });
+
+  it('a recordDirectTouch placeholder stores empty source/medium but keeps the Direct channel', () => {
+    expect(touchOf({ url: 'https://example.com/a', currentHost: 'example.com', recordDirectTouch: true, inferSourceMedium: false }))
+      .toMatchObject({ source: '', medium: '', channel: 'direct', channelLabel: 'Direct', unmeasured: true });
+  });
+
+  it('true is the default and changes nothing', () => {
+    const inputs = [
+      { url: 'https://example.com/?gclid=X', now },
+      { url: 'https://example.com/?fbclid=F&utm_medium=paid_social', now },
+      { url: 'https://example.com/', referrer: 'https://l.facebook.com/', currentHost: 'example.com', now },
+      { url: 'https://example.com/a', currentHost: 'example.com', now, recordDirectTouch: true },
+    ];
+    for (const input of inputs) {
+      expect(parseAttributionUrl({ ...input, inferSourceMedium: true })).toEqual(parseAttributionUrl(input));
+    }
+    expect(touchOf(inputs[0]!)).toMatchObject({ source: 'google', medium: 'cpc' });
+  });
+});
+
+describe('query value policies (#64, opt-in)', () => {
+  const long130 = 'a'.repeat(130);
+
+  function touchOf(input: Parameters<typeof parseAttributionUrl>[0]) {
+    const r = parseAttributionUrl(input);
+    if (r.kind !== 'touch') throw new Error('expected a touch');
+    return r.touch;
+  }
+
+  it("overLengthPolicy 'drop' with maxFieldLength 120 drops a 130-char utm_source and keeps a 120-char one", () => {
+    const opts = { overLengthPolicy: 'drop', maxFieldLength: 120 } as const;
+    expect(touchOf({ url: `https://example.com/?utm_source=${long130}&utm_medium=email`, ...opts }))
+      .toMatchObject({ source: '', medium: 'email' });
+    expect(touchOf({ url: `https://example.com/?utm_source=${'a'.repeat(120)}`, ...opts }).source).toBe('a'.repeat(120));
+  });
+
+  it('maxFieldLength alone truncates; the default stays 512', () => {
+    expect(touchOf({ url: `https://example.com/?utm_source=${long130}`, maxFieldLength: 120 }).source).toBe('a'.repeat(120));
+    expect(touchOf({ url: `https://example.com/?utm_source=${'a'.repeat(600)}` }).source).toBe('a'.repeat(512));
+    expect(touchOf({ url: `https://example.com/?utm_source=${'a'.repeat(600)}`, overLengthPolicy: 'drop' }).source).toBe('');
+  });
+
+  it('applies to click IDs and browser IDs but not to the landing page or referrer', () => {
+    const url = `https://example.com/?gclid=${long130}&fbp=${long130}`;
+    const referrer = `https://example.org/${long130}`;
+    const t = touchOf({ url, referrer, overLengthPolicy: 'drop', maxFieldLength: 120 });
+    expect(t.clickIds).toEqual({ gclid: '' });
+    expect(t.browserIds).toEqual({ fbp: '' });
+    expect(t.landingPage).toBe(url);
+    expect(t.referrer).toBe(referrer);
+  });
+
+  it("macroPolicy 'keep' stores an unexpanded {{macro}} as received", () => {
+    const url = 'https://example.com/?utm_source=google&utm_campaign=%7B%7Badset.name%7D%7D';
+    expect(touchOf({ url }).campaign).toBe('');
+    expect(touchOf({ url, macroPolicy: 'keep' }).campaign).toBe('{{adset.name}}');
+  });
+
+  it("controlCharPolicy 'drop' drops a value with an inner control character after trimming", () => {
+    const url = 'https://example.com/?utm_source=goo%01gle&utm_medium=%20cpc%0A&utm_campaign=spring%7Fsale';
+    expect(touchOf({ url })).toMatchObject({ source: 'google', medium: 'cpc', campaign: 'springsale' });
+    expect(touchOf({ url, controlCharPolicy: 'drop' })).toMatchObject({ source: '', medium: 'cpc', campaign: '' });
+  });
+
+  it('sanitizeField keeps the 512 default for an unusable maxFieldLength', () => {
+    const v = 'a'.repeat(600);
+    for (const maxFieldLength of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(sanitizeField(v, { maxFieldLength })).toBe('a'.repeat(512));
+    }
+    expect(sanitizeField(v, { maxFieldLength: 1000 })).toBe(v);
   });
 });
 

@@ -59,8 +59,41 @@ export type LandingPageFormat = 'url' | 'path' | 'path+allowlisted-query';
 /** Stored form of `ft_/lt_referrer`. See {@link ParseAttributionInput.referrerFormat}. */
 export type ReferrerFormat = 'url' | 'host';
 
-/** Inputs to {@link parseAttributionUrl}. All values come from the caller. */
-export interface ParseAttributionInput {
+/** What happens to a value longer than the length limit. See {@link SanitizeFieldOptions}. */
+export type OverLengthPolicy = 'truncate' | 'drop';
+
+/** What happens to an unsubstituted `{{...}}` template macro. See {@link SanitizeFieldOptions}. */
+export type MacroPolicy = 'drop' | 'keep';
+
+/** What happens to a value containing control characters. See {@link SanitizeFieldOptions}. */
+export type ControlCharPolicy = 'strip' | 'drop';
+
+/**
+ * Value policies for {@link sanitizeField}. Every default is the plugin
+ * contract (WP-parity rulings #14-#16); a "dropped" value becomes `''`.
+ */
+export interface SanitizeFieldOptions {
+  /** Length limit in UTF-16 code units, after trimming. Default 512; non-positive or non-integer values keep 512. */
+  maxFieldLength?: number;
+  /** Default `'truncate'`: cut to `maxFieldLength`. `'drop'`: store `''` instead. */
+  overLengthPolicy?: OverLengthPolicy;
+  /** Default `'drop'`: a whole-value `{{...}}` macro stores `''` (ruling #15). `'keep'`: store it as received. */
+  macroPolicy?: MacroPolicy;
+  /**
+   * Default `'strip'`: delete control characters (U+0000-U+001F, U+007F),
+   * then trim. `'drop'`: trim, then store `''` if any control character is left.
+   */
+  controlCharPolicy?: ControlCharPolicy;
+}
+
+/**
+ * Inputs to {@link parseAttributionUrl}. All values come from the caller.
+ *
+ * The inherited {@link SanitizeFieldOptions} apply to query-parameter values:
+ * UTM fields, click IDs and browser IDs. The landing page and referrer keep
+ * the default policies (see `landingPageFormat` / `referrerFormat`).
+ */
+export interface ParseAttributionInput extends SanitizeFieldOptions {
   url: string;
   referrer?: string;
   /** Host of the current page, used to ignore internal referrals. */
@@ -110,6 +143,17 @@ export interface ParseAttributionInput {
    * Classification always reads the raw referrer.
    */
   referrerFormat?: ReferrerFormat;
+  /**
+   * Default `true`: `source` / `medium` missing from the URL are inferred — a
+   * click ID fills its platform source and, when certain, `cpc` (engine
+   * addition, WP-parity ruling #2); an external referrer fills the classified
+   * source and `organic` / `social` / `referral` (plugin contract);
+   * `recordDirectTouch` fills `(direct)` / `(none)`.
+   * `false`: `source` / `medium` keep only `utm_source` / `utm_medium` as
+   * received (`''` otherwise). Inferred values still decide `channel` and
+   * `channelLabel`, so stored channels and channel codes are unchanged.
+   */
+  inferSourceMedium?: boolean;
 }
 
 /** Options for {@link mergeAttributionTouch}. */

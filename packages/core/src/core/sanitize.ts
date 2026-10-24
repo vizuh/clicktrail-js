@@ -6,21 +6,47 @@
  * - Control characters DELETED (not space-replaced).
  * - Values matching the unsubstituted-template-macro pattern '{{...}}'
  *   are rejected outright (#15) — ad-platform macros pollute reports.
+ *
+ * Each rule has an opt-in alternative ({@link SanitizeFieldOptions}, #64) so
+ * hosts with their own downstream limits can keep values as they define them.
  */
+import type { SanitizeFieldOptions } from './types.js';
 
 const MAX_FIELD_LENGTH = 512;
 
 /** Unsubstituted ad-platform macro guard: e.g. {{campaign.name}}, {{adset.name}}. */
 const MACRO_PATTERN = /^\{\{.+\}\}$/;
 
-/** Strip control characters and template macros, trim, and cap length. Empty/nullish -> ''. */
-export function sanitizeField(value: unknown): string {
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR = /[\u0000-\u001f\u007f]/;
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g;
+
+/**
+ * Strip control characters and template macros, trim, and cap length. Empty/nullish -> ''.
+ * Defaults are the contract above; `options` opts into dropping a value with
+ * control characters (checked after trimming), keeping `{{...}}` macros, a
+ * different length limit, and dropping over-long values instead of truncating.
+ */
+export function sanitizeField(value: unknown, options: SanitizeFieldOptions = {}): string {
   if (typeof value !== 'string') return '';
-  // eslint-disable-next-line no-control-regex
-  const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, '').trim();
-  if (!cleaned || MACRO_PATTERN.test(cleaned)) return '';
-  if (cleaned.length > MAX_FIELD_LENGTH) return cleaned.slice(0, MAX_FIELD_LENGTH);
+  let cleaned: string;
+  if (options.controlCharPolicy === 'drop') {
+    cleaned = value.trim();
+    if (CONTROL_CHAR.test(cleaned)) return '';
+  } else {
+    cleaned = value.replace(CONTROL_CHARS, '').trim();
+  }
+  if (!cleaned) return '';
+  if (options.macroPolicy !== 'keep' && MACRO_PATTERN.test(cleaned)) return '';
+  const max = isValidLength(options.maxFieldLength) ? options.maxFieldLength : MAX_FIELD_LENGTH;
+  if (cleaned.length > max) return options.overLengthPolicy === 'drop' ? '' : cleaned.slice(0, max);
   return cleaned;
+}
+
+/** A usable `maxFieldLength`: a positive integer. Anything else keeps the 512 default. */
+function isValidLength(value: number | undefined): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
 /** Normalize a host for comparison: lowercase, strip leading www. and port. */

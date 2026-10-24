@@ -1,0 +1,23 @@
+{
+  "name": "opt-in-as-received-click-id-only",
+  "description": "inferSourceMedium false: a bare gclid stores empty source/medium and the click ID; the channel is still classified from the click ID.",
+  "quirk_decision": "CONTRACT (opt-in, #64): default inferSourceMedium true keeps the plugin's inferred source/medium. Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/lp?gclid=X",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "inferSourceMedium": false
+  },
+  "expected": {
+    "_channel": "paid_search",
+    "ft_source": "",
+    "ft_medium": "",
+    "ft_gclid": "X",
+    "ft_channel": "Google Ads",
+    "lt_source": "",
+    "lt_medium": "",
+    "lt_gclid": "X",
+    "gclid": "X"
+  }
+}

@@ -79,6 +79,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   empty session once it expired; `IdentitySeed.lastActivityAt` keeps a
   seeded session's idle clock; `identity.activityOnTrack` (default true)
   controls whether `track()` counts as activity (#63).
+- `@vizuh/clicktrail-core`: opt-in `parseAttributionUrl` options that store
+  touch fields as received. `inferSourceMedium: false` keeps `source` /
+  `medium` to `utm_source` / `utm_medium` while inferred values still set
+  `channel`, `ft_/lt_channel` and channel codes. `maxFieldLength`,
+  `overLengthPolicy: 'drop'`, `macroPolicy: 'keep'` and
+  `controlCharPolicy: 'drop'` apply to UTM, click-ID and browser-ID values;
+  `sanitizeField` accepts the same options. Defaults match the WordPress
+  plugin and are unchanged, as are `CLASSIFIER_VERSION`, `SCHEMA_VERSION` and
+  `CHANNEL_LABELS_VERSION` (#64).
 
 ### Fixed
 

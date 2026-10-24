@@ -160,6 +160,15 @@ ported. It deviates from the plugin's session refresh (plugin 1.11.0
 The parity harness does not exercise identity, so `PARITY-RUN.md` is
 unaffected. Cookie-backed identity stays with #46.
 
+Opt-in options with no plugin ancestor (issue #64; defaults unchanged, so
+every fixture and the parity run keep their results):
+
+| Engine option (#64) | Plugin | Why |
+|---|---|---|
+| `inferSourceMedium: false` keeps `source` / `medium` as received; inferred values set only `channel` / `ft_channel` | infers from the referrer (classifyReferrerHost `:275-296`), never from a bare click ID | hosts with their own channel rules must rebuild channels from raw URL values |
+| `maxFieldLength` + `overLengthPolicy: 'drop'` for query-parameter values | sanitizeValue two-pass 128/256 truncation `:103-112` | hosts with shorter downstream limits drop instead of truncating |
+| `macroPolicy: 'keep'`, `controlCharPolicy: 'drop'` | sanitizeValue rejects macros, replaces control chars `:103-112` | hosts that keep macros or drop values with control characters keep their data |
+
 ### 2.5 Explicitly NOT derived (checked, cleared)
 
 - **`conversation/chatwoot.ts` attribute naming**: there is NO Chatwoot

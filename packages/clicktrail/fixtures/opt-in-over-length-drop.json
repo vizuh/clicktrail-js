@@ -1,0 +1,20 @@
+{
+  "name": "opt-in-over-length-drop",
+  "description": "overLengthPolicy 'drop' with maxFieldLength 120 stores '' for a 130-char utm_source instead of truncating it; sibling UTMs are kept.",
+  "quirk_decision": "CONTRACT (opt-in, #64): default stays the uniform 512 truncation (ruling #14). Semver: additive opt-in parse option (minor); defaults, CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/lp?utm_source=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&utm_medium=email&utm_campaign=spring",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-10-23T10:00:00.000Z",
+    "overLengthPolicy": "drop",
+    "maxFieldLength": 120
+  },
+  "expected": {
+    "_channel": "email",
+    "ft_source": "",
+    "ft_medium": "email",
+    "ft_campaign": "spring",
+    "lt_source": ""
+  }
+}
