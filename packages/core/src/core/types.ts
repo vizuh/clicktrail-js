@@ -109,7 +109,8 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
    * Referrer hosts that never form a touch, typically payment and
    * hosted-checkout returns (`paypal.com`, `stripe.com`). A referrer on a
    * listed host or any subdomain of it counts like a same-site referrer:
-   * referrer-only landings return `{ kind: 'none', reason: 'ignored_referrer' }`;
+   * referrer-only landings return `{ kind: 'none', reason: 'ignored_referrer' }`
+   * (or the "before capture" placeholder under `recordDirectTouch`);
    * UTMs and click IDs on the URL still form a touch, with the referrer
    * blanked. Entries are normalized with {@link normalizeReferrerHosts}.
    * Default: none. {@link PAYMENT_REFERRER_HOSTS} holds the WordPress
@@ -132,15 +133,18 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
   /**
    * Default `false` (plugin contract: no signal stores nothing). When true,
    * a landing that would return `no_signal` yields an unmeasured `direct`
-   * touch, and one that would return `internal_referrer` yields an
-   * unmeasured `unknown` touch labelled "before capture" (the visit began
-   * on another page of this site before capture, e.g. before consent).
+   * touch, and one that would return `internal_referrer` or
+   * `ignored_referrer` yields an unmeasured `unknown` touch labelled
+   * "before capture" (the visit began before capture, e.g. before consent
+   * or before a payment/sign-in hop). The merge writes placeholders only
+   * into an empty payload, so a stored touch is kept.
    */
   recordDirectTouch?: boolean;
   /**
    * Stored form of the referrer. Default `'url'`: the full referrer URL.
    * `'host'`: the referrer hostname ('' when it is not an http(s) URL).
-   * Classification always reads the raw referrer.
+   * Classification always reads the raw referrer. An ignored referrer is
+   * stored as ''.
    */
   referrerFormat?: ReferrerFormat;
   /**

@@ -88,6 +88,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `sanitizeField` accepts the same options. Defaults match the WordPress
   plugin and are unchanged, as are `CLASSIFIER_VERSION`, `SCHEMA_VERSION` and
   `CHANNEL_LABELS_VERSION` (#64).
+- `@vizuh/clicktrail-core`: with `recordDirectTouch`, a referrer-only landing
+  from an ignored referrer host yields the `Unknown (before capture)`
+  placeholder instead of `ignored_referrer`; the merge still keeps any stored
+  touch. The stored referrer of a touch with an ignored referrer is always
+  blank, also under `referrerFormat: 'host'` (#65).
 
 ### Fixed
 

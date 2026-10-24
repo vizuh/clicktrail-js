@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseAttributionUrl } from '../src/core/parse.js';
 import { areRelatedHosts, isIgnoredReferrerHost, normalizeReferrerHosts, sanitizeField } from '../src/core/sanitize.js';
 import { PAYMENT_REFERRER_HOSTS, resolveChannelLabel } from '../src/core/knowledge.js';
+import { emptyAttribution, mergeAttributionTouch } from '../src/core/merge.js';
 
 describe('parseAttributionUrl', () => {
   it('parses Google Ads UTMs + gclid into a paid_search touch', () => {
@@ -393,6 +394,48 @@ describe('query value policies (#64, opt-in)', () => {
       expect(sanitizeField(v, { maxFieldLength })).toBe('a'.repeat(512));
     }
     expect(sanitizeField(v, { maxFieldLength: 1000 })).toBe(v);
+  });
+});
+
+describe('ignored referrers with recordDirectTouch (#65)', () => {
+  const now = '2026-10-23T10:00:00.000Z';
+  const input = {
+    url: 'https://example.com/login-bridge', referrer: 'https://accounts.google.com/',
+    currentHost: 'example.com', now, ignoredReferrerHosts: ['accounts.google.com'],
+  };
+
+  it('an empty payload gets the before-capture first touch', () => {
+    const r = parseAttributionUrl({ ...input, recordDirectTouch: true });
+    expect(r.kind).toBe('touch');
+    if (r.kind !== 'touch') return;
+    expect(r.touch).toMatchObject({ referrer: '', channelLabel: 'Unknown (before capture)', unmeasured: true });
+    const out = mergeAttributionTouch(emptyAttribution(), r.touch);
+    expect(out.ft_channel).toBe('Unknown (before capture)');
+    expect(out.ft_landing_page).toBe('https://example.com/login-bridge');
+  });
+
+  it('keeps a stored paid touch', () => {
+    const paid = parseAttributionUrl({ url: 'https://example.com/?gclid=G1', currentHost: 'example.com', now });
+    if (paid.kind !== 'touch') throw new Error('expected touch');
+    const stored = mergeAttributionTouch(emptyAttribution(), paid.touch);
+    const r = parseAttributionUrl({ ...input, recordDirectTouch: true });
+    if (r.kind !== 'touch') throw new Error('expected touch');
+    expect(mergeAttributionTouch(stored, r.touch)).toEqual(stored);
+  });
+
+  it('without recordDirectTouch still returns ignored_referrer', () => {
+    expect(parseAttributionUrl(input)).toEqual({ kind: 'none', reason: 'ignored_referrer' });
+  });
+
+  it('an ignored referrer with UTMs is stored blank under referrerFormat host (#55/#56)', () => {
+    const r = parseAttributionUrl({
+      url: 'https://example.com/thanks?utm_source=newsletter&utm_medium=email',
+      referrer: 'https://checkout.stripe.com/c/pay/cs_test_x', currentHost: 'example.com', now,
+      ignoredReferrerHosts: ['checkout.stripe.com'], referrerFormat: 'host',
+    });
+    if (r.kind !== 'touch') throw new Error('expected touch');
+    expect(r.touch.referrer).toBe('');
+    expect(mergeAttributionTouch(emptyAttribution(), r.touch).lt_referrer).toBe('');
   });
 });
 
