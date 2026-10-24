@@ -58,6 +58,12 @@ Do not start capture before that source grants the required purpose.
   property's `_ga_<ID>` cookie, so server-side events can join its session.
   Without it, the first `_ga_*` cookie wins and `ga_session_property_unpinned`
   is reported when several exist.
+- The dataLayer destination never pushes Google tag field names flat
+  (`session_id`, `client_id`, `user_id`, `session_number`,
+  `engagement_time_msec`, `timestamp_micros`, `page_location`,
+  `page_referrer`); it pushes `ct_<name>` and sends the canonical `page_view`
+  as `event: 'ct_page_view'` (`datalayer_version` 2.0.0). Configure with
+  `reservedFieldPrefix` and `pageViewEvent`.
 - HTTP delivery is at-most-once; monitor the `onDropped` callback when using
   the HTTP destination. The fetch fallback reports non-2xx responses there;
   sendBeacon only confirms browser queue acceptance, not collector delivery.

@@ -54,7 +54,7 @@ describe('createClickTrail', () => {
     expect(typeof event['classifier_version']).toBe('string');
     expect(String(event['event_id'])).toMatch(/^evt_/);
     expect((event['marketing_trail'] as Record<string, unknown>)['event_id']).toBe(event['event_id']);
-    expect(dl.getArray()).toEqual([{ ...event, event: 'page_view' }]);
+    expect(dl.getArray()).toEqual([{ ...event, event: 'ct_page_view', datalayer_version: '2.0.0' }]);
   });
 
   it('consent gate returning false drops events and reports once at warn level', () => {

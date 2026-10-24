@@ -38,6 +38,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nitropack/listhen dev server) and GHSA-mrhx-c7xc-m3w5 (`zod@3`, reached only
   through the `@builder.io/qwik-city` peer, which ClickTrail never imports).
 
+### Changed
+
+- **dataLayer push shape 2.0.0 (breaking for GTM setups).**
+  `dataLayerDestination()` no longer pushes Google tag field names flat:
+  `session_id`, `client_id`, `user_id`, `session_number`,
+  `engagement_time_msec`, `timestamp_micros`, `page_location`, and
+  `page_referrer` are pushed as `ct_<name>` (`reservedFieldPrefix`, default
+  `ct_`). The canonical `page_view` is pushed as `event: 'ct_page_view'`
+  (`pageViewEvent`); `event_name` and `marketing_trail` are unchanged. Every
+  push carries `datalayer_version: '2.0.0'`. A GA4 Event tag that mapped
+  ClickTrail's `session_id` overrode GA4's own session, and catch-all tags
+  duplicated the Google tag's page views (#48). `schema_version`,
+  `classifier_version`, and the HTTP destination payload are unchanged.
+
+### Migration
+
+- In GTM, repoint data-layer variables from `session_id` /
+  `session_number` to `ct_session_id` / `ct_session_number`, and triggers
+  that matched `{{Event}}` equals `page_view` to `ct_page_view`. Rename any
+  GA4 Event tag parameter that uses a reserved name. See
+  `examples/gtm-datalayer/README.md`.
+
 ## [0.2.0-rc.2] - pending publication
 
 Candidate prepared 2026-09-13 from merged PR #28 for matching GitHub/npm
