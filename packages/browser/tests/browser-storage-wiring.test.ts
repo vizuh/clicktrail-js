@@ -339,6 +339,32 @@ describe('createClickTrail storage wiring', () => {
     expect(mirror.map.has(ATTRIBUTION_KEY)).toBe(false);
   });
 
+  it('identity reaches the cookie surface only while consent is granted', () => {
+    const primary = fakeAdapter();
+    const mirror = fakeAdapter();
+    let consent = false;
+    const ct = createClickTrail({
+      destinations: [],
+      consentGate: () => consent,
+      storage: { primaryAdapter: primary, mirrorAdapter: mirror, randomBytes: () => BYTES_VISITOR },
+    });
+    const identityKeys = [SESSION_STATE_KEY, VISITOR_ID_FALLBACK_KEY, SESSION_ID_FALLBACK_KEY];
+
+    ct.start();
+    ct.touchSession();
+    for (const key of identityKeys) expect(primary.map.has(key)).toBe(false);
+
+    consent = true;
+    const session = ct.touchSession();
+    expect(primary.get(VISITOR_ID_FALLBACK_KEY)).toBe(session.visitorId);
+    expect(primary.get(SESSION_ID_FALLBACK_KEY)).toBe(session.sessionId);
+    expect(primary.get(SESSION_STATE_KEY)).toBe(mirror.get(SESSION_STATE_KEY));
+
+    consent = false;
+    ct.getSession();
+    for (const key of identityKeys) expect(primary.map.has(key)).toBe(false);
+  });
+
   it('without a storage config, behavior is unchanged (no identity generation)', () => {
     const ct = createClickTrail({ destinations: [] });
     ct.start();
