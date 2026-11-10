@@ -149,15 +149,9 @@ function stableConversionKey(
   input: ConversionInput<Record<string, unknown>>,
 ): string {
   const data = input.data ?? {};
+  const businessKey = BUSINESS_KEY_FIELDS.map((key) => data[key]).find(isBusinessKeyValue);
   const stableInput = input.eventId
-    ?? data['transactionId']
-    ?? data['transaction_id']
-    ?? data['bookingId']
-    ?? data['booking_id']
-    ?? data['leadId']
-    ?? data['lead_id']
-    ?? data['orderId']
-    ?? data['order_id']
+    ?? businessKey
     ?? data['formId']
     ?? data['form_id']
     ?? `${input.identity.visitorId ?? ''}:${input.identity.sessionId ?? ''}`;
@@ -182,23 +176,39 @@ const BUSINESS_KEY_FIELDS = [
   'order_id',
 ] as const;
 
-function hasBusinessKey(data: Record<string, unknown>): boolean {
-  return BUSINESS_KEY_FIELDS.some((key) => {
-    const value = data[key];
-    return (typeof value === 'string' && value.trim() !== '')
-      || (typeof value === 'number' && Number.isFinite(value));
-  });
+/** Empty, whitespace, and non-scalar values do not identify a conversion. */
+function isBusinessKeyValue(value: unknown): boolean {
+  return (typeof value === 'string' && value.trim() !== '')
+    || (typeof value === 'number' && Number.isFinite(value));
 }
 
-async function defaultRandomBytes(): Promise<RandomBytesFn> {
+function hasBusinessKey(data: Record<string, unknown>): boolean {
+  return BUSINESS_KEY_FIELDS.some((key) => isBusinessKeyValue(data[key]));
+}
+
+type WebCryptoLike = Pick<Crypto, 'getRandomValues'>;
+
+function globalWebCrypto(): WebCryptoLike | undefined {
   const webCrypto = (globalThis as { crypto?: Crypto }).crypto;
-  if (webCrypto?.getRandomValues) {
-    return (byteLength) => webCrypto.getRandomValues(new Uint8Array(byteLength));
+  return webCrypto?.getRandomValues ? webCrypto : undefined;
+}
+
+function loadNodeWebCrypto(): Promise<WebCryptoLike | undefined> {
+  return import('node:crypto').then((m) => m.webcrypto as WebCryptoLike, () => undefined);
+}
+
+// ponytail: Node 18 has no global WebCrypto. Start loading node:crypto at
+// module load so the first track* call does not wait on it (and delivery
+// timing stays the same as Node 20+). Runtimes with globalThis.crypto never
+// touch the Node builtin. The promise never rejects.
+const preloadedNodeWebCrypto = globalWebCrypto() ? undefined : loadNodeWebCrypto();
+
+async function defaultRandomBytes(): Promise<RandomBytesFn> {
+  const webCrypto = globalWebCrypto() ?? await (preloadedNodeWebCrypto ?? loadNodeWebCrypto());
+  if (!webCrypto) {
+    throw new TypeError('clicktrail server: no WebCrypto available; pass config.randomBytes.');
   }
-  // ponytail: Node 18 has no global WebCrypto. Load node:crypto lazily so
-  // runtimes that do have globalThis.crypto never touch a Node builtin.
-  const { webcrypto } = await import('node:crypto');
-  return (byteLength) => webcrypto.getRandomValues(new Uint8Array(byteLength));
+  return (byteLength) => webCrypto.getRandomValues(new Uint8Array(byteLength));
 }
 
 async function resolveEventId(

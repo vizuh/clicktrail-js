@@ -93,9 +93,45 @@ describe('ClickTrailServer event_id without a business key', () => {
     expect(second).toMatch(UUID_EVENT_ID);
     expect(first).not.toBe(second);
   });
+
+  it('does not delay delivery when loaded without a global WebCrypto (Node 18)', async () => {
+    vi.resetModules();
+    vi.stubGlobal('crypto', undefined);
+    const { ClickTrailServer: FreshServer } = await import('../src/server.js');
+    // Module load and the first track* call are separate turns in real hosts.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn((_url: unknown, _init?: RequestInit) => new Promise<Response>(() => {}));
+      const result = new FreshServer({ endpoint: 'https://collector.example.com/v1/events', fetch: fetchImpl as typeof fetch })
+        .trackLead({ identity: { payload: {} } });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchImpl).toHaveBeenCalledOnce();
+      const body = JSON.parse(String(fetchImpl.mock.calls[0]![1]!.body)) as { events: Array<Record<string, unknown>> };
+      expect(body.events[0]!['event_id']).toMatch(UUID_EVENT_ID);
+      await vi.advanceTimersByTimeAsync(3000);
+      await expect(result).resolves.toEqual({ ok: false, status: 0 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('ClickTrailServer event_id with a business key', () => {
+  it('ignores an empty business key that sits ahead of a real one', async () => {
+    const randomBytes = counterBytes();
+    const { server, ids } = harness({ randomBytes });
+    await server.trackLead({ identity: { payload: {} }, data: { transactionId: '', leadId: 'L1' } });
+    await server.trackLead({ identity: { payload: {} }, data: { transactionId: '', leadId: 'L2' } });
+    await server.trackLead({ identity: { payload: {} }, data: { transactionId: ' ', leadId: 'L3' } });
+    await server.trackLead({ identity: { payload: {} }, data: { transactionId: ' ', leadId: 'L4' } });
+    await server.trackLead({ identity: { payload: {} }, data: { transactionId: '', leadId: 'L1' } });
+    const [l1, l2, l3, l4, l1b] = ids();
+    expect(randomBytes).not.toHaveBeenCalled();
+    expect(new Set([l1, l2, l3, l4]).size).toBe(4);
+    expect(l1b).toBe(l1);
+  });
+
   it('derives the same id for the same leadId, bookingId, or orderId across calls', async () => {
     const randomBytes = counterBytes();
     const { server, ids } = harness({ randomBytes });
