@@ -15,8 +15,13 @@ import {
   filterServerAttributionPayload,
 } from '@vizuh/clicktrail-browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail-browser';
-import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { deriveStableEventId, isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
+import type { AttributionPayload, RandomBytesFn } from '@vizuh/clicktrail-core';
+import {
+  deriveStableEventId,
+  isSafeHttpUrl,
+  mintEventId,
+  toCanonicalEventName,
+} from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -84,12 +89,21 @@ export interface ClickTrailServerConfig {
   siteId?: string;
   workspaceId?: string;
   fetch?: typeof fetch;
+  /**
+   * Random byte source for event ids minted when a conversion has no
+   * eventId, business key, or explicit `now`. Defaults to WebCrypto
+   * (`globalThis.crypto`, else `node:crypto`). Never Math.random.
+   */
+  randomBytes?: RandomBytesFn;
 }
 
 export interface ConversionInput<D extends Record<string, unknown>> {
   identity: ServerIdentity;
   data?: D;
-  /** ISO-8601 occurrence time override. Defaults to the current wall clock. */
+  /**
+   * ISO-8601 occurrence time override. Defaults to the current wall clock.
+   * When set, it also keys a stable derived `event_id` (same input, same id).
+   */
   now?: string;
   /** Stable caller-owned key reused when the same logical event is retried. */
   eventId?: string;
@@ -142,6 +156,8 @@ function stableConversionKey(
     ?? data['booking_id']
     ?? data['leadId']
     ?? data['lead_id']
+    ?? data['orderId']
+    ?? data['order_id']
     ?? data['formId']
     ?? data['form_id']
     ?? `${input.identity.visitorId ?? ''}:${input.identity.sessionId ?? ''}`;
@@ -154,15 +170,51 @@ function stableConversionKey(
   ]);
 }
 
-function resolveEventId(
+/** Caller-owned keys that identify one logical conversion across retries. */
+const BUSINESS_KEY_FIELDS = [
+  'transactionId',
+  'transaction_id',
+  'bookingId',
+  'booking_id',
+  'leadId',
+  'lead_id',
+  'orderId',
+  'order_id',
+] as const;
+
+function hasBusinessKey(data: Record<string, unknown>): boolean {
+  return BUSINESS_KEY_FIELDS.some((key) => {
+    const value = data[key];
+    return (typeof value === 'string' && value.trim() !== '')
+      || (typeof value === 'number' && Number.isFinite(value));
+  });
+}
+
+async function defaultRandomBytes(): Promise<RandomBytesFn> {
+  const webCrypto = (globalThis as { crypto?: Crypto }).crypto;
+  if (webCrypto?.getRandomValues) {
+    return (byteLength) => webCrypto.getRandomValues(new Uint8Array(byteLength));
+  }
+  // ponytail: Node 18 has no global WebCrypto. Load node:crypto lazily so
+  // runtimes that do have globalThis.crypto never touch a Node builtin.
+  const { webcrypto } = await import('node:crypto');
+  return (byteLength) => webcrypto.getRandomValues(new Uint8Array(byteLength));
+}
+
+async function resolveEventId(
   eventName: string,
   input: ConversionInput<Record<string, unknown>>,
-  siteId?: string,
-): string {
+  siteId: string | undefined,
+  randomBytes: RandomBytesFn | undefined,
+): Promise<string> {
   if (input.eventId !== undefined) return normalizeEventId(input.eventId);
-  // Server conversions have no browser clock/UUID lifecycle. Derive an ID
-  // from stable occurrence data so retries of the same call deduplicate.
-  return deriveStableEventId(siteId ?? 'clicktrail', stableConversionKey(eventName, input));
+  // Derive a stable id only from caller-owned occurrence data, so retries of
+  // the same conversion deduplicate. formId and visitor/session identity are
+  // shared by many distinct conversions and must never be the only key.
+  if (input.now !== undefined || hasBusinessKey(input.data ?? {})) {
+    return deriveStableEventId(siteId ?? 'clicktrail', stableConversionKey(eventName, input));
+  }
+  return mintEventId(randomBytes ?? await defaultRandomBytes());
 }
 
 function optionalText(value: unknown): string | undefined {
@@ -235,10 +287,12 @@ export class ClickTrailServer {
   private readonly siteId?: string;
   private readonly workspaceId?: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly randomBytes?: RandomBytesFn;
 
   constructor(config: ClickTrailServerConfig) {
     this.endpoint = requireSafeHttpUrl(config.endpoint, 'endpoint');
     this.fetchImpl = config.fetch ?? fetch;
+    if (config.randomBytes !== undefined) this.randomBytes = config.randomBytes;
     if (config.siteId !== undefined) this.siteId = config.siteId;
     if (config.workspaceId !== undefined) this.workspaceId = config.workspaceId;
   }
@@ -259,7 +313,10 @@ export class ClickTrailServer {
     }
   }
 
-  private build(eventName: string, input: ConversionInput<Record<string, unknown>>): ClickTrailEvent {
+  private async build(
+    eventName: string,
+    input: ConversionInput<Record<string, unknown>>,
+  ): Promise<ClickTrailEvent> {
     const payload = filterServerAttributionPayload(input.identity.payload ?? {});
     const inputData = input.data ?? {};
     const data = sanitizeConversionData(inputData);
@@ -272,7 +329,7 @@ export class ClickTrailServer {
     const bookingId = optionalText(inputData['bookingId']);
     const orderId = optionalText(inputData['orderId']) ?? optionalText(inputData['transactionId']);
     const startDate = optionalText(inputData['startDate']);
-    const eventId = resolveEventId(eventName, input, this.siteId);
+    const eventId = await resolveEventId(eventName, input, this.siteId, this.randomBytes);
     return buildEventPayload(payload, canonicalName, {
       ...data,
       ...(formId !== undefined ? { form_id: formId } : {}),
@@ -296,22 +353,43 @@ export class ClickTrailServer {
     });
   }
 
+  /**
+   * Send a `lead` conversion.
+   *
+   * Retries are idempotent only when the call carries `eventId` or a business
+   * key (`data.leadId`, or an explicit `now`): repeating the same input then
+   * yields the same `event_id`. Without one, every call mints a random
+   * `event_id`, so a retried call counts as a new conversion. `formId` and
+   * visitor/session identity are not business keys.
+   */
   async trackLead(input: ConversionInput<LeadData>): Promise<SendResult> {
-    return this.send([this.build('lead', input)]);
+    return this.send([await this.build('lead', input)]);
   }
 
+  /**
+   * Send a `booking` conversion.
+   *
+   * Retries are idempotent only with `eventId` or a business key
+   * (`data.bookingId`, or an explicit `now`); otherwise each call mints a
+   * random `event_id`.
+   */
   async trackBooking(input: ConversionInput<BookingData>): Promise<SendResult> {
     const value = input.data?.value;
     if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)) {
       throw new TypeError('clicktrail server: booking.value must be a positive finite number.');
     }
-    return this.send([this.build('booking', input)]);
+    return this.send([await this.build('booking', input)]);
   }
 
+  /**
+   * Send a `sale` conversion. The required `data.transactionId` is the
+   * business key, so retries of the same purchase reuse the same `event_id`
+   * (an explicit `eventId` still wins).
+   */
   async trackPurchase(input: ConversionInput<PurchaseData>): Promise<SendResult> {
     requireNonEmptyString(input.data?.transactionId, 'purchase.transactionId');
     requirePositiveNumber(input.data?.value, 'purchase.value');
     requireNonEmptyString(input.data?.currency, 'purchase.currency');
-    return this.send([this.build('sale', input)]);
+    return this.send([await this.build('sale', input)]);
   }
 }
