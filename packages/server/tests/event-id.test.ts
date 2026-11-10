@@ -84,6 +84,7 @@ describe('ClickTrailServer event_id without a business key', () => {
 
   it('falls back to node:crypto when no global WebCrypto exists (Node 18)', async () => {
     vi.stubGlobal('crypto', undefined);
+    expect((globalThis as { crypto?: Crypto }).crypto).toBeUndefined();
     const { server, ids } = harness();
     await server.trackLead({ identity: { payload: {} } });
     await server.trackLead({ identity: { payload: {} } });
