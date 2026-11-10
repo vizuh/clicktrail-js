@@ -37,9 +37,26 @@ export interface HttpDestinationConfig {
   send?: SendFn;
   /** Called with a batch that could not be delivered. */
   onDropped?: (events: readonly StampedClickTrailEvent[], error: unknown) => void;
+  /**
+   * Flush a partial batch this many ms after its oldest event was buffered.
+   * Default 5000. `0` disables the timer (flush only on batch size, page
+   * hide or stop()). The timer is armed only when an event is buffered.
+   */
+  maxAgeMs?: number;
+  /**
+   * Injected timer for the max-age flush: schedule `fn` after `ms` and
+   * return a cancel function. Default wraps setTimeout/clearTimeout.
+   */
+  schedule?: (fn: () => void, ms: number) => () => void;
 }
 
 const DEFAULT_BATCH_SIZE = 10;
+const DEFAULT_MAX_AGE_MS = 5000;
+
+function defaultSchedule(fn: () => void, ms: number): () => void {
+  const handle = setTimeout(fn, ms);
+  return () => clearTimeout(handle);
+}
 
 function defaultSend(useBeacon: boolean): SendFn {
   return (endpoint, body) => {
@@ -70,10 +87,18 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   const batchSize = Math.max(1, config.batchSize ?? DEFAULT_BATCH_SIZE);
   const useBeacon = config.beacon ?? true;
   const send = config.send ?? defaultSend(useBeacon);
+  const maxAgeMs = Math.max(0, config.maxAgeMs ?? DEFAULT_MAX_AGE_MS);
+  const schedule = config.schedule ?? defaultSchedule;
 
   let batch: StampedClickTrailEvent[] = [];
+  let cancelTimer: (() => void) | null = null;
+  const stopTimer = (): void => {
+    cancelTimer?.();
+    cancelTimer = null;
+  };
 
   const flushBatch = async (): Promise<void> => {
+    stopTimer();
     if (batch.length === 0) return;
     const events = batch;
     batch = [];
@@ -96,9 +121,11 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
     deliver(event) {
       batch.push(event);
       if (batch.length >= batchSize) void flushBatch();
+      else if (maxAgeMs > 0 && cancelTimer === null) cancelTimer = schedule(() => void flushBatch(), maxAgeMs);
     },
     flush: flushBatch,
     clear() {
+      stopTimer();
       batch = [];
     },
   };

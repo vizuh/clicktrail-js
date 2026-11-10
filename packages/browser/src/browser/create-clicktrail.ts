@@ -642,6 +642,29 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
     linkDecorator.start();
   }
 
+  let removePageHideListeners: (() => void) | null = null;
+  /** Drain every destination; a failing flush is reported, never thrown. */
+  const flushDestinations = (when: string): void => {
+    const reportFlushFailure = (name: string): void => {
+      try {
+        sink.report({
+          code: 'destination_flush_failed',
+          level: 'warn',
+          message: `Destination '${name}' failed to flush during ${when}.`,
+        });
+      } catch {
+        // Host diagnostics are best effort and must not break cleanup.
+      }
+    };
+    for (const dest of destinations) {
+      try {
+        void Promise.resolve(dest.flush?.()).catch(() => reportFlushFailure(dest.name));
+      } catch {
+        reportFlushFailure(dest.name);
+      }
+    }
+  };
+
   const instance: ClickTrailInstance = {
     start() {
       if (started) return;
@@ -704,6 +727,25 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         if (config.crossDomain) {
           wireCrossDomain(instance);
         }
+        // Last, so a failed start() never leaves listeners behind. Browser
+        // only: SSR/Node hosts have no window/document and register nothing.
+        const win =
+          typeof window !== 'undefined' && typeof window.addEventListener === 'function' ? window : null;
+        const doc =
+          typeof document !== 'undefined' && typeof document.addEventListener === 'function' ? document : null;
+        // Same consent recheck as stop(): a denied gate clears instead of sending.
+        const onPageHide = (): void => {
+          if (consentAllows()) flushDestinations('page hide');
+        };
+        const onVisibilityChange = (): void => {
+          if (doc?.visibilityState === 'hidden') onPageHide();
+        };
+        win?.addEventListener('pagehide', onPageHide);
+        doc?.addEventListener('visibilitychange', onVisibilityChange);
+        removePageHideListeners = () => {
+          win?.removeEventListener('pagehide', onPageHide);
+          doc?.removeEventListener('visibilitychange', onVisibilityChange);
+        };
       } catch (error) {
         formInjector?.stop();
         formInjector = null;
@@ -723,33 +765,9 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
 
     stop() {
       if (!started) return;
-      if (consentAllows()) {
-        for (const dest of destinations) {
-          try {
-            void Promise.resolve(dest.flush?.()).catch(() => {
-              try {
-                sink.report({
-                  code: 'destination_flush_failed',
-                  level: 'warn',
-                  message: `Destination '${dest.name}' failed to flush during stop().`,
-                });
-              } catch {
-                // Host diagnostics are best effort and must not break cleanup.
-              }
-            });
-          } catch {
-            try {
-              sink.report({
-                code: 'destination_flush_failed',
-                level: 'warn',
-                message: `Destination '${dest.name}' failed to flush during stop().`,
-              });
-            } catch {
-              // Host diagnostics are best effort and must not break cleanup.
-            }
-          }
-        }
-      }
+      removePageHideListeners?.();
+      removePageHideListeners = null;
+      if (consentAllows()) flushDestinations('stop()');
       formInjector?.stop();
       formInjector = null;
       linkDecorator?.stop();

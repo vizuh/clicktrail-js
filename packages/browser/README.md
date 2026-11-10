@@ -151,9 +151,13 @@ const { sessionId } = clickTrail.getSession({ passive: true }); // '' once expir
 ## Boundaries
 
 - Storage and transmission are consent-gated.
-- Call `clearData()` when consent is withdrawn to clear state immediately.
-  `stop()` also rechecks consent and discards buffered HTTP events when the gate
-  is denied. An already-started request cannot be recalled.
+- Call `clearData()` when consent is withdrawn to clear state immediately; it
+  also cancels the pending max-age flush. `stop()` and the page-hide flush also
+  recheck consent and discard buffered HTTP events when the gate is denied. The
+  max-age timer does not recheck the gate, so a host that only flips
+  `consentGate` without calling `clearData()` can still send events captured
+  before withdrawal within `maxAgeMs`. An already-started request cannot be
+  recalled.
 - The host owns the cookie policy, destination, and retention period. Mirror
   retention defaults to 90 days and must be set from 1 through 400 days.
 - Unavailable localStorage does not stop capture or cookie persistence. Blocked
@@ -178,6 +182,10 @@ const { sessionId } = clickTrail.getSession({ passive: true }); // '' once expir
   Differing duplicates of `_ga`, `_ga_<property>`, `_fbp` or `_fbc` report
   `browser_id_cookie_duplicate` once per instance. `parseCookieMap(raw,
   { duplicates })` still keeps the last occurrence unless told otherwise.
+- The HTTP destination sends a batch when it reaches `batchSize` (default 10),
+  `maxAgeMs` after its oldest event (default 5000; `0` disables), when the page
+  is hidden (`visibilitychange` to `hidden` or `pagehide`, listeners added by
+  `start()` and removed by `stop()`), and on `stop()`.
 - HTTP delivery is at-most-once; monitor the `onDropped` callback when using
   the HTTP destination. The fetch fallback reports non-2xx responses there;
   sendBeacon only confirms browser queue acceptance, not collector delivery.
