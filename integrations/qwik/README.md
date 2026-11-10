@@ -69,6 +69,8 @@ export const useAction = action$(async (form, requestEvent) => {
 
 Validation matrix, canonical event names, and the never-throw `{ ok, status }` contract mirror `packages/server` exactly.
 
+Every event carries an `evt_` `event_id`: pass `eventId` to reuse a stable key across retries; when it is omitted, the helper derives an ID from `transactionId`/`bookingId`/`leadId` or the occurrence timestamp. Only canonical attribution fields from the identity (cookie or `sharedMap`) are sent; conversion fields such as `value`, `currency`, `order_id` or `consent` must come from your server code.
+
 ### 3. Browser page views (optional)
 
 Qwik City has no global router-afterEach DOM event, so you inject a navigation seam:

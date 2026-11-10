@@ -85,6 +85,8 @@ export const actions = {
 
 Validation contract (identical to `@vizuh/clicktrail-server`): money fields must be positive finite numbers with a non-empty ISO-4217 currency; invalid input rejects as a promise; `send` resolves `{ ok, status }` and never throws into host request handling.
 
+Every event carries an `evt_` `event_id`: pass `eventId` to reuse a stable key across retries; when it is omitted, the helper derives an ID from `orderId`/`bookingId`/`leadId` or the occurrence timestamp. Only canonical attribution fields are read from the attribution cookie; conversion fields such as `value`, `currency`, `order_id` or `consent` must come from your server code.
+
 ## Privacy
 
 - Visitor IPs are never forwarded by the proxy (fresh header set, allowlist only).
