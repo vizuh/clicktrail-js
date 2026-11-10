@@ -11,14 +11,21 @@ export interface Destination {
   /**
    * Called once when the SDK starts. Create runtime resources (e.g. the
    * dataLayer array reference) HERE, never at factory/import time.
+   * `context.canSend()` rechecks consent for sends the destination starts on
+   * its own (e.g. a timer); a denied check also clears the queues.
    */
-  start?(): void;
+  start?(context?: DestinationContext): void;
   stop?(): void;
   deliver(event: StampedClickTrailEvent): void;
   /** Drain any buffered events (e.g. on page hide or stop()). */
   flush?(): void | Promise<void>;
   /** Discard buffered events without delivering them. */
   clear(): void;
+}
+
+/** Passed to Destination.start() by createClickTrail. */
+export interface DestinationContext {
+  canSend(): boolean;
 }
 
 /** Injected side-effect boundary: transmits a pre-encoded JSON body. */
@@ -91,6 +98,7 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
   const schedule = config.schedule ?? defaultSchedule;
 
   let batch: StampedClickTrailEvent[] = [];
+  let canSend: () => boolean = () => true;
   let cancelTimer: (() => void) | null = null;
   const stopTimer = (): void => {
     cancelTimer?.();
@@ -118,10 +126,19 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
 
   return {
     name: 'http',
+    start(context) {
+      if (context) canSend = () => context.canSend();
+    },
     deliver(event) {
       batch.push(event);
       if (batch.length >= batchSize) void flushBatch();
-      else if (maxAgeMs > 0 && cancelTimer === null) cancelTimer = schedule(() => void flushBatch(), maxAgeMs);
+      else if (maxAgeMs > 0 && cancelTimer === null) {
+        cancelTimer = schedule(() => {
+          cancelTimer = null;
+          // Fail closed: a denied gate clears the batch instead of sending it.
+          if (canSend()) void flushBatch();
+        }, maxAgeMs);
+      }
     },
     flush: flushBatch,
     clear() {

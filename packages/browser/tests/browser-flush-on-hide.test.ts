@@ -186,6 +186,23 @@ describe('max-age flush timer', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('timer rechecks consent: a gate denied without any SDK call sends nothing', () => {
+    vi.useFakeTimers();
+    let consent = true;
+    const send = vi.fn();
+    const ct = createClickTrail({
+      destinations: [httpDestination({ endpoint: 'https://t.example', send })],
+      consentGate: () => consent,
+    });
+    ct.start();
+    ct.track('page_view');
+    consent = false; // host flips the gate only: no clearData(), no stop()
+    vi.advanceTimersByTime(60_000);
+    consent = true;
+    ct.stop();
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('clearData() cancels the pending max-age flush', () => {
     vi.useFakeTimers();
     const send = vi.fn();

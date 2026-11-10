@@ -152,12 +152,9 @@ const { sessionId } = clickTrail.getSession({ passive: true }); // '' once expir
 
 - Storage and transmission are consent-gated.
 - Call `clearData()` when consent is withdrawn to clear state immediately; it
-  also cancels the pending max-age flush. `stop()` and the page-hide flush also
-  recheck consent and discard buffered HTTP events when the gate is denied. The
-  max-age timer does not recheck the gate, so a host that only flips
-  `consentGate` without calling `clearData()` can still send events captured
-  before withdrawal within `maxAgeMs`. An already-started request cannot be
-  recalled.
+  also cancels the pending max-age flush. `stop()`, the page-hide flush and the
+  max-age timer also recheck consent and discard buffered HTTP events when the
+  gate is denied. An already-started request cannot be recalled.
 - The host owns the cookie policy, destination, and retention period. Mirror
   retention defaults to 90 days and must be set from 1 through 400 days.
 - Unavailable localStorage does not stop capture or cookie persistence. Blocked

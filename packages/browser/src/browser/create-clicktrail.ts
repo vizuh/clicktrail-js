@@ -673,7 +673,7 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
       try {
         for (const dest of destinations) {
           startedDestinations.push(dest);
-          dest.start?.();
+          dest.start?.({ canSend: consentAllows });
         }
         if (storageCfg) {
           initStorage();
