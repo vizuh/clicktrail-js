@@ -156,8 +156,11 @@ export function httpDestination(config: HttpDestinationConfig): Destination {
  * 1.0.0 (unstamped): every canonical key pushed flat, `event` = `event_name`.
  * 2.0.0: Google tag field names are prefixed and the canonical `page_view`
  * is pushed as `event: 'ct_page_view'` (see GOOGLE_TAG_RESERVED_FIELDS).
+ * 3.0.0: every push also carries the paid-marker keys (`gad_source`,
+ * `gad_campaignid`, `oppref` and their `ft_`/`lt_` mirrors), empty when the
+ * visitor has none, because the canonical payload allowlist now includes them.
  */
-export const DATALAYER_VERSION = '2.0.0' as const;
+export const DATALAYER_VERSION = '3.0.0' as const;
 
 /**
  * Flat keys the Google tag (gtag.js / GA4) interprets as its own fields

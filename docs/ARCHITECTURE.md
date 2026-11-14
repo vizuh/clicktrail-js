@@ -91,15 +91,16 @@ Binding rulings and their fixture-level pins live in `docs/internal/WP-PARITY-DR
   `CHANNEL_LABELS` table; machine enum channels remain authoritative.
 - **Channel codes (opt-in)**: `ft_channel_code` / `lt_channel_code` carry the
   machine `Channel` enum next to the labels. See [Channel codes](#channel-codes-opt-in).
-- **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.2.0` for the
+- **Versions**: `SCHEMA_VERSION`/`CLASSIFIER_VERSION` are at `1.3.0` for the
   `0.1.0` package line; these bumps record semantic decisions, not published
   breaking releases.
 - **dataLayer push shape**: the browser `dataLayerDestination()` projection
-  has its own stamp, `datalayer_version` (`DATALAYER_VERSION`, `2.0.0`),
+  has its own stamp, `datalayer_version` (`DATALAYER_VERSION`, `3.0.0`),
   independent of the payload stamps above. 2.0.0 pushes Google tag field
   names as `ct_<name>` and the canonical `page_view` as `ct_page_view`
-  (#48); a change to which keys or `event` values reach the dataLayer bumps
-  its major.
+  (#48); 3.0.0 adds the paid-marker keys (`gad_source`, `gad_campaignid`,
+  `oppref` and their `ft_`/`lt_` mirrors, #82) to every push. A change to
+  which keys or `event` values reach the dataLayer bumps its major.
 
 ### Channel codes (opt-in)
 
@@ -124,11 +125,13 @@ keep the label for display.
 
 The label and the code come from two independent rule sets
 (`resolveChannelLabel()` vs. the parser's classification), so one label maps
-to several codes. Mapping on `CLASSIFIER_VERSION` 1.2.0:
+to several codes. Mapping on `CLASSIFIER_VERSION` 1.3.0:
 
 | `ft_channel` / `lt_channel` label | `*_channel_code` | Deciding input |
 |---|---|---|
 | Google Ads, Microsoft Ads | `paid_search` | `gclid` / `wbraid` / `gbraid` / `msclkid` (medium defaults to `cpc`) |
+| Google Ads | `paid_search` | `gad_source` alone (gclid stripped); a certain click ID of another platform wins; never the selected click ID |
+| ChatGPT Ads | `paid_other` | `oppref`; never the selected click ID |
 | Google Ads, Microsoft Ads, Facebook Ads, LinkedIn Ads, X Ads, Reddit Ads, TikTok Ads, Pinterest Ads, Snapchat Ads | `paid_other` | paid `utm_medium` (`cpc`, `ppc`, `paid`, …) and no click ID |
 | Facebook Ads, LinkedIn Ads, X Ads, TikTok Ads, Pinterest Ads, Snapchat Ads | `paid_social` | `fbclid` / `li_fat_id` / `twclid` / `ttclid` / `epik` / `sccid` plus a paid `utm_medium` |
 | Facebook, LinkedIn, X, TikTok, Pinterest, Snapchat | `unknown`, or the `utm_medium` class (`email`, …) | the same click IDs without a paid `utm_medium` |

@@ -63,7 +63,7 @@ below is opt-in:
 
 | Option | Values | Effect |
 | --- | --- | --- |
-| `landingPageFormat` | `'url'` (default), `'path'`, `'path+allowlisted-query'` | `'path'` stores `/pricing`. `'path+allowlisted-query'` also keeps the query keys in `landingPageQueryAllowlist`, which defaults to `LANDING_PAGE_QUERY_ALLOWLIST` (UTMs and click IDs). |
+| `landingPageFormat` | `'url'` (default), `'path'`, `'path+allowlisted-query'` | `'path'` stores `/pricing`. `'path+allowlisted-query'` also keeps the query keys in `landingPageQueryAllowlist`, which defaults to `LANDING_PAGE_QUERY_ALLOWLIST` (UTMs, click IDs and the paid markers `gad_source`, `gad_campaignid`, `oppref`). |
 | `referrerFormat` | `'url'` (default), `'host'` | `'host'` stores `www.google.com`. Classification still reads the full referrer. |
 | `recordDirectTouch` | `false` (default), `true` | Turns a landing without signal into a placeholder touch: `Direct` (source `(direct)`, medium `(none)`) when there is no referrer, and `Unknown (before capture)` when the referrer is your own site, for example because consent came after the first page. |
 | `inferSourceMedium` | `true` (default), `false` | `false` stores `source` / `medium` only as received in `utm_source` / `utm_medium`. A bare `gclid` then stores empty source and medium instead of `google` / `cpc`, and a bare referrer instead of `google` / `organic`. Inferred values still decide the channel label and code. |
@@ -90,7 +90,7 @@ WordPress plugin:
 | Option | Values | Effect |
 | --- | --- | --- |
 | `signalAfterSanitize` | `false` (default), `true` | Only UTM and click-ID values that survive the value policies count. A landing whose only signals were dropped follows the no-signal path: referrer inference, the `recordDirectTouch` placeholder, or no touch. |
-| `signalKeys` | `{ utm?: string[]; clickIds?: string[] }` | Only the listed UTM keys and click IDs are read; others are neither a signal nor stored. An omitted list keeps every known key; aliases such as `sc_click_id` count as their canonical key. |
+| `signalKeys` | `{ utm?: string[]; clickIds?: string[] }` | Only the listed UTM keys and click IDs are read (the paid markers `gad_source`, `gad_campaignid`, `oppref` are listed under `clickIds`); others are neither a signal nor stored. An omitted list keeps every known key; aliases such as `sc_click_id` count as their canonical key. |
 | `internalReferrer` | `'related'` (default), `'same-host'` | `'same-host'` treats only the current host (ignoring `www.`) as internal, so `blog.example.com` -> `www.example.com` is a referral. |
 | `caseSensitiveParams` | `false` (default), `true` | UTM and click-ID keys match exactly, so `UTM_SOURCE` is ignored. Duplicate keys still resolve to the last value. |
 

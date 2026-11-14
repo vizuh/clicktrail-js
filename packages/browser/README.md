@@ -171,7 +171,7 @@ const { sessionId } = clickTrail.getSession({ passive: true }); // '' once expir
   (`session_id`, `client_id`, `user_id`, `session_number`,
   `engagement_time_msec`, `timestamp_micros`, `page_location`,
   `page_referrer`); it pushes `ct_<name>` and sends the canonical `page_view`
-  as `event: 'ct_page_view'` (`datalayer_version` 2.0.0). Configure with
+  as `event: 'ct_page_view'` (`datalayer_version` 3.0.0). Configure with
   `reservedFieldPrefix` and `pageViewEvent`.
 - A browser-ID cookie can appear twice in `document.cookie`, one per domain or
   path. Browser IDs use the first occurrence by default, the one gtag reads for
