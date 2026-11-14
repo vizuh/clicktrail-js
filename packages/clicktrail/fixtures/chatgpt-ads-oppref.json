@@ -1,0 +1,23 @@
+{
+  "name": "chatgpt-ads-oppref",
+  "description": "ChatGPT Ads landing: oppref on the URL, referrer chatgpt.com. Classifies as paid, not as a ChatGPT referral.",
+  "quirk_decision": "CONTRACT (#82, parity with click-trail-handler#231): oppref is a paid marker for ChatGPT Ads (source chatgpt, medium cpc, channel paid_other). It is stored as ft_/lt_/top-level oppref but is NOT a click ID: never in click_id_history or the selected click ID. Semver: classification change, CLASSIFIER_VERSION 1.3.0; additive payload keys, SCHEMA_VERSION 1.3.0.",
+  "input": {
+    "url": "https://example.com/pricing?oppref=abc123",
+    "referrer": "https://chatgpt.com/",
+    "currentHost": "example.com",
+    "now": "2026-11-14T10:00:00.000Z"
+  },
+  "expected": {
+    "_channel": "paid_other",
+    "ft_source": "chatgpt",
+    "ft_medium": "cpc",
+    "ft_channel": "ChatGPT Ads",
+    "lt_channel": "ChatGPT Ads",
+    "oppref": "abc123",
+    "ft_oppref": "abc123",
+    "lt_oppref": "abc123",
+    "attribution_selected_click_id": "",
+    "click_id_history": "[]"
+  }
+}

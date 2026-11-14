@@ -11,6 +11,7 @@ import {
   BROWSER_ID_KEYS,
   CHANNEL_CODE_KEYS,
   CLICK_ID_KEYS,
+  PAID_MARKER_KEYS,
   touchKeys,
 } from '@vizuh/clicktrail-core';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
@@ -36,6 +37,9 @@ export const CANONICAL_PAYLOAD_KEYS: readonly string[] = [
   // (ft_<cid>/lt_<cid>) and MUST survive store round-trips + hydration.
   ...CLICK_ID_KEYS.flatMap((cid) => [`ft_${cid}`, `lt_${cid}`]),
   ...CLICK_ID_KEYS,
+  // Paid markers (#82) are stored like click IDs: top-level plus mirrors.
+  ...PAID_MARKER_KEYS.flatMap((key) => [`ft_${key}`, `lt_${key}`]),
+  ...PAID_MARKER_KEYS,
   ...BROWSER_ID_KEYS,
   'visitor_id',
   'session_id',
