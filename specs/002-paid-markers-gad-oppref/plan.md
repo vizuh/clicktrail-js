@@ -17,7 +17,7 @@ Add a third key family next to click IDs and browser IDs. Markers are parsed as 
 - `parse.ts`: collect markers after click IDs. A marker counts as a signal. Platform choice: a certain click ID wins; otherwise a marker platform; otherwise the existing uncertain-click-ID/UTM path.
 - `merge.ts`: `MIRRORED_KEYS` (click IDs + markers) drive the ft_/lt_ mirrors, `clearLastTouchClickIds` and the first-touch guard. Top-level write for markers is separate from the click-ID audit loop.
 - `payload-store.ts`: canonical allowlist gains the nine keys; `filterServerAttributionPayload` derives from it.
-- Not changed: link decoration, form injection, server conversion data allow-lists, `click_ids` envelope, Python.
+- Not changed: link decoration, form injection, server conversion data allow-lists, `click_ids` envelope. Python (`python/clicktrail/clicktrail/landing.py`) mirrors capture only.
 
 ## Versioning
 

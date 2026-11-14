@@ -21,7 +21,7 @@ const clickTrail = createClickTrail({
 clickTrail.start();
 ```
 
-## 2. Push shape (`datalayer_version` 2.0.0)
+## 2. Push shape (`datalayer_version` 3.0.0)
 
 Every delivered event is one flat object pushed onto the array. Canonical
 fields stay flat so each maps directly to a GTM data-layer variable; a
@@ -40,9 +40,9 @@ name. Two exceptions keep the push from colliding with the Google tag:
   "event": "lead_submitted",          // GTM custom-event key
   "event_name": "lead_submitted",
   "event_id": "evt_...",              // deduplication wiring
-  "schema_version": "1.2.0",
-  "classifier_version": "1.2.0",
-  "datalayer_version": "2.0.0",       // version of this push shape
+  "schema_version": "1.3.0",
+  "classifier_version": "1.3.0",
+  "datalayer_version": "3.0.0",       // version of this push shape
   // flat canonical fields (same keys the WP plugin uses):
   "ft_source": "google", "lt_source": "google",
   "ft_medium": "cpc",   "lt_medium": "cpc",

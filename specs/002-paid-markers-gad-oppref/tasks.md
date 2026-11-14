@@ -26,7 +26,8 @@
 
 ## Follow-ups (not in this change)
 
-- [ ] `docs/ARCHITECTURE.md` still says `1.2.0` and its channel-label table lacks Google Ads via `gad_source` and ChatGPT Ads.
+- [x] `docs/ARCHITECTURE.md` version (1.3.0) and channel table (Google Ads via `gad_source`, ChatGPT Ads) updated in fix round 2.
 - [ ] Decide whether cross-domain continuation tokens and form injection should carry the markers.
 - [ ] Python has capture only (no channel rules); classification parity needs a Python classifier first.
-- [ ] `DATALAYER_VERSION` (`transport.ts`): dataLayer pushes and HTTP events spread the canonical payload, so they now carry the nine marker keys. Decide whether that is a major bump under the ARCHITECTURE rule.
+- [x] `DATALAYER_VERSION` bumped `2.0.0` to `3.0.0` in fix round 2: dataLayer pushes, HTTP events and Apointoo outcome records spread the canonical payload, so they carry the nine marker keys (ARCHITECTURE rule: a change to which keys reach the dataLayer bumps its major).
+- [ ] No fixture pins a `gad_campaignid`-only landing from google.com (now `unknown` channel, empty source/medium, label `Google Organic`, same as a `utm_campaign`-only landing on base).
