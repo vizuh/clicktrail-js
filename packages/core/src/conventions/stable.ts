@@ -12,11 +12,13 @@
 /**
  * Schema version of the canonical flat payload. Additive changes only within
  * a major. 1.1.0 adds ft_channel / lt_channel (WP-parity channel-label layer).
+ * 1.3.0 adds the paid-marker keys gad_source / gad_campaignid / oppref and
+ * their ft_/lt_ mirrors (#82).
  *
  * NOTE: 1.x is the UNPUBLISHED development line (package pre-release); these
  * bumps record semantic decisions, not published breaking releases.
  */
-export const SCHEMA_VERSION = '1.2.0' as const;
+export const SCHEMA_VERSION = '1.3.0' as const;
 
 /**
  * Version of the channel classification rules. Semantic changes are MAJOR
@@ -25,8 +27,11 @@ export const SCHEMA_VERSION = '1.2.0' as const;
  * macro rejection, symmetric related-host check, case-insensitive/last-wins
  * query parsing, full-href landing page, click-ID-aware first-touch guard,
  * and the ft_channel/lt_channel label layer.
+ * 1.3.0: gad_source classifies as Google Ads paid_search and oppref as
+ * ChatGPT Ads paid_other (#82); before, such landings were Google organic /
+ * ChatGPT referral.
  */
-export const CLASSIFIER_VERSION = '1.2.0' as const;
+export const CLASSIFIER_VERSION = '1.3.0' as const;
 
 // --- first-touch attributes -------------------------------------------------
 
@@ -73,6 +78,12 @@ export const ATTR_AD_CLICK_ID_TWCLID = 'ad.click_id.twclid' as const;
 export const ATTR_AD_CLICK_ID_LI_FAT_ID = 'ad.click_id.li_fat_id' as const;
 export const ATTR_AD_CLICK_ID_SCCID = 'ad.click_id.sccid' as const;
 export const ATTR_AD_CLICK_ID_EPIK = 'ad.click_id.epik' as const;
+
+// --- paid markers (not click IDs: never selected for conversion upload) -----
+
+export const ATTR_AD_MARKER_GAD_SOURCE = 'ad.marker.gad_source' as const;
+export const ATTR_AD_MARKER_GAD_CAMPAIGNID = 'ad.marker.gad_campaignid' as const;
+export const ATTR_AD_MARKER_OPPREF = 'ad.marker.oppref' as const;
 
 // --- browser/platform identifiers (captured only when consent allows) -------
 

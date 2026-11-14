@@ -97,8 +97,9 @@ export const PAYMENT_REFERRER_HOSTS: readonly string[] = [
  * Version of the CHANNEL_LABELS table; bump when any label or trigger changes.
  * 2: adds DIRECT and BEFORE_CAPTURE, written only by the opt-in
  * `recordDirectTouch` placeholders (no existing trigger changed).
+ * 3: adds CHATGPT_ADS (`oppref`); `gad_source` now yields GOOGLE_ADS (#82).
  */
-export const CHANNEL_LABELS_VERSION = '2';
+export const CHANNEL_LABELS_VERSION = '3';
 
 /**
  * Human-readable channel labels written to `ft_channel` / `lt_channel`.
@@ -125,6 +126,7 @@ export const CHANNEL_LABELS = {
   HUBSPOT: 'HubSpot',
   SALESFORCE_PARDOT: 'Salesforce Pardot',
   CONSTANT_CONTACT: 'Constant Contact',
+  CHATGPT_ADS: 'ChatGPT Ads',
   // AI-assistant referrers
   CHATGPT: 'ChatGPT',
   PERPLEXITY: 'Perplexity',
@@ -293,6 +295,8 @@ export interface ChannelLabelInput {
   medium: string;
   /** Canonical click IDs found in the URL. */
   clickIds: Readonly<Record<string, string>>;
+  /** Paid markers (`gad_source`, `oppref`, ...) found in the URL. */
+  paidMarkers?: Readonly<Record<string, string>>;
   /** Raw external referrer URL, if any. */
   referrer?: string;
 }
@@ -307,15 +311,19 @@ export interface ChannelLabelInput {
  */
 export function resolveChannelLabel(input: ChannelLabelInput): string {
   const ids = input.clickIds;
+  const markers = input.paidMarkers ?? {};
 
   // Click IDs — highest priority, checked before referrer. Certainty-tiered
   // per Hugo gate ruling D2: advertising-only identifiers get their Ads label;
   // uncertain identifiers get the plain platform label UNLESS explicit paid
-  // evidence (a paid utm_medium) promotes them.
+  // evidence (a paid utm_medium) promotes them. Paid markers (#82) are
+  // advertising-only too, so they rank with the certain identifiers.
   const medium = input.medium.trim().toLowerCase();
   const hasPaidEvidence = PAID_MEDIUMS.includes(medium);
   if (ids.gclid || ids.gbraid || ids.wbraid) return CHANNEL_LABELS.GOOGLE_ADS;
   if (ids.msclkid) return CHANNEL_LABELS.MICROSOFT_ADS;
+  if (markers.gad_source) return CHANNEL_LABELS.GOOGLE_ADS;
+  if (markers.oppref) return CHANNEL_LABELS.CHATGPT_ADS;
   if (ids.li_fat_id) return hasPaidEvidence ? CHANNEL_LABELS.LINKEDIN_ADS : CHANNEL_LABELS.LINKEDIN;
   if (ids.twclid) return hasPaidEvidence ? CHANNEL_LABELS.X_ADS : CHANNEL_LABELS.TWITTER_X;
   if (ids.ttclid) return hasPaidEvidence ? CHANNEL_LABELS.TIKTOK_ADS : CHANNEL_LABELS.TIKTOK;
@@ -387,6 +395,25 @@ export const CLICK_ID_PLATFORMS: Readonly<
   li_fat_id: { source: 'linkedin',  certainty: 'uncertain', paidChannel: 'paid_social' },
   sccid:     { source: 'snapchat',  certainty: 'uncertain', paidChannel: 'paid_social' },
   epik:      { source: 'pinterest', certainty: 'uncertain', paidChannel: 'paid_social' },
+};
+
+/**
+ * Paid markers (#82, parity with click-trail-handler#231): query parameters
+ * that prove a paid visit when the click ID is gone (`gad_source` when
+ * `gclid` was stripped; `oppref` on ChatGPT Ads) but are NOT click IDs.
+ * They form a touch and are stored like click IDs (top-level plus ft_/lt_
+ * mirrors), yet never enter `click_id_history` or the selected click ID, so
+ * they are never uploaded as a conversion click ID. `gad_campaignid` is
+ * stored only: it has no platform rule and does not classify.
+ */
+export const PAID_MARKER_KEYS: readonly string[] = ['gad_source', 'gad_campaignid', 'oppref'];
+
+/** Paid-marker -> platform map (advertising-only, so always `certain`). */
+export const PAID_MARKER_PLATFORMS: Readonly<
+  Record<string, { source: string; certainty: 'certain'; paidChannel: Channel }>
+> = {
+  gad_source: { source: 'google',  certainty: 'certain', paidChannel: 'paid_search' },
+  oppref:     { source: 'chatgpt', certainty: 'certain', paidChannel: 'paid_other' },
 };
 
 /** D3 additive payload keys (click-ID selection audit trail). */
@@ -476,6 +503,7 @@ export const PARAM_ALIASES: Readonly<Record<string, string>> = {
 export const LANDING_PAGE_QUERY_ALLOWLIST: readonly string[] = [
   ...Object.keys(UTM_PARAM_TO_FIELD),
   ...CLICK_ID_KEYS,
+  ...PAID_MARKER_KEYS,
   ...Object.keys(PARAM_ALIASES),
 ];
 

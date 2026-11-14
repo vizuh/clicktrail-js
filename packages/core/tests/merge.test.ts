@@ -315,8 +315,8 @@ describe('stampVersions', () => {
   it('stamps both versions without mutating input', () => {
     const base = { foo: 'bar' };
     const out = stampVersions(base);
-    expect(out.schema_version).toBe('1.2.0');
-    expect(out.classifier_version).toBe('1.2.0');
+    expect(out.schema_version).toBe('1.3.0');
+    expect(out.classifier_version).toBe('1.3.0');
     expect(base).toEqual({ foo: 'bar' });
   });
 });
