@@ -55,5 +55,5 @@ A visitor lands from `google.com` on `/?gad_source=1&gad_campaignid=999` with no
 
 ## Assumptions
 
-- Python (`python/clicktrail`) has a five-key click-ID parse table with no channel rules; it does not mirror the core table, so it is not changed.
+- Python (`python/clicktrail`) has a five-key click-ID parse table and no channel rules. It mirrors only the capture: `parse_landing` also returns the three markers (separate `PAID_MARKER_KEYS`, `None` when absent). Django's middleware filters by an explicit field set, so it drops them; Flask and ASGI pass the dict through.
 - Cross-domain link decoration, form injection and the server conversion data allow-lists are not widened: carrying these markers to other domains or third parties is a separate decision.

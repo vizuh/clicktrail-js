@@ -63,6 +63,12 @@ describe('paid markers (#82)', () => {
     expect(touch.channel).toBe('paid_search');
   });
 
+  it('a certain click ID outranks a marker in both channel and label', () => {
+    const touch = touchOf('https://example.com/?msclkid=M1&gad_source=1');
+    expect(touch.source).toBe('bing');
+    expect(touch.channelLabel).toBe('Microsoft Ads');
+  });
+
   it('gad_campaignid alone is stored but does not classify as paid', () => {
     const touch = touchOf('https://example.com/?gad_campaignid=999');
     expect(touch.channel).toBe('unknown');

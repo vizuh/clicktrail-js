@@ -17,6 +17,8 @@
 
 - [x] T006 `payload-store.ts`: canonical allowlist gains the nine keys (covers `filterServerAttributionPayload`).
 
+- [x] T006b `python/clicktrail/landing.py`: `PAID_MARKER_KEYS` captured by `parse_landing`; test in `test_landing.py`.
+
 ## Phase 3 - Docs and checks
 
 - [x] T007 `docs/EVENT-CONTRACT.md`: paid-marker paragraph.
@@ -26,4 +28,5 @@
 
 - [ ] `docs/ARCHITECTURE.md` still says `1.2.0` and its channel-label table lacks Google Ads via `gad_source` and ChatGPT Ads.
 - [ ] Decide whether cross-domain continuation tokens and form injection should carry the markers.
-- [ ] Python `clicktrail.landing` click-ID table (five keys, no channel rules) is a subset; extend only if Python gains classification.
+- [ ] Python has capture only (no channel rules); classification parity needs a Python classifier first.
+- [ ] `DATALAYER_VERSION` (`transport.ts`): dataLayer pushes and HTTP events spread the canonical payload, so they now carry the nine marker keys. Decide whether that is a major bump under the ARCHITECTURE rule.

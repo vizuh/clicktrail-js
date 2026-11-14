@@ -320,8 +320,9 @@ export function resolveChannelLabel(input: ChannelLabelInput): string {
   // advertising-only too, so they rank with the certain identifiers.
   const medium = input.medium.trim().toLowerCase();
   const hasPaidEvidence = PAID_MEDIUMS.includes(medium);
-  if (ids.gclid || ids.gbraid || ids.wbraid || markers.gad_source) return CHANNEL_LABELS.GOOGLE_ADS;
+  if (ids.gclid || ids.gbraid || ids.wbraid) return CHANNEL_LABELS.GOOGLE_ADS;
   if (ids.msclkid) return CHANNEL_LABELS.MICROSOFT_ADS;
+  if (markers.gad_source) return CHANNEL_LABELS.GOOGLE_ADS;
   if (markers.oppref) return CHANNEL_LABELS.CHATGPT_ADS;
   if (ids.li_fat_id) return hasPaidEvidence ? CHANNEL_LABELS.LINKEDIN_ADS : CHANNEL_LABELS.LINKEDIN;
   if (ids.twclid) return hasPaidEvidence ? CHANNEL_LABELS.X_ADS : CHANNEL_LABELS.TWITTER_X;
