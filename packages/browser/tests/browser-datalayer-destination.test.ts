@@ -2,7 +2,7 @@
  * dataLayerDestination: pushes stamped payloads into an injected array,
  * creates its own array only inside start() — never on import — and keeps
  * Google tag field names and the canonical page_view out of the dataLayer
- * (push shape DATALAYER_VERSION 2.0.0).
+ * (push shape DATALAYER_VERSION 3.0.0).
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -44,6 +44,20 @@ describe('dataLayerDestination', () => {
     ]);
   });
 
+  it('pushes the paid-marker keys under datalayer_version 3.0.0', () => {
+    const dest = dataLayerDestination();
+    dest.deliver(buildEventPayload(
+      { gad_source: '1', lt_gad_source: '1', oppref: 'abc123' },
+      'lead_submitted',
+    ));
+    const push = pushed(dest);
+
+    expect(push['datalayer_version']).toBe('3.0.0');
+    expect(push['gad_source']).toBe('1');
+    expect(push['lt_gad_source']).toBe('1');
+    expect(push['oppref']).toBe('abc123');
+  });
+
   it('creates its backing array only when started (lazy, never at import)', () => {
     const dest = dataLayerDestination();
     expect(dest.getArray()).toEqual([]);
@@ -65,7 +79,7 @@ describe('dataLayerDestination', () => {
       'page_location',
       'page_referrer',
     ]);
-    expect(DATALAYER_VERSION).toBe('2.0.0');
+    expect(DATALAYER_VERSION).toBe('3.0.0');
   });
 
   it('never pushes a reserved Google tag field name by default', () => {

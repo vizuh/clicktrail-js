@@ -1,0 +1,20 @@
+{
+  "name": "sensitive-query-redacted-referrer",
+  "description": "Default referrerFormat 'url' removes sensitive query keys (sid, user_email) from the stored external referrer and the email from the landing page, keeping the search query; the channel is still classified from the raw referrer.",
+  "quirk_decision": "CONTRACT FIX (#83, plugin parity click-trail-handler#232): sensitive query keys never reach ft_/lt_referrer. Semver: behavior change on a default; recorded in specs/003-sensitive-query-redaction. CLASSIFIER_VERSION and SCHEMA_VERSION unchanged.",
+  "input": {
+    "url": "https://example.com/?email=a%40b.com",
+    "referrer": "https://www.google.com/search?q=clinic&sid=S1&user_email=a%40b.com",
+    "currentHost": "example.com",
+    "now": "2026-11-14T10:00:00.000Z"
+  },
+  "expected": {
+    "_channel": "organic_search",
+    "ft_source": "google",
+    "ft_medium": "organic",
+    "ft_channel": "Google Organic",
+    "ft_landing_page": "https://example.com/",
+    "ft_referrer": "https://www.google.com/search?q=clinic",
+    "lt_referrer": "https://www.google.com/search?q=clinic"
+  }
+}

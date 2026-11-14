@@ -111,7 +111,7 @@ Start the ClickTrail instance, then inspect the array in the host's test
 environment. The bridge keeps canonical fields flat for GTM data-layer
 variables, publishes both `event` (the GTM custom-event key) and `event_name`,
 and carries `event_id` for deduplication wiring. Each push is stamped
-`datalayer_version: '2.0.0'`. Keys the Google tag reads as its own fields
+`datalayer_version: '3.0.0'`. Keys the Google tag reads as its own fields
 (`GOOGLE_TAG_RESERVED_FIELDS`: `session_id`, `client_id`, `user_id`,
 `session_number`, `engagement_time_msec`, `timestamp_micros`,
 `page_location`, `page_referrer`) are pushed as `ct_<name>`, and the

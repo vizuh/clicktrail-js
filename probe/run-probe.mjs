@@ -192,8 +192,8 @@ try {
           if (evt.event !== 'ct_page_view') {
             failures.push(`event: expected ct_page_view, got ${String(evt.event)}`);
           }
-          if (evt.datalayer_version !== '2.0.0') {
-            failures.push(`datalayer_version: expected 2.0.0, got ${String(evt.datalayer_version)}`);
+          if (evt.datalayer_version !== '3.0.0') {
+            failures.push(`datalayer_version: expected 3.0.0, got ${String(evt.datalayer_version)}`);
           }
           if (typeof evt.schema_version !== 'string' || evt.schema_version === '') {
             failures.push('schema_version stamp missing on dataLayer event');

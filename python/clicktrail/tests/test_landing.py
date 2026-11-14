@@ -32,6 +32,15 @@ def test_click_ids_captured():
     assert out["msclkid"] == "Ms"
 
 
+def test_paid_markers_captured_apart_from_click_ids():
+    out = parse_landing("https://x.dev/?gad_source=1&gad_campaignid=999&oppref=abc")
+    assert out["gad_source"] == "1"
+    assert out["gad_campaignid"] == "999"
+    assert out["oppref"] == "abc"
+    assert out["gclid"] is None
+    assert parse_landing("https://x.dev/")["oppref"] is None
+
+
 def test_landing_url_keeps_query_and_referrer_recorded():
     url = "https://x.dev/land?utm_source=nl"
     out = parse_landing(url, referrer="https://mail.example.com/read")

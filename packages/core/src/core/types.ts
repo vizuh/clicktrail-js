@@ -38,6 +38,13 @@ export interface ParsedTouch extends AttributionTouch {
    */
   clickIds: Record<string, string>;
   /**
+   * Paid markers found in the URL (`gad_source`, `gad_campaignid`, `oppref`;
+   * #82). They classify and are stored like click IDs but are NOT click IDs:
+   * merge never adds them to click-ID history or the selected click ID.
+   * Optional so hand-built touches stay valid without them.
+   */
+  paidMarkers?: Record<string, string>;
+  /**
    * Browser/platform identifiers found as URL QUERY PARAMS (fbc, fbp, ttp,
    * li_gc, ga_*). RULING (runtime findings 2026-08-23): core populates these
    * top-level deterministically; cookie-derived IDs are the /browser
@@ -131,6 +138,15 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
    */
   landingPageQueryAllowlist?: readonly string[];
   /**
+   * Extra query keys to remove from the stored landing page and referrer, on
+   * top of {@link SENSITIVE_QUERY_KEYS} (#83). Same rule: case-insensitive,
+   * exact key or `_<key>` suffix. The default list always applies and
+   * `utm_*` keys, click IDs and browser IDs are never removed. Applies to
+   * the `'url'` and `'path+allowlisted-query'` landing formats and the
+   * `'url'` referrer format; classification reads the raw values.
+   */
+  additionalSensitiveQueryKeys?: readonly string[];
+  /**
    * Default `false` (plugin contract: no signal stores nothing). When true,
    * a landing that would return `no_signal` yields an unmeasured `direct`
    * touch, and one that would return `internal_referrer` or
@@ -173,9 +189,11 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
    */
   signalAfterSanitize?: boolean;
   /**
-   * Default: every key in {@link UTM_PARAM_TO_FIELD} and
-   * {@link CLICK_ID_KEYS} forms a touch. When set, only the listed keys are
-   * read: an unlisted UTM key or click ID is neither a signal nor stored.
+   * Default: every key in {@link UTM_PARAM_TO_FIELD}, {@link CLICK_ID_KEYS}
+   * and {@link PAID_MARKER_KEYS} forms a touch. When set, only the listed
+   * keys are read: an unlisted UTM key, click ID or paid marker is neither a
+   * signal nor stored. Paid markers (`gad_source`, `gad_campaignid`,
+   * `oppref`) are listed under `clickIds`.
    * Entries are canonical lowercase names (`utm_source`, `gclid`); an alias
    * (`sc_click_id`) counts as its canonical key. An omitted list keeps the
    * full default set for that kind; an empty list disables that kind.
@@ -202,7 +220,7 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
 export interface SignalKeys {
   /** UTM parameter names, e.g. `['utm_source', 'utm_medium']`. */
   utm?: readonly string[];
-  /** Canonical click-ID keys, e.g. `['gclid', 'fbclid']`. */
+  /** Canonical click-ID and paid-marker keys, e.g. `['gclid', 'fbclid', 'gad_source']`. */
   clickIds?: readonly string[];
 }
 
