@@ -77,8 +77,13 @@ aliases; the wire builder maps them to `form_id`, `lead_id`, `booking_id`, and
 put provider-specific non-PII values under `properties`. Validate conversion
 fields before calling the helper and never send customer content as attribution
 metadata. For retryable webhooks, always pass the stable provider key as
-`eventId`; when it is omitted, the helper derives an ID from the conversion key
-or occurrence timestamp, which is not a retry guarantee if the timestamp changes.
+`eventId`. When it is omitted, the helper derives a stable `event_id` only from
+a business key (`transactionId`, `orderId`, `bookingId`, or `leadId`) or an
+explicit `now`; a changed `now` gives a new ID. With none of these, each call
+gets a random `event_id`, so a retry counts as a new conversion. `formId` and
+visitor/session identity never key the ID on their own. Random IDs use
+`globalThis.crypto` (falling back to `node:crypto`); inject `randomBytes` in the
+constructor config to supply your own source.
 
 ## GA4 Measurement Protocol purchase and refund
 
