@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { emptyAttribution, mergeAttributionTouch } from '../src/core/merge.js';
 import { parseAttributionUrl } from '../src/core/parse.js';
 import { SENSITIVE_QUERY_KEYS } from '../src/core/knowledge.js';
-import type { ParseAttributionInput } from '../src/core/types.js';
+import type { ParseAttributionInput, ParsedTouch } from '../src/core/types.js';
 
 const NOW = '2026-11-14T10:00:00.000Z';
 // Issue #83 scenario: email, token and phone next to UTMs and a click ID.
@@ -107,5 +108,41 @@ describe('sensitive query redaction (#83)', () => {
     if (r.kind !== 'touch') throw new Error('expected a touch');
     expect(r.touch.source).toBe('google');
     expect(r.touch.clickIds).toEqual({ gclid: 'G1' });
+  });
+
+  it('ignores non-string and empty additionalSensitiveQueryKeys entries instead of throwing or matching every "_" key', () => {
+    const url = 'https://example.com/?foo_=1&email=2&utm_source=x';
+    const extra = [null, undefined, 7, ''] as unknown as string[];
+    expect(landing({ url, additionalSensitiveQueryKeys: extra })).toBe('https://example.com/?foo_=1&utm_source=x');
+  });
+});
+
+describe('redaction at merge time (continuation touches bypass parseAttributionUrl)', () => {
+  const dirty = 'https://shop.com/checkout?email=a%40b.com&utm_source=mail&token=SECRET&gclid=G1';
+  const clean = 'https://shop.com/checkout?utm_source=mail&gclid=G1';
+
+  it('redacts landingPage and referrer in both first and last touch, keeping attribution keys', () => {
+    const touch: ParsedTouch = {
+      source: 'a.com', medium: 'referral', campaign: '', term: '', content: '',
+      utmId: '', utmSourcePlatform: '', utmCreativeFormat: '', utmMarketingTactic: '',
+      referrer: 'https://a.com/?user_email=a%40b.com&x=1',
+      landingPage: dirty,
+      touchTimestamp: NOW,
+      channel: 'referral' as never,
+      channelLabel: 'Referral',
+      clickIds: {},
+    };
+    const out = mergeAttributionTouch(emptyAttribution(), touch);
+    expect(out.ft_landing_page).toBe(clean);
+    expect(out.lt_landing_page).toBe(clean);
+    expect(out.ft_referrer).toBe('https://a.com/?x=1');
+    expect(out.lt_referrer).toBe('https://a.com/?x=1');
+  });
+
+  it('leaves an already-redacted touch unchanged (idempotent)', () => {
+    const parsed = parseAttributionUrl({ url: URL_WITH_PII, now: NOW });
+    if (parsed.kind !== 'touch') throw new Error('expected a touch');
+    const out = mergeAttributionTouch(emptyAttribution(), parsed.touch);
+    expect(out.lt_landing_page).toBe(parsed.touch.landingPage);
   });
 });

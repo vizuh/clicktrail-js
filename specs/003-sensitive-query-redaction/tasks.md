@@ -17,7 +17,12 @@
 - [x] T005 Fixtures `sensitive-query-redacted-landing` and `sensitive-query-redacted-referrer` with `quirk_decision`.
 - [x] T006 Document the rule in `docs/EVENT-CONTRACT.md`.
 
-## Phase 3 — Gates
+## Phase 3 — Review round 1 fixes
+
+- [x] T008 Failing tests first: continuation-style touch merged with an email/token landing page and a `user_email` referrer; `additionalSensitiveQueryKeys` with `null` and `''`.
+- [x] T009 Redact `touch.landingPage` / `touch.referrer` in `mergeAttributionTouch` (`merge.ts`); export `redactSensitiveQuery` from `parse.ts`; ignore non-string and empty extra keys.
+
+## Phase 4 — Gates
 
 - [x] T007 `pnpm typecheck`, `pnpm test`, `pnpm verify:workspace`.
 

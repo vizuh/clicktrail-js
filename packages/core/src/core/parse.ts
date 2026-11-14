@@ -390,7 +390,8 @@ const PROTECTED_QUERY_KEYS = new Set([
 ].map((key) => key.toLowerCase()));
 
 function sensitiveMatcher(extra: readonly string[]): (rawKey: string) => boolean {
-  const words = [...SENSITIVE_QUERY_KEYS, ...extra].map((word) => word.toLowerCase());
+  const words = [...SENSITIVE_QUERY_KEYS, ...extra.filter((word) => typeof word === 'string' && word !== '')]
+    .map((word) => word.toLowerCase());
   return (rawKey) => {
     let key = rawKey.replace(/\+/g, ' ');
     try {
@@ -410,7 +411,8 @@ function sensitiveMatcher(extra: readonly string[]): (rawKey: string) => boolean
  * remain, and the fragment is left alone. Returns the input unchanged when
  * nothing matches.
  */
-function redactSensitiveQuery(url: string, extra: readonly string[]): string {
+export function redactSensitiveQuery(url: string, extra: readonly string[] = []): string {
+  if (!url) return url; // '' (and partial touches from untyped callers) pass through
   const hashAt = url.indexOf('#');
   const base = hashAt < 0 ? url : url.slice(0, hashAt);
   const hash = hashAt < 0 ? '' : url.slice(hashAt);
