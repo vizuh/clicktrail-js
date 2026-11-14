@@ -1,0 +1,19 @@
+{
+  "name": "sensitive-query-redacted-landing",
+  "description": "Default landingPageFormat 'url' removes email, token and phone (and a _<word> suffix key) from the stored landing page; UTMs and the click ID are kept in URL order with their raw encoding, and the signal is unchanged.",
+  "quirk_decision": "CONTRACT FIX (#83, plugin parity click-trail-handler#232): sensitive query keys never reach ft_/lt_landing_page. Deliberate change to ruling #12 (full href): privacy fix, not opt-in. Semver: behavior change on a default; recorded in specs/003-sensitive-query-redaction. CLASSIFIER_VERSION and SCHEMA_VERSION unchanged (channel logic untouched).",
+  "input": {
+    "url": "https://example.com/lp?email=a%40b.com&utm_source=google&utm_medium=cpc&user_token=abc&gclid=EAIaTEST&phone=%2B5511999999999&utm_term=best+clinic#plans",
+    "referrer": "",
+    "currentHost": "example.com",
+    "now": "2026-11-14T10:00:00.000Z"
+  },
+  "expected": {
+    "_channel": "paid_search",
+    "ft_source": "google",
+    "ft_channel": "Google Ads",
+    "ft_landing_page": "https://example.com/lp?utm_source=google&utm_medium=cpc&gclid=EAIaTEST&utm_term=best+clinic#plans",
+    "lt_landing_page": "https://example.com/lp?utm_source=google&utm_medium=cpc&gclid=EAIaTEST&utm_term=best+clinic#plans",
+    "ft_gclid": "EAIaTEST"
+  }
+}

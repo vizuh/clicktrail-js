@@ -11,6 +11,8 @@ from urllib.parse import parse_qsl, urlsplit
 
 UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
 CLICK_ID_KEYS = ("gclid", "gbraid", "wbraid", "fbclid", "msclkid")
+# Paid markers (JS core #82): captured like click IDs but are NOT click IDs.
+PAID_MARKER_KEYS = ("gad_source", "gad_campaignid", "oppref")
 
 SEARCH_REFERRERS = ("google", "bing", "duckduckgo")
 SOCIAL_REFERRERS = ("facebook", "instagram", "linkedin")
@@ -32,16 +34,18 @@ def parse_landing(url: str, referrer: Optional[str] = None, current_host: Option
     """Extract UTM params, click ids, landing_url and referrer from a landing URL.
 
     Returns a dict with utm_source/medium/campaign/content/term, gclid/gbraid/
-    wbraid/fbclid/msclkid, landing_url (full href incl. query) and referrer.
+    wbraid/fbclid/msclkid, the paid markers gad_source/gad_campaignid/oppref,
+    landing_url (full href incl. query) and referrer.
     Missing values are None. ``current_host`` documents the host of the page
     itself; it does not change the parsed fields.
     """
     out = {key: None for key in UTM_KEYS}
     out.update({key: None for key in CLICK_ID_KEYS})
+    out.update({key: None for key in PAID_MARKER_KEYS})
     out["landing_url"] = url
     out["referrer"] = referrer
     q = _query_map(url)
-    for key in UTM_KEYS + CLICK_ID_KEYS:
+    for key in UTM_KEYS + CLICK_ID_KEYS + PAID_MARKER_KEYS:
         value = q.get(key)
         if value is not None and value != "":
             out[key] = value

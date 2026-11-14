@@ -1,0 +1,27 @@
+{
+  "name": "google-ads-gad-source-no-gclid",
+  "description": "Google Ads landing whose gclid was stripped (link tracking protection) but gad_source and gad_campaignid survive, arriving from google.com.",
+  "quirk_decision": "CONTRACT (#82, parity with click-trail-handler#231): gad_source is a paid marker for Google Ads (medium defaults to cpc, paid_search). gad_source and gad_campaignid are stored as ft_/lt_/top-level fields but are NOT click IDs: never in click_id_history or the selected click ID. Semver: classification change, CLASSIFIER_VERSION 1.3.0; additive payload keys, SCHEMA_VERSION 1.3.0.",
+  "input": {
+    "url": "https://example.com/pricing?gad_source=1&gad_campaignid=999",
+    "referrer": "https://www.google.com/",
+    "currentHost": "example.com",
+    "now": "2026-11-14T10:00:00.000Z"
+  },
+  "expected": {
+    "_channel": "paid_search",
+    "ft_source": "google",
+    "ft_medium": "cpc",
+    "ft_channel": "Google Ads",
+    "lt_channel": "Google Ads",
+    "gad_source": "1",
+    "ft_gad_source": "1",
+    "lt_gad_source": "1",
+    "gad_campaignid": "999",
+    "ft_gad_campaignid": "999",
+    "lt_gad_campaignid": "999",
+    "gclid": "",
+    "attribution_selected_click_id": "",
+    "click_id_history": "[]"
+  }
+}
