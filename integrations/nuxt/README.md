@@ -137,7 +137,7 @@ export default defineEventHandler(async (event) => {
 });
 ```
 
-`trackPurchase` validates that `transactionId`, `value`, and `currency` are present and well-formed before sending. Delivery failures resolve to `{ ok: false }` instead of throwing so an analytics outage never breaks checkout.
+`trackPurchase` validates that `transactionId`, `value`, and `currency` are present and well-formed before sending. Every event carries an `evt_` `event_id`: pass `eventId` to reuse a stable key across retries; when it is omitted, the helper derives an ID from `transactionId`/`bookingId`/`leadId` or the occurrence timestamp. Only canonical attribution fields are read from the `attribution` cookie; conversion fields such as `value`, `currency`, `order_id` or `consent` must come from your server code. Delivery failures resolve to `{ ok: false }` instead of throwing so an analytics outage never breaks checkout.
 
 ## Nitro proxy utilities
 

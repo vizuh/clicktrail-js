@@ -12,6 +12,7 @@
 import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import {
   buildEventPayload,
+  filterServerAttributionPayload,
   parseCookieMap,
   sanitizeServerEventInput,
 } from '@vizuh/clicktrail/browser';
@@ -24,7 +25,11 @@ import {
   SESSION_STATE_KEY,
   VISITOR_ID_FALLBACK_KEY,
 } from '@vizuh/clicktrail/browser';
-import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
+import {
+  deriveStableEventId,
+  isSafeHttpUrl,
+  toCanonicalEventName,
+} from '@vizuh/clicktrail-core';
 
 export interface ServerIdentity {
   /** Canonical flat attribution payload from the `attribution` cookie. */
@@ -53,7 +58,7 @@ export function parseIdentityFromCookies(cookieHeader: string | null | undefined
   const payloadRaw = cookies[ATTRIBUTION_KEY] ?? cookies[LEGACY_ATTRIBUTION_KEY];
   const payload =
     typeof payloadRaw === 'string' && payloadRaw
-      ? ((safeJsonParse(payloadRaw) as AttributionPayload | null) ?? {})
+      ? filterServerAttributionPayload(safeJsonParse(payloadRaw))
       : {};
 
   let visitorId: string | undefined;
@@ -99,6 +104,8 @@ export interface ConversionInput<D extends Record<string, unknown>> {
   data?: D;
   /** ISO-8601 event time override. Default: current wall clock. */
   now?: string;
+  /** Stable caller-owned key reused when the same logical event is retried. */
+  eventId?: string;
 }
 
 export interface LeadData extends Record<string, unknown> {
@@ -127,6 +134,15 @@ function requireNonEmptyString(value: unknown, field: string): string {
     throw new TypeError(`clicktrail server: ${field} must be a non-empty string.`);
   }
   return value;
+}
+
+function normalizeEventId(value: unknown): string {
+  const eventId = requireNonEmptyString(value, 'eventId');
+  return eventId.startsWith('evt_') ? eventId : `evt_${eventId}`;
+}
+
+function optionalText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 }
 
 function requireSafeHttpUrl(value: unknown, field: string): string {
@@ -178,10 +194,27 @@ export class ClickTrailServer {
     eventName: string,
     input: ConversionInput<Record<string, unknown>>,
   ): ClickTrailEvent {
-    const payload = sanitizeServerEventInput(input.identity.payload ?? {});
-    const data = sanitizeServerEventInput(input.data ?? {});
-    return buildEventPayload(payload, toCanonicalEventName(eventName), {
+    const payload = filterServerAttributionPayload(input.identity.payload ?? {});
+    const inputData = input.data ?? {};
+    const data = sanitizeServerEventInput(inputData);
+    const canonicalName = toCanonicalEventName(eventName);
+    // Same resolution as the Astro sender: explicit id, else a stable id from
+    // the business key (falling back to the occurrence time).
+    const businessKey = optionalText(inputData['orderId'])
+      ?? optionalText(inputData['transactionId'])
+      ?? optionalText(inputData['bookingId'])
+      ?? optionalText(inputData['leadId'])
+      ?? input.now
+      ?? new Date().toISOString();
+    const eventId = input.eventId === undefined
+      ? deriveStableEventId(
+          this.siteId ?? 'unspecified-site',
+          JSON.stringify([canonicalName, businessKey]),
+        )
+      : normalizeEventId(input.eventId);
+    return buildEventPayload(payload, canonicalName, {
       ...data,
+      event_id: eventId,
       ...(input.now !== undefined ? { event_time: input.now } : {}),
       ...(this.siteId !== undefined ? { site_id: this.siteId } : {}),
       ...(this.workspaceId !== undefined ? { workspace_id: this.workspaceId } : {}),

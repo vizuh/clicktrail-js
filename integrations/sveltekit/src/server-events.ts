@@ -15,12 +15,17 @@
 import { withDeliveryTimeout } from '@vizuh/clicktrail/browser';
 import {
   buildEventPayload,
+  filterServerAttributionPayload,
   parseCookieMap,
   sanitizeServerEventInput,
 } from '@vizuh/clicktrail/browser';
 import type { ClickTrailEvent } from '@vizuh/clicktrail/browser';
 import type { AttributionPayload } from '@vizuh/clicktrail-core';
-import { isSafeHttpUrl, toCanonicalEventName } from '@vizuh/clicktrail-core';
+import {
+  deriveStableEventId,
+  isSafeHttpUrl,
+  toCanonicalEventName,
+} from '@vizuh/clicktrail-core';
 import {
   ATTRIBUTION_KEY,
   LEGACY_ATTRIBUTION_KEY,
@@ -53,7 +58,7 @@ export function parseIdentityFromCookies(cookieHeader: string | null | undefined
   const payloadRaw = cookies[ATTRIBUTION_KEY] ?? cookies[LEGACY_ATTRIBUTION_KEY];
   const payload =
     typeof payloadRaw === 'string' && payloadRaw
-      ? ((safeJsonParse(payloadRaw) as AttributionPayload | null) ?? {})
+      ? filterServerAttributionPayload(safeJsonParse(payloadRaw))
       : {};
 
   let visitorId: string | undefined;
@@ -94,6 +99,8 @@ export interface TrackConversionOptions {
   bookingId?: string;
   value?: number;
   currency?: string;
+  /** Stable caller-owned key reused when the same logical event is retried. */
+  eventId?: string;
   fetch?: typeof fetch;
 }
 
@@ -107,6 +114,11 @@ function requireNonEmptyString(value: unknown, field: string): string {
     throw new TypeError(`clicktrail server: ${field} must be a non-empty string.`);
   }
   return value;
+}
+
+function normalizeEventId(value: unknown): string {
+  const eventId = requireNonEmptyString(value, 'eventId');
+  return eventId.startsWith('evt_') ? eventId : `evt_${eventId}`;
 }
 
 function requireSafeHttpUrl(value: unknown, field: string): string {
@@ -155,6 +167,17 @@ export async function trackConversion(
   }
 
   const endpoint = requireSafeHttpUrl(options.endpoint, 'endpoint');
+  // Same resolution as the Astro sender: explicit id, else a stable id from
+  // the business key (falling back to the occurrence time).
+  const eventId = options.eventId === undefined
+    ? deriveStableEventId(
+        options.siteId ?? 'unspecified-site',
+        JSON.stringify([
+          eventName,
+          options.orderId ?? options.bookingId ?? options.leadId ?? new Date().toISOString(),
+        ]),
+      )
+    : normalizeEventId(options.eventId);
 
   const identity = parseIdentityFromCookies(request.headers.get('cookie'));
   const data = sanitizeServerEventInput({
@@ -166,10 +189,11 @@ export async function trackConversion(
   });
 
   const built: ClickTrailEvent = buildEventPayload(
-    sanitizeServerEventInput(identity.payload),
+    filterServerAttributionPayload(identity.payload),
     eventName,
     {
       ...data,
+      event_id: eventId,
       ...(options.siteId !== undefined ? { site_id: options.siteId } : {}),
       ...(options.workspaceId !== undefined ? { workspace_id: options.workspaceId } : {}),
       ...(identity.visitorId ? { visitor_id: identity.visitorId } : {}),
