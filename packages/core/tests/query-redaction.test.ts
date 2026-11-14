@@ -85,6 +85,11 @@ describe('sensitive query redaction (#83)', () => {
     expect(landing({ url })).toBe(url);
   });
 
+  it('keeps paid markers (gad_source, gad_campaignid, oppref) next to a redacted key', () => {
+    expect(landing({ url: 'https://example.com/?gad_source=1&gad_campaignid=999&oppref=abc&email=a%40b.com' }))
+      .toBe('https://example.com/?gad_source=1&gad_campaignid=999&oppref=abc');
+  });
+
   it('keeps attribution keys even when the caller adds them to the sensitive list', () => {
     const url = 'https://example.com/?gclid=G1&utm_source=google&email=1';
     expect(landing({ url, additionalSensitiveQueryKeys: ['gclid', 'UTM_Source', 'email'] }))

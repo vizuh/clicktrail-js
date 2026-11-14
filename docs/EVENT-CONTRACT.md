@@ -58,6 +58,15 @@ lead_id, contact_id, booking_id, order_id, value, currency, landing_url, referre
 utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid, gbraid,
 wbraid, fbclid, msclkid, consent_state, consent_source, consent_version.
 
+Paid markers (`gad_source`, `gad_campaignid`, `oppref`; `CLASSIFIER_VERSION`
+1.3.0) ride the canonical flat attribution payload as `gad_source`,
+`ft_gad_source`, `lt_gad_source` (same for the other two). They are NOT click
+IDs: they never appear in the `click_ids` map, `click_id_history` or
+`attribution_selected_click_id`, so they are never a conversion-upload click
+ID. `gad_source` classifies as Google Ads paid, `oppref` as ChatGPT Ads paid
+(`paid_other`); `gad_campaignid` is stored only. They are not part of the
+canonical event field vocabulary above.
+
 Rules:
 - snake_case everywhere on the wire. Platform-native casing lives only inside
   adapter inputs.

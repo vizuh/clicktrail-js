@@ -13,6 +13,8 @@ import {
   CLICK_ID_KEYS,
   CLICK_ID_PLATFORMS,
   LANDING_PAGE_QUERY_ALLOWLIST,
+  PAID_MARKER_KEYS,
+  PAID_MARKER_PLATFORMS,
   PARAM_ALIASES,
   SENSITIVE_QUERY_KEYS,
   SEARCH_REFERRER_RULES,
@@ -177,6 +179,20 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   }
   const hasClickId = Object.keys(clickIds).length > 0;
 
+  // --- collect paid markers (#82): signals like click IDs, same value policy
+  // and `signalKeys.clickIds` gate, but never click IDs themselves.
+  const paidMarkers: Record<string, string> = {};
+  if (signalQuery) {
+    for (const key of PAID_MARKER_KEYS) {
+      if (clickIdAllowed && !clickIdAllowed.has(key)) continue;
+      const value = signalQuery.get(key);
+      if (!value) continue;
+      const cleaned = sanitizeField(value, clickIdOptions);
+      if (!signalAfterSanitize || cleaned !== '') paidMarkers[key] = cleaned;
+    }
+  }
+  const hasPaidMarker = Object.keys(paidMarkers).length > 0;
+
   // --- collect browser IDs present as URL QUERY PARAMS (ruling, runtime
   // findings 2026-08-23): deterministic core-side collection. Plugin
   // evidence: BrowserIdentifiers.collect(params) reads the same params
@@ -213,7 +229,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const referrer = referrerIgnored ? '' : input.referrer ?? '';
   const storedReferrer = referrerOf(referrer, input.referrerFormat ?? 'url', input.additionalSensitiveQueryKeys ?? []);
 
-  if (!hasUtm && !hasClickId) {
+  if (!hasUtm && !hasClickId && !hasPaidMarker) {
     // --- referrer inference path ---
     if (!rHost) {
       return input.recordDirectTouch
@@ -260,27 +276,29 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const receivedSource = touch.source;
   const receivedMedium = touch.medium;
   let channel: Channel;
-  if (hasClickId) {
-    // Platform map decides; first matching click ID wins (deterministic order).
-    const matched = CLICK_ID_KEYS.find((key) => Boolean(clickIds[key]));
-    if (matched) {
-      const plat = CLICK_ID_PLATFORMS[matched]!;
-      if (!touch.source) touch.source = plat.source;
-      if (plat.certainty === 'certain') {
-        // Advertising-only identifier: paid classification is unambiguous.
-        channel = plat.paidChannel ?? 'unknown';
-        if (!touch.medium) touch.medium = 'cpc';
-      } else {
-        // Uncertain identifier (D2): proves the surface, not the payment.
-        // Channel stays UNKNOWN unless explicit paid evidence exists in UTMs;
-        // promotion uses the platform's own paid channel class.
-        channel =
-          PAID_MEDIUMS.includes(touch.medium.toLowerCase()) && plat.paidChannel
-            ? plat.paidChannel
-            : classifyUtmChannel(touch.medium);
-      }
+  // Platform map decides; first matching click ID wins (deterministic order).
+  const matched = hasClickId ? CLICK_ID_KEYS.find((key) => Boolean(clickIds[key])) : undefined;
+  let plat = matched ? CLICK_ID_PLATFORMS[matched] : undefined;
+  if (plat?.certainty !== 'certain') {
+    // Paid markers (#82) are advertising-only, so they outrank an uncertain
+    // click ID but never a certain one. `gad_campaignid` has no platform rule.
+    const markerKey = PAID_MARKER_KEYS.find((key) => paidMarkers[key] && PAID_MARKER_PLATFORMS[key]);
+    if (markerKey) plat = PAID_MARKER_PLATFORMS[markerKey];
+  }
+  if (plat) {
+    if (!touch.source) touch.source = plat.source;
+    if (plat.certainty === 'certain') {
+      // Advertising-only identifier: paid classification is unambiguous.
+      channel = plat.paidChannel ?? 'unknown';
+      if (!touch.medium) touch.medium = 'cpc';
     } else {
-      channel = 'unknown';
+      // Uncertain identifier (D2): proves the surface, not the payment.
+      // Channel stays UNKNOWN unless explicit paid evidence exists in UTMs;
+      // promotion uses the platform's own paid channel class.
+      channel =
+        PAID_MEDIUMS.includes(touch.medium.toLowerCase()) && plat.paidChannel
+          ? plat.paidChannel
+          : classifyUtmChannel(touch.medium);
     }
   } else {
     channel = classifyUtmChannel(touch.medium);
@@ -288,13 +306,13 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
 
   touch.referrer = storedReferrer;
   const channelLabel = resolveChannelLabel({
-    source: touch.source, medium: touch.medium, clickIds, referrer,
+    source: touch.source, medium: touch.medium, clickIds, paidMarkers, referrer,
   });
   if (!inferSourceMedium) {
     touch.source = receivedSource;
     touch.medium = receivedMedium;
   }
-  const withClickIds: ParsedTouch = { ...touch, clickIds, browserIds, channel, channelLabel };
+  const withClickIds: ParsedTouch = { ...touch, clickIds, paidMarkers, browserIds, channel, channelLabel };
   return { kind: 'touch', touch: withClickIds };
 }
 
