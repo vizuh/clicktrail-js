@@ -450,8 +450,22 @@ export function createClickTrail(config: ClickTrailConfig): ClickTrailInstance {
         nowMs,
       });
     adapters = { primary, mirror };
+    // Identity reads stay on the mirror; writes also reach the server-readable
+    // cookie (same attrs and consent gate as attribution) so
+    // parseIdentityFromCookies sees the SDK's visitor/session.
+    const identityAdapter: StorageAdapter = {
+      get: (key) => mirror.get(key),
+      set: (key, value) => {
+        mirror.set(key, value);
+        if (consentIsGranted()) primary.set(key, value);
+      },
+      delete: (key) => {
+        mirror.delete(key);
+        primary.delete(key);
+      },
+    };
     identity = createIdentityStore({
-      adapter: mirror,
+      adapter: identityAdapter,
       randomBytes: storageCfg.randomBytes ?? defaultRandomBytes,
       nowMs,
       ...(identityCfg?.sessionIdleMs !== undefined ? { timeoutMs: identityCfg.sessionIdleMs } : {}),

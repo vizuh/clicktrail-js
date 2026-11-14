@@ -39,6 +39,25 @@ if (!result.ok) {
 }
 ```
 
+## Identity cookies
+
+`parseIdentityFromCookies` reads the `attribution` cookie and the identity
+cookies `ct_session`, `ct_visitor_id`, and `ct_session_id`. The browser SDK
+(`@vizuh/clicktrail-browser` with `storage` configured) writes them:
+
+- Only while the consent gate allows. A denied gate writes none and clears any
+  that exist; `clearData()` clears them too.
+- With the same `storage.cookieAttrs` as the attribution cookie. Without
+  `maxAgeSeconds` they are session cookies, so set it if the server must see
+  identity after a browser restart.
+- When the SDK writes identity: a new or rolled session, `touchSession()`, or a
+  delivered `track()` (default `identity.activityOnTrack`). A request made
+  before the SDK runs on the page carries no identity cookie.
+
+Without these cookies `visitorId` and `sessionId` are `undefined`. Hosts that
+need identity anyway can send the browser's `getSession()` values in the
+request body and build the `identity` object from them.
+
 ## Tenant adapters and webhook deduplication
 
 Use `createTenantAdapter` for a trusted server-side tenant boundary. The
