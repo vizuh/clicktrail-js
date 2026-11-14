@@ -8,13 +8,18 @@ import {
   CLICK_ID_HISTORY_KEY,
   CLICK_ID_HISTORY_LIMIT,
   CLICK_ID_KEYS,
+  PAID_MARKER_KEYS,
   touchKeys,
 } from './knowledge.js';
+import { redactSensitiveQuery } from './parse.js';
 import { sanitizeField } from './sanitize.js';
 import type { AttributionPayload, MergeAttributionOptions, ParsedTouch } from './types.js';
 
 const FT = touchKeys('ft');
 const LT = touchKeys('lt');
+
+/** Stored like click IDs (top-level + ft_/lt_ mirrors), but only click IDs are audited/selected. */
+const MIRRORED_KEYS: readonly string[] = [...CLICK_ID_KEYS, ...PAID_MARKER_KEYS];
 
 /** Create an empty canonical payload with every contract key present as ''. */
 export function emptyAttribution(): AttributionPayload {
@@ -22,6 +27,11 @@ export function emptyAttribution(): AttributionPayload {
   for (const key of Object.values(FT)) payload[key] = '';
   for (const key of Object.values(LT)) payload[key] = '';
   for (const key of CLICK_ID_KEYS) payload[key] = '';
+  for (const key of PAID_MARKER_KEYS) {
+    payload[key] = '';
+    payload[`ft_${key}`] = '';
+    payload[`lt_${key}`] = '';
+  }
   for (const key of BROWSER_ID_KEYS) payload[key] = '';
   payload[CLICK_ID_HISTORY_KEY] = '[]';
   payload[ATTRIBUTION_SELECTED_CLICK_ID_KEY] = '';
@@ -78,7 +88,7 @@ function touchEmpty(payload: AttributionPayload, prefix: 'ft' | 'lt'): boolean {
   return (
     !payload[keys.source] && !payload[keys.medium] && !payload[keys.campaign] &&
     !payload[keys.referrer] && !payload[keys.landingPage] &&
-    CLICK_ID_KEYS.every((key) => !payload[`${prefix}_${key}`])
+    MIRRORED_KEYS.every((key) => !payload[`${prefix}_${key}`])
   );
 }
 
@@ -87,8 +97,13 @@ function hasUnmeasuredFirstTouch(payload: AttributionPayload): boolean {
   const label = payload[FT.channel];
   return (
     (label === CHANNEL_LABELS.DIRECT || label === CHANNEL_LABELS.BEFORE_CAPTURE) &&
-    CLICK_ID_KEYS.every((key) => !payload[`ft_${key}`])
+    MIRRORED_KEYS.every((key) => !payload[`ft_${key}`])
   );
+}
+
+/** Touch value for a click ID or paid marker (they live in separate bags). */
+function mirroredValue(touch: ParsedTouch, key: string): string | undefined {
+  return touch.clickIds?.[key] ?? touch.paidMarkers?.[key];
 }
 
 /**
@@ -130,6 +145,11 @@ export function mergeAttributionTouch(
     return next;
   }
 
+  // Touches built outside parseAttributionUrl (cross-domain continuation)
+  // reach storage here too, so redact again. A no-op on parsed touches (#83).
+  const referrer = redactSensitiveQuery(touch.referrer);
+  const landingPage = redactSensitiveQuery(touch.landingPage);
+
   // First touch: write-once. A stored click ID alone blocks the overwrite;
   // a stored placeholder yields to the first measured touch.
   const ftWritable =
@@ -146,15 +166,15 @@ export function mergeAttributionTouch(
     next[FT.utmMarketingTactic] = touch.utmMarketingTactic;
     next[FT.channel] = touch.channelLabel;
     writeChannelCode(next, CHANNEL_CODE_KEYS.ft, touch, options);
-    next[FT.referrer] = touch.referrer;
-    next[FT.landingPage] = touch.landingPage;
+    next[FT.referrer] = referrer;
+    next[FT.landingPage] = landingPage;
     next[FT.touchTimestamp] = touch.touchTimestamp;
 
     // First-touch write-time click-ID mirror (RULING B): applyTouch('ft')
     // runs only when hasFirstTouch() is false (:1770-1782, :1793-1801), so
     // the ft_<cid> mirrors follow the same write-once gate.
-    for (const key of CLICK_ID_KEYS) {
-      const value = touch.clickIds?.[key];
+    for (const key of MIRRORED_KEYS) {
+      const value = mirroredValue(touch, key);
       if (value) next[`ft_${key}`] = value;
     }
   }
@@ -171,20 +191,22 @@ export function mergeAttributionTouch(
   next[LT.utmMarketingTactic] = touch.utmMarketingTactic;
   next[LT.channel] = touch.channelLabel;
   writeChannelCode(next, CHANNEL_CODE_KEYS.lt, touch, options);
-  next[LT.referrer] = touch.referrer;
-  next[LT.landingPage] = touch.landingPage;
+  next[LT.referrer] = referrer;
+  next[LT.landingPage] = landingPage;
   next[LT.touchTimestamp] = touch.touchTimestamp;
 
   // Last-touch write-time click-ID mirror (RULING B): applyTouch('lt')
   // always runs on a valid signal, so lt_<cid> follows every capture.
   // Opt-in `clearLastTouchClickIds` also blanks the IDs this touch lacks.
-  for (const key of CLICK_ID_KEYS) {
-    const value = touch.clickIds?.[key];
+  for (const key of MIRRORED_KEYS) {
+    const value = mirroredValue(touch, key);
     if (value) next[`lt_${key}`] = value;
     else if (options.clearLastTouchClickIds) next[`lt_${key}`] = '';
   }
 
   // Click IDs: newest-valid-wins (from the touch itself; deterministic order).
+  // Paid markers take the top-level newest-non-empty write but never enter
+  // the audit trail, so they can never become the selected click ID (#82).
   const capturedNow: Array<{ k: string; v: string }> = [];
   for (const key of CLICK_ID_KEYS) {
     const value = touch.clickIds?.[key];
@@ -192,6 +214,10 @@ export function mergeAttributionTouch(
       next[key] = value;
       capturedNow.push({ k: key, v: value });
     }
+  }
+  for (const key of PAID_MARKER_KEYS) {
+    const value = touch.paidMarkers?.[key];
+    if (value) next[key] = value;
   }
 
   applyClickIdSelectionAudit(next, capturedNow, touch.touchTimestamp);

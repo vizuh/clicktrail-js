@@ -9,5 +9,5 @@ export type { ReferrerRule } from './knowledge.js';
 export { DIAGNOSTIC_CODES, nullDiagnosticSink } from './diagnostics.js';
 export type { Diagnostic, DiagnosticLevel, DiagnosticSink } from './diagnostics.js';
 export type { AttributionPayload, AttributionTouch, ControlCharPolicy, InternalReferrerPolicy, LandingPageFormat, MacroPolicy, MergeAttributionOptions, OverLengthPolicy, ParseAttributionInput, ParseResult, ParsedTouch, ReferrerFormat, SanitizeFieldOptions, SignalKeys } from './types.js';
-export { CLICK_ID_KEYS, BROWSER_ID_KEYS, parseGaClientIdValue, touchKeys } from './knowledge.js';
-export { LEGACY_WP_LABEL_VERSION, PAID_MEDIUMS, CLICK_ID_PLATFORMS, CLICK_ID_HISTORY_KEY, ATTRIBUTION_SELECTED_CLICK_ID_KEY, ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY, CLICK_ID_HISTORY_LIMIT, BROWSER_ID_PARAMS, LANDING_PAGE_QUERY_ALLOWLIST, UTM_PARAM_TO_FIELD, PARAM_ALIASES } from './knowledge.js';
+export { CLICK_ID_KEYS, PAID_MARKER_KEYS, PAID_MARKER_PLATFORMS, BROWSER_ID_KEYS, parseGaClientIdValue, touchKeys } from './knowledge.js';
+export { LEGACY_WP_LABEL_VERSION, PAID_MEDIUMS, CLICK_ID_PLATFORMS, CLICK_ID_HISTORY_KEY, ATTRIBUTION_SELECTED_CLICK_ID_KEY, ATTRIBUTION_SELECTED_CLICK_ID_REASON_KEY, CLICK_ID_HISTORY_LIMIT, BROWSER_ID_PARAMS, LANDING_PAGE_QUERY_ALLOWLIST, SENSITIVE_QUERY_KEYS, UTM_PARAM_TO_FIELD, PARAM_ALIASES } from './knowledge.js';

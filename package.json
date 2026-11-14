@@ -26,6 +26,7 @@
       "source-map-js@<1.2.2": "^1.2.2",
       "shell-quote@<1.11.0": "^1.11.0",
       "launch-editor@<2.14.2": "^2.14.2",
+      "node-forge@<1.4.1": "^1.4.1",
       "vite@<6.4.4": "^6.4.5"
     },
     "auditConfig": {
