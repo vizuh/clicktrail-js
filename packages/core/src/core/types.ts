@@ -138,6 +138,15 @@ export interface ParseAttributionInput extends SanitizeFieldOptions {
    */
   landingPageQueryAllowlist?: readonly string[];
   /**
+   * Extra query keys to remove from the stored landing page and referrer, on
+   * top of {@link SENSITIVE_QUERY_KEYS} (#83). Same rule: case-insensitive,
+   * exact key or `_<key>` suffix. The default list always applies and
+   * `utm_*` keys, click IDs and browser IDs are never removed. Applies to
+   * the `'url'` and `'path+allowlisted-query'` landing formats and the
+   * `'url'` referrer format; classification reads the raw values.
+   */
+  additionalSensitiveQueryKeys?: readonly string[];
+  /**
    * Default `false` (plugin contract: no signal stores nothing). When true,
    * a landing that would return `no_signal` yields an unmeasured `direct`
    * touch, and one that would return `internal_referrer` or

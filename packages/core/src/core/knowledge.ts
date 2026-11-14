@@ -507,6 +507,20 @@ export const LANDING_PAGE_QUERY_ALLOWLIST: readonly string[] = [
   ...Object.keys(PARAM_ALIASES),
 ];
 
+/**
+ * Query keys removed from the stored landing page and referrer (#83). A key
+ * is sensitive when its lowercased name equals an entry or ends with
+ * `_<entry>` (`user_email`, `access_token`). Same list and rule as the
+ * WordPress plugin (click-trail-handler#232). `utm_*` keys, click IDs and
+ * browser-ID keys are never removed, whatever this list or a caller's
+ * `additionalSensitiveQueryKeys` says.
+ */
+export const SENSITIVE_QUERY_KEYS: readonly string[] = [
+  'email', 'e-mail', 'mail', 'phone', 'tel', 'mobile', 'token', 'access_token', 'id_token', 'auth',
+  'password', 'pass', 'pwd', 'secret', 'key', 'api_key', 'apikey', 'code', 'otp', 'session', 'sessionid',
+  'sid', 'signature', 'sig', 'nonce', 'ssn', 'card', 'iban',
+];
+
 /** Field-name -> flat payload key mapping for one touch. */
 export interface TouchFieldMap {
   source: string; medium: string; campaign: string; term: string; content: string;

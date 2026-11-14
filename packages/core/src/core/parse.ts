@@ -16,6 +16,7 @@ import {
   PAID_MARKER_KEYS,
   PAID_MARKER_PLATFORMS,
   PARAM_ALIASES,
+  SENSITIVE_QUERY_KEYS,
   SEARCH_REFERRER_RULES,
   SOCIAL_REFERRER_RULES,
   UTM_PARAM_TO_FIELD,
@@ -109,9 +110,12 @@ export function readQuery(url: string, options: { caseSensitive?: boolean } = {}
  * - A click ID without UTMs still yields a paid touch via its platform map.
  * - Browser-ID query params (fbc/fbp/ttp/li_gc/ga_*) ride along on the parsed
  *   touch and land top-level at merge time; bare fbclid derives an fbc.
- * - The landing page stores the FULL href including query string (ruling #12)
+ * - The landing page stores the full href including query string (ruling #12)
  *   and the referrer the full URL, unless the caller opts into
- *   `landingPageFormat` / `referrerFormat`. Classification reads raw values.
+ *   `landingPageFormat` / `referrerFormat`. Sensitive query keys
+ *   ({@link SENSITIVE_QUERY_KEYS} plus `additionalSensitiveQueryKeys`) are
+ *   removed from every stored query string (#83); attribution keys stay.
+ *   Classification reads raw values.
  * - Opt-in `recordDirectTouch` turns `no_signal` / `internal_referrer` /
  *   `ignored_referrer` into an unmeasured placeholder touch (see
  *   {@link ParsedTouch.unmeasured}).
@@ -143,6 +147,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
     input.url,
     input.landingPageFormat ?? 'url',
     input.landingPageQueryAllowlist ?? LANDING_PAGE_QUERY_ALLOWLIST,
+    input.additionalSensitiveQueryKeys ?? [],
   );
 
   // --- collect UTM fields ---
@@ -222,7 +227,7 @@ export function parseAttributionUrl(input: ParseAttributionInput): ParseResult {
   const referrerIgnored =
     rHost !== '' && isIgnoredReferrerHost(rHost, input.ignoredReferrerHosts);
   const referrer = referrerIgnored ? '' : input.referrer ?? '';
-  const storedReferrer = referrerOf(referrer, input.referrerFormat ?? 'url');
+  const storedReferrer = referrerOf(referrer, input.referrerFormat ?? 'url', input.additionalSensitiveQueryKeys ?? []);
 
   if (!hasUtm && !hasClickId && !hasPaidMarker) {
     // --- referrer inference path ---
@@ -372,27 +377,78 @@ function unmeasuredTouch(
  * Path formats drop the fragment; allowlisted keys match case-insensitively
  * (ruling #9) and keep their URL order.
  */
-function landingPageOf(url: string, format: LandingPageFormat, allowlist: readonly string[]): string {
+function landingPageOf(
+  url: string,
+  format: LandingPageFormat,
+  allowlist: readonly string[],
+  extraSensitive: readonly string[],
+): string {
   let u: URL;
   try {
     u = new URL(url);
   } catch {
     return '';
   }
-  if (format === 'url') return sanitizeField(u.href);
+  if (format === 'url') return sanitizeField(redactSensitiveQuery(u.href, extraSensitive));
   if (format === 'path') return sanitizeField(u.pathname);
   const allowed = new Set(allowlist.map((key) => key.toLowerCase()));
+  const sensitive = sensitiveMatcher(extraSensitive);
   const kept = new URLSearchParams();
   for (const [key, value] of u.searchParams) {
-    if (allowed.has(key.toLowerCase())) kept.append(key, value);
+    if (allowed.has(key.toLowerCase()) && !sensitive(key)) kept.append(key, value);
   }
   const search = kept.toString();
   return sanitizeField(search ? `${u.pathname}?${search}` : u.pathname);
 }
 
-/** Stored referrer: the full URL (`'url'`) or its http(s) hostname (`'host'`). */
-function referrerOf(referrer: string, format: ReferrerFormat): string {
-  if (format === 'url' || !referrer) return sanitizeField(referrer);
+// Keys redaction never touches: utm_*, click IDs, aliases, browser IDs.
+const PROTECTED_QUERY_KEYS = new Set([
+  ...LANDING_PAGE_QUERY_ALLOWLIST,
+  ...Object.keys(BROWSER_ID_PARAMS),
+].map((key) => key.toLowerCase()));
+
+function sensitiveMatcher(extra: readonly string[]): (rawKey: string) => boolean {
+  const words = [...SENSITIVE_QUERY_KEYS, ...extra.filter((word) => typeof word === 'string' && word !== '')]
+    .map((word) => word.toLowerCase());
+  return (rawKey) => {
+    let key = rawKey.replace(/\+/g, ' ');
+    try {
+      key = decodeURIComponent(key);
+    } catch {
+      // Malformed escape: match on the raw key.
+    }
+    key = key.toLowerCase();
+    if (key.startsWith('utm_') || PROTECTED_QUERY_KEYS.has(key)) return false;
+    return words.some((word) => key === word || key.endsWith(`_${word}`));
+  };
+}
+
+/**
+ * Remove sensitive query keys (#83) from a URL string without re-encoding:
+ * kept parameters keep their order and raw spelling, the "?" goes when none
+ * remain, and the fragment is left alone. Returns the input unchanged when
+ * nothing matches.
+ */
+export function redactSensitiveQuery(url: string, extra: readonly string[] = []): string {
+  if (!url) return url; // '' (and partial touches from untyped callers) pass through
+  const hashAt = url.indexOf('#');
+  const base = hashAt < 0 ? url : url.slice(0, hashAt);
+  const hash = hashAt < 0 ? '' : url.slice(hashAt);
+  const queryAt = base.indexOf('?');
+  if (queryAt < 0) return url;
+  const sensitive = sensitiveMatcher(extra);
+  const parts = base.slice(queryAt + 1).split('&');
+  const kept = parts.filter((part) => !sensitive(part.split('=')[0] ?? ''));
+  if (kept.length === parts.length) return url;
+  return `${base.slice(0, queryAt)}${kept.length ? `?${kept.join('&')}` : ''}${hash}`;
+}
+
+/**
+ * Stored referrer: the full URL (`'url'`, minus sensitive query keys) or its
+ * http(s) hostname (`'host'`).
+ */
+function referrerOf(referrer: string, format: ReferrerFormat, extraSensitive: readonly string[]): string {
+  if (format === 'url' || !referrer) return sanitizeField(redactSensitiveQuery(referrer, extraSensitive));
   try {
     const u = new URL(referrer);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';

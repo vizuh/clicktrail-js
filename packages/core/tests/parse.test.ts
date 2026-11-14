@@ -206,10 +206,12 @@ describe('touch field formats (#56, opt-in)', () => {
     return r.touch.landingPage;
   }
 
-  it("defaults to the full href and full referrer URL (ruling #12)", () => {
+  it("defaults to the full href and full referrer URL minus sensitive query keys (ruling #12, #83)", () => {
     const r = parseAttributionUrl({ url, referrer, currentHost: 'example.com' });
     if (r.kind !== 'touch') throw new Error('expected a touch');
-    expect(r.touch.landingPage).toBe(url);
+    expect(r.touch.landingPage).toBe(
+      'https://example.com/pricing?UTM_Source=google&utm_medium=cpc&gclid=G1&sc_click_id=S1#plans',
+    );
     expect(r.touch.referrer).toBe(referrer);
   });
 

@@ -11,6 +11,7 @@ import {
   PAID_MARKER_KEYS,
   touchKeys,
 } from './knowledge.js';
+import { redactSensitiveQuery } from './parse.js';
 import { sanitizeField } from './sanitize.js';
 import type { AttributionPayload, MergeAttributionOptions, ParsedTouch } from './types.js';
 
@@ -144,6 +145,11 @@ export function mergeAttributionTouch(
     return next;
   }
 
+  // Touches built outside parseAttributionUrl (cross-domain continuation)
+  // reach storage here too, so redact again. A no-op on parsed touches (#83).
+  const referrer = redactSensitiveQuery(touch.referrer);
+  const landingPage = redactSensitiveQuery(touch.landingPage);
+
   // First touch: write-once. A stored click ID alone blocks the overwrite;
   // a stored placeholder yields to the first measured touch.
   const ftWritable =
@@ -160,8 +166,8 @@ export function mergeAttributionTouch(
     next[FT.utmMarketingTactic] = touch.utmMarketingTactic;
     next[FT.channel] = touch.channelLabel;
     writeChannelCode(next, CHANNEL_CODE_KEYS.ft, touch, options);
-    next[FT.referrer] = touch.referrer;
-    next[FT.landingPage] = touch.landingPage;
+    next[FT.referrer] = referrer;
+    next[FT.landingPage] = landingPage;
     next[FT.touchTimestamp] = touch.touchTimestamp;
 
     // First-touch write-time click-ID mirror (RULING B): applyTouch('ft')
@@ -185,8 +191,8 @@ export function mergeAttributionTouch(
   next[LT.utmMarketingTactic] = touch.utmMarketingTactic;
   next[LT.channel] = touch.channelLabel;
   writeChannelCode(next, CHANNEL_CODE_KEYS.lt, touch, options);
-  next[LT.referrer] = touch.referrer;
-  next[LT.landingPage] = touch.landingPage;
+  next[LT.referrer] = referrer;
+  next[LT.landingPage] = landingPage;
   next[LT.touchTimestamp] = touch.touchTimestamp;
 
   // Last-touch write-time click-ID mirror (RULING B): applyTouch('lt')
