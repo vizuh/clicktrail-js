@@ -68,6 +68,12 @@ Rules:
   positive value + `refund_of: <original event_id|transactionId>`.
 - Unknown extra properties allowed under `properties` bag; PII only via explicit
   host mapping (see policy below).
+- `landing_url` and `referrer` never carry sensitive query parameters. Core
+  removes keys such as `email`, `token`, `phone`, `password` and `code` (exact
+  key or `_<word>` suffix, case-insensitive; `SENSITIVE_QUERY_KEYS`) before it
+  stores `ft_/lt_landing_page` and `ft_/lt_referrer`, in every format that keeps
+  a query string. `utm_*`, click IDs and browser IDs are never removed. Hosts
+  extend the list with `additionalSensitiveQueryKeys`.
 
 ## Idempotency (non-negotiable backend property)
 
